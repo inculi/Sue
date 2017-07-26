@@ -1,2 +1,0 @@
-# Sue
-iMessage Bot
