@@ -86,5 +86,3 @@ def sue(sender,command,textBody):
         help()
     else:
         print('Command not found.')
-
-help()
