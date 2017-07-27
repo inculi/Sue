@@ -1,5 +1,6 @@
 import cPickle as pickle
 import random
+from pprint import pprint
 suedir = '/Users/lucifius/Documents/prog/Sue/'
 
 def name(sender,command,textBody):
@@ -50,29 +51,67 @@ def choose(textBody):
     print(random.choice(textBody.split(' ')))
 
 def randomDist(textBody):
-    """!random <lowerbound> <upperbound>"""
-    try:
-        randRange = map(int, textBody.split(' '))
-        randRange.sort()
-        print(int(round(random.uniform(randRange[0],randRange[1]))))
-    except:
-        pass
+    """!random <lower> <upper>"""
+    textBody = textBody.lower()
+    randRange = sorted(textBody.split(' '))
+    numberBased = set(map(lambda x: x.isdigit(), randRange))
 
-def help():
+    try:
+        if numberBased == {True}:
+            randRange = map(int, randRange)
+            randRange.sort()
+            print(int(round(random.uniform(randRange[0],randRange[1]))))
+        elif numberBased == {False}:
+            randRange = map(ord, randRange)
+            randRange.sort()
+            print(chr(int(round(random.uniform(randRange[0],randRange[1])))))
+    except:
+        print(random.random())
+
+def shuffle(textBody):
+    """!shuffle <1> <2> ... <n>"""
+    items = textBody.split(' ')
+    random.shuffle(items)
+    print(reduce(lambda x,y: unicode(x)+' '+unicode(y), items))
+
+def identify(fileName):
+    """!identify <image>"""
+    if fileName == 'noFile':
+        print('Please supply a file.')
+    else:
+        from clarifai.rest import ClarifaiApp
+        from clarifai.rest import Image as ClImage
+
+        app = ClarifaiApp(api_key='ab4ea7efce5a4398bcbed8329a3d81c7')
+        model = app.models.get('general-v1.3')
+        image = ClImage(file_obj=open(fileName, 'rb'))
+
+        imageData = model.predict([image])
+        imageData = imageData['outputs'][0]['data']['concepts'][:10]
+        imageData = map(lambda x: x['name'], imageData)
+        print(reduce(lambda x,y: x+', '+y, imageData))
+
+def suehelp():
     funcs = [
     name,
     whoami,
     flip,
     choose,
-    randomDist]
+    randomDist,
+    shuffle,
+    identify]
 
     for f in funcs:
-        print(f.__doc__)
+        try:
+            print(f.__doc__)
+        except:
+            pass
 
 
-def sue(sender,command,textBody):
-    command = command.lower()
-    if command == 'name':
+def sue(sender,command,textBody,fileName):
+    if command == 'help':
+        suehelp()
+    elif command == 'name':
         name(sender, command, textBody)
     elif command == 'whoami':
         whoami(sender, command, textBody)
@@ -80,9 +119,11 @@ def sue(sender,command,textBody):
         flip()
     elif command == 'random':
         randomDist(textBody)
+    elif command == 'shuffle':
+        shuffle(textBody)
     elif command == 'choose':
         choose(textBody)
-    elif command == 'help':
-        help()
+    elif command == 'identify':
+        identify(fileName)
     else:
         print('Command not found.')
