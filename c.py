@@ -174,8 +174,7 @@ def sue(sender,command,textBody,fileName):
     elif command == 'define':
         define(textBody)
     elif command == 'identify':
-        print('Ice cream machine broken until I add image logging.')
-        # identify(fileName)
+        identify(fileName)
     else:
         try:
             callDefn(command)

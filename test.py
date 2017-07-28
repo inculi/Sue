@@ -4,6 +4,7 @@ from pprint import pprint
 
 try:
     data = sys.stdin.readlines()
+    pprint(data)
     data = reduce(lambda x,y: unicode(x)+unicode(y), data)
     data = data.split('|~|')
     buddyID = data[0].rsplit('+',1)[1]
@@ -26,5 +27,5 @@ else:
         print('Error parsing: ==='+textBody+'===')
         exit()
 
-    from b import sue
+    from c import sue
     sue(buddyID, command.lower(), textBody, fileName)
