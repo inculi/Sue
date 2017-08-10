@@ -5,7 +5,7 @@ from mongo import *
 suedir = '/Users/lucifius/Documents/prog/Sue/'
 
 def name(sender,command,textBody):
-    """!name <newname>"""
+    """!name <... newname ...>"""
     # load names from pickle file
     try:
         f = open(suedir+'names.pckl', 'rb')
@@ -86,6 +86,7 @@ def shuffle(textBody):
 
 # ===========================   USER DEFINITIONS   =============================
 def define(textBody):
+    """!define <word> <... meaning ...>"""
     if len(textBody) == 0:
         print('Please supply a word to define.')
         exit()
@@ -148,6 +149,7 @@ def suehelp():
     choose,
     randomDist,
     shuffle,
+    define,
     identify]
 
     for f in funcs:
