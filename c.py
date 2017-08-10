@@ -5,7 +5,7 @@ from mongo import *
 suedir = '/Users/lucifius/Documents/prog/Sue/'
 
 def name(sender,command,textBody):
-    """!name <... newname ...>"""
+    """!name <newname>"""
     # load names from pickle file
     try:
         f = open(suedir+'names.pckl', 'rb')
@@ -118,6 +118,24 @@ def callDefn(defnName):
         print('Not found. Add it with !define')
 # =========================   END USER DEFINITIONS   ===========================
 
+def fortune():
+    """!fortune"""
+    import subprocess
+    output = subprocess.check_output("/usr/local/bin/fortune", shell=True)
+    print(output)
+
+def dirty():
+    """!dirty"""
+    import subprocess
+    output = subprocess.check_output("/usr/local/bin/fortune -o", shell=True)
+    print(output)
+
+def uptime():
+    """!uptime"""
+    import subprocess
+    output = subprocess.check_output("uptime", shell=True)
+    print(output)
+
 # ==========================   IMAGE RECOGNITION   =============================
 def identify(fileName):
     """!identify <image>"""
@@ -150,6 +168,9 @@ def suehelp():
     randomDist,
     shuffle,
     define,
+    fortune,
+    dirty,
+    uptime,
     identify]
 
     for f in funcs:
@@ -175,7 +196,14 @@ def sue(sender,command,textBody,fileName):
         choose(textBody,sender)
     elif command == 'define':
         define(textBody)
+    elif command == 'fortune':
+        fortune()
+    elif command == 'dirty':
+        dirty()
+    elif command == 'uptime':
+        uptime()
     elif command == 'identify':
+        # print('Ice cream machine broken until I add image logging.')
         identify(fileName)
     else:
         try:
