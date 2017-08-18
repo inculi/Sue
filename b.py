@@ -1,42 +1,29 @@
 import cPickle as pickle
 import random
 from pprint import pprint
-from mongo import *
+import mongo # load our database interface from mongo.py
 suedir = '/Users/lucifius/Documents/prog/Sue/'
+
+# ==============================   Utilities   =================================
+
+def clean(inputString):
+    return inputString.strip().lower
+
+# ============================   END Utilities   ===============================
 
 def name(sender,command,textBody):
     """!name <newname>"""
-    # load names from pickle file
-    try:
-        f = open(suedir+'names.pckl', 'rb')
-        names = pickle.load(f)
-        f.close()
-    except IOError:
-        names = {}
-
-    # make changes
+    # make changes to our names collection.
     if len(textBody) == 0:
         print('Please specify a name.')
     else:
-        names[sender] = textBody
+        mongo.updateName(sender,textBody)
         print(sender+' shall now be known as '+textBody)
-
-    # save changes
-    f = open(suedir+'names.pckl', 'wb')
-    pickle.dump(names, f)
-    f.close()
 
 def whoami(sender,command,textBody):
     """!whoami"""
     # load names from pickle file
-    try:
-        f = open(suedir+'names.pckl', 'rb')
-        names = pickle.load(f)
-        f.close()
-    except IOError:
-        names = {}
-
-    nameFound = names[sender] if sender in names else None
+    nameFound = mongo.findName(sender)
 
     if nameFound:
         print('You are '+ nameFound + '.')
@@ -102,16 +89,16 @@ def define(textBody):
         exit()
 
     defnName = clean(defnName)
-    q = findDefn(defnName)
+    q = mongo.findDefn(defnName)
     if q:
-        updateDefn(defnName, meaning)
+        mongo.updateDefn(defnName, meaning)
         print(defnName + ' updated.')
     else:
-        addDefn(defnName, meaning)
+        mongo.addDefn(defnName, meaning)
         print(defnName + ' added.')
 
 def callDefn(defnName):
-    q = findDefn(defnName)
+    q = mongo.findDefn(defnName)
     if q:
         print(q[u'meaning'].encode('utf-8'))
     else:
