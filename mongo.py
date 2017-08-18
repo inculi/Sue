@@ -17,8 +17,12 @@ def updateDefn(defnName, meaning):
 ### !NAME, !WHOAMI
 def findName(phoneNumber):
     """searches for a given phone number in our names collection, and updates """
-    q = db.names.find_one({'phonenumber' : phoneNumber})
-    return q['name']
+    q = db.names.find_one({'phoneNumber' : phoneNumber})
+
+    if q:
+        return q['name']
+    else:
+        return None
 
 def updateName(phoneNumber,newName):
     db.names.update_one({'phoneNumber':phoneNumber}, {'$set' : {'name' : newName}}, upsert=True)
