@@ -179,7 +179,7 @@ def suehelp():
         except:
             pass
 
-def sue(sender,command,textBody,fileName):
+def sue(sender,groupId,command,textBody,fileName):
     if command == 'help':
         suehelp()
     elif command == 'name':
