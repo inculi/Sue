@@ -29,13 +29,13 @@ if textBody.strip()[0] is not '!':
     exit()
 else:
     # find the command we are being told to do, and execute it.
-    try:
-        textBody = textBody.strip().replace('¬¬¬','"')
-        command = textBody.split(' ',1)[0].replace('!','').lower()
-        textBody = textBody.split(command,1)[1].strip()
-    except:
-        print('Error parsing: ==='+textBody+'===')
-        exit()
+    # try:
+    textBody = textBody.strip().replace('¬¬¬','"')
+    command = textBody.split(' ',1)[0].replace('!','')
+    textBody = textBody.split(command,1)[1].strip()
+    # except:
+    #     print('Error parsing: ==='+textBody+'===')
+    #     exit()
 
     from b import sue
-    sue(sender, groupId, command, textBody, fileName)
+    sue(sender, groupId, command.lower(), textBody, fileName)
