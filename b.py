@@ -156,7 +156,12 @@ def searchImage(searchText):
 
     if len(a) > 0:
         # imageUrl = a[0]['link']
-        return random.choice(a)['link']
+        # return random.choice(a)['link']
+        try:
+            return random.choice(a)['link']
+        except:
+            # there was an error finding a link key in the item's dict.
+            return None
     else:
         return None
 
@@ -196,7 +201,7 @@ def img(groupId,textBody):
 # ==========================   IMAGE RECOGNITION   =============================
 def identify(fileName):
     """!identify <image>"""
-    print(fileName)
+    # print(fileName)
     if fileName == 'noFile':
         print('Please supply a file.')
     elif fileName == 'fileError':
@@ -210,10 +215,12 @@ def identify(fileName):
         image = ClImage(file_obj=open(fileName, 'rb'))
 
         imageData = model.predict([image])
-        pprint(imageData)
-        # imageData = imageData['outputs'][0]['data']['concepts'][:10]
-        # imageData = map(lambda x: x['name'], imageData)
-        # print(reduce(lambda x,y: x+', '+y, imageData))
+        try:
+            imageData = imageData['outputs'][0]['data']['concepts'][:10]
+            imageData = map(lambda x: x['name'], imageData)
+            print(reduce(lambda x,y: x+', '+y, imageData))
+        except:
+            print('Error, most likely with the reduce function. Unicode maybe?')
 # ========================   END IMAGE RECOGNITION   ===========================
 
 def suehelp():
