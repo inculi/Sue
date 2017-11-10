@@ -7,6 +7,7 @@ try:
     buddyId, chatId, inputText, fileName becomes
     sender, groupId, textBody, fileName. """
     data = sys.stdin.readlines()
+    print(data)
     data = reduce(lambda x,y: unicode(x)+unicode(y), data)
     data = data.split('|~|')
     if len(data) != 4:

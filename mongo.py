@@ -3,6 +3,15 @@ from pprint import pprint
 client = MongoClient('mongodb://localhost:27017')
 db = client.sue
 
+def mFind(collection,key,value):
+    return db[collection].find_one({key : value})
+
+def mAdd(collection,item):
+    db[collection].insert_one(item)
+
+def mUpdate(collection,searchitem,updateitem):
+    db[collection].update_one(searchitem, {'$set' : updateitem})
+
 ### !DEFINE
 def findDefn(defnName):
     q = db.defns.find_one({'name' : defnName})
