@@ -141,9 +141,74 @@ def wiki(searchTerm):
     except:
         print("Hmm, couldn't find that...")
 
+def wikis(searchTerm):
+    """!wiki <... topic ...> , <... search filter ...>"""
+    import wikipedia as wikip
+    searchTerm = searchTerm.split(',',1)
+
+    if len(searchTerm) != 2:
+        print('Please separate the topic and search term with a comma.\
+        \nEx: !wikis george washington, was born')
+        return
+
+    from nltk.tokenize import sent_tokenize
+    searchTerm = [x.lower().strip() for x in searchTerm]
+    data = sent_tokenize(wikip.page(searchTerm[0]).content)
+    data = [x for x in data if searchTerm[1] in x.lower()]
+    data = data[:10] # we don't want too many sentences.
+    if len(data) == 0:
+        print('No sentences match that...')
+        return
+    for sent in data:
+        print(sent.encode('utf-8'))
+
+    # try:
+    #     from nltk.tokenize import sent_tokenize
+    #     searchTerm = [x.lower().strip() for x in searchTerm]
+    #     data = sent_tokenize(wikip.page(searchTerm[0]).content)
+    #     data = [x for x in data if searchTerm[1] in x.lower()]
+    #     data = data[:10] # we don't want too many sentences.
+    #     for sent in data:
+    #         print(sent.encode('utf-8'))
+    # except ImportError:
+    #     print("Please pip install nltk first.")
+    # except:
+    #     print("Hmm, couldn't find that...")
+
+
+def wolf(inputQuestion):
+    """!wolf <... question ...>"""
+    import wolframalpha
+    client = wolframalpha.Client('HWP8QY-EL2KR2KKLW')
+
+    res = client.query(inputQuestion)
+
+    interp = [pod for pod in res.pods if pod['@title'] == 'Input interpretation']
+    results = [pod for pod in res.pods if pod['@title'] == 'Result']
+
+    # TODO: "integral of sigmoid function" returns empty interp and results.
+    #       there are more things that still need extraction.
+
+    if interp:
+        print('Input:')
+        for item in interp:
+            try:
+                print(item['subpod']['img']['@alt'])
+            except:
+                pass # didn't have the right keys.
+        print('\nResult:')
+    
+    # TODO: if results is empty, the answer was in image form. extract that.
+    for res in results:
+        try:
+            print(res['subpod']['img']['@alt'])
+        except:
+            pass # didn't have the right keys.
+
 def searchImage(searchText):
-    """use imgur's API to return the link to the first non-album result.
+    """!img <... query ...>
     """
+    # use imgur's API to return the link to the first non-album result.
     from json import loads
     import requests
     url = "https://api.imgur.com/3/gallery/search/{{sort}}/{{window}}/{{page}}"
@@ -232,6 +297,9 @@ def suehelp():
     randomDist,
     shuffle,
     define,
+    wiki,
+    wolf,
+    searchImage,
     fortune,
     dirty,
     uptime,
@@ -265,6 +333,10 @@ def sue(sender,groupId,command,textBody,fileName):
         define(textBody)
     elif command == 'wiki':
         wiki(textBody)
+    elif command == 'wikis':
+        wikis(textBody)
+    elif command == 'wolf':
+        wolf(textBody)
     elif command == 'fortune':
         fortune()
     elif command == 'dirty':
