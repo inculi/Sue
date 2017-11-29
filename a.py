@@ -6,9 +6,12 @@ try:
     """ Note that:
     buddyId, chatId, inputText, fileName becomes
     sender, groupId, textBody, fileName. """
-    data = sys.stdin.readlines()
-    data = reduce(lambda x,y: unicode(x)+unicode(y), data)
+    # data = sys.stdin.readlines()
+    # data = reduce(lambda x,y: unicode(x)+unicode(y), data)
+
+    data = sys.stdin.read()
     data = data.split('|~|')
+    
     if len(data) != 4:
         # someone tried to mess up our data by adding a '|~|'
         print('Nice try, kid.')
