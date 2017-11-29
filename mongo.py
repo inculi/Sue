@@ -23,6 +23,9 @@ def addDefn(defnName, meaning):
 def updateDefn(defnName, meaning):
     db.defns.update_one({'name' : defnName}, {'$set' : {'meaning' : meaning}})
 
+def listDefns():
+    return [item['name'] for item in db.defns.find({})]
+
 ### !NAME, !WHOAMI
 def findName(phoneNumber):
     """searches for a given phone number in our names collection, and updates """

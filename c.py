@@ -102,6 +102,17 @@ def define(textBody):
 
     return 0
 
+def phrases():
+    data = mongo.listDefns()
+    random.shuffle(data)
+
+    output = ''
+    for x in data[0:30]:
+        output += (x + ', ')
+    output += data[30]
+
+    print(output.encode('utf-8'))
+
 def callDefn(defnName):
     q = mongo.findDefn(defnName)
     if q:
@@ -359,6 +370,8 @@ def sue(sender,groupId,command,textBody,fileName):
         choose(textBody,sender)
     elif command == 'define':
         define(textBody)
+    elif command == 'phrases':
+        phrases()
     elif command == 'wiki':
         wiki(textBody)
     elif command == 'wikis':
