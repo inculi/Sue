@@ -205,6 +205,33 @@ def wolf(inputQuestion):
         except:
             pass # didn't have the right keys.
 
+def urbanDictionary(term):
+    import sys
+    import json
+    import requests
+
+    if term:
+        if sys.version < '3':
+            from urllib import quote as urlquote
+        else:
+            from urllib.parse import quote as urlquote
+        url = 'http://api.urbandictionary.com/v0/define?term=' + urlquote(term)
+    else:
+        # no term provided. Send a random one.
+        url = 'http://api.urbandictionary.com/v0/random'
+    
+    r = requests.get(url)
+    data = json.loads(r.content)
+    if not data['list']:
+        print("Sorry, couldn't find that...")
+
+    clean = lambda x: x.replace('\r\n', '\n').strip()
+    print((data['list'][0]['word']).encode('utf-8'))
+    for entry in data['list'][:1]:
+        output = 'def: ' + clean(entry['definition']) + '\n'
+        output += 'ex: ' + clean(entry['example'])
+        print(output.encode('utf-8'))
+
 def searchImage(searchText):
     """!img <... query ...>
     """
@@ -238,7 +265,7 @@ def downloadImage(imageUrl):
 
 # TODO: Make this actually work.
 def sendImage(groupId, fileName):
-    os.system('osascript direct.applescript {} {}'.format(groupId,fileName))
+    os.system('osascript direct.applescript {} {}'.format(groupId, fileName))
 
 # TODO: Make this actually work.
 def imgHandler(groupId,imageInfo):
@@ -337,6 +364,8 @@ def sue(sender,groupId,command,textBody,fileName):
         wikis(textBody)
     elif command == 'wolf':
         wolf(textBody)
+    elif command == 'ud':
+        urbanDictionary(textBody)
     elif command == 'fortune':
         fortune()
     elif command == 'dirty':
