@@ -206,6 +206,7 @@ def wolf(inputQuestion):
             pass # didn't have the right keys.
 
 def urbanDictionary(term):
+    """!ud <... term ...>"""
     import sys
     import json
     import requests
@@ -233,8 +234,7 @@ def urbanDictionary(term):
         print(output.encode('utf-8'))
 
 def searchImage(searchText):
-    """!img <... query ...>
-    """
+    """!img <... query ...>"""
     # use imgur's API to return the link to the first non-album result.
     from json import loads
     import requests
@@ -326,6 +326,7 @@ def suehelp():
     define,
     wiki,
     wolf,
+    urbanDictionary,
     searchImage,
     fortune,
     dirty,
