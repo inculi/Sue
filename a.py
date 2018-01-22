@@ -19,7 +19,8 @@ try:
     sender = data[0].rsplit('+',1)[1]
     groupId = data[1]
     if groupId != 'singleUser':
-        groupId = groupId.split('chat')[1]
+        if groupId[0:6] != 'signal':
+            groupId = groupId.split('chat')[1]
     textBody = data[2]
     fileName = data[3].replace('\n','')
 except:

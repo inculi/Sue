@@ -268,6 +268,7 @@ def searchImage(searchText):
     else:
         return None
 
+# ============================   DOES NOT WORK   ===============================
 # TODO: Make this actually work
 def downloadImage(imageUrl):
     os.system('aria2c -q '+imageUrl+' -d ./images')
@@ -289,6 +290,8 @@ def imgHandler(groupId,imageInfo):
             sendImage(groupId, imgPath)
     else:
         sendImage(groupId,imageInfo)
+# ==========================   END DOES NOT WORK   =============================
+
 
 def img(groupId,textBody):
     imgUrl = searchImage(textBody)
