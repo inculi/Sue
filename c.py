@@ -102,6 +102,17 @@ def define(textBody):
 
     return 0
 
+def phrases():
+    data = mongo.listDefns()
+    random.shuffle(data)
+
+    output = ''
+    for x in data[0:30]:
+        output += (x + ', ')
+    output += data[30]
+
+    print(output.encode('utf-8'))
+
 def callDefn(defnName):
     q = mongo.findDefn(defnName)
     if q:
@@ -197,7 +208,7 @@ def wolf(inputQuestion):
             except:
                 pass # didn't have the right keys.
         print('\nResult:')
-    
+
     # TODO: if results is empty, the answer was in image form. extract that.
     for res in results:
         try:
@@ -220,7 +231,7 @@ def urbanDictionary(term):
     else:
         # no term provided. Send a random one.
         url = 'http://api.urbandictionary.com/v0/random'
-    
+
     r = requests.get(url)
     data = json.loads(r.content)
     if not data['list']:
@@ -359,6 +370,8 @@ def sue(sender,groupId,command,textBody,fileName):
         choose(textBody,sender)
     elif command == 'define':
         define(textBody)
+    elif command == 'phrases':
+        phrases()
     elif command == 'wiki':
         wiki(textBody)
     elif command == 'wikis':
