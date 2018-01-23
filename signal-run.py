@@ -5,18 +5,22 @@ import re
 import logging
 from pprint import pprint
 
-# from suesignal import sue_signal
+from asignal import a_signal
 
-def sue_signal(sender, groupId, inputText, fileName):
-    """Functions somewhat like our applescript in that it prepares our message
-    to be processed by sue
-    """
-    # inputText = inputText.replace('\"','¬¬¬')
-    # print(inputText)
-    command = 'echo \"%s|~|%s|~|%s|~|%s\" | python2 a.py' % (sender, groupId, inputText, fileName)
-
-    output = subprocess.check_output(command, shell=True)
-    return output
+# def sue_signal(sender, groupId, inputText, fileName):
+#     """Functions somewhat like our applescript in that it prepares our message
+#     to be processed by sue
+#     """
+#     inputText = unicode(inputText).encode('utf-8')
+#     replaceText = unicode('¬¬¬'.decode('utf-8'))
+#     inputText = inputText.replace('"',replaceText)
+#
+#     command = 'echo "%s|~|%s|~|%s|~|%s" | python2 a.py' % (sender, groupId, inputText, fileName)
+#     print(command)
+#
+#     # output = subprocess.check_output(command, shell=True)
+#     print('working!')
+#     # return output
 
 def sendReply(message):
     print('handling reply')
@@ -28,15 +32,15 @@ def sendReply(message):
     groupId = 'singleUser'
     if groupInfo:
         groupId = groupInfo['groupId']
-    
+
     print(sender)
     print(inputText)
     print('signal-'+groupId)
     print(fileName)
-    
+
     # call sue to examine the messageBody as per usual
     print('sending to sue')
-    text_reply = sue_signal(sender, 'signal-'+groupId, inputText, fileName)
+    text_reply = a_signal(sender, 'signal-'+groupId, inputText, fileName)
     if not text_reply:
         print('Nothing to say')
         return None # nothing to say.
@@ -57,7 +61,7 @@ def sendReply(message):
         reply['recipientGroupId'] = groupId
     else:
         reply['recipientNumber'] = sender
-    
+
     return reply
 
 
@@ -73,7 +77,7 @@ def _handle_message(message):
 
         if current_reply:
             responses.append(json.dumps(current_reply))
-    
+
     return responses
 
 def run(signal_number, binary='signal-cli'):
@@ -99,7 +103,8 @@ def run(signal_number, binary='signal-cli'):
                 proc.stdin.write(response.encode('utf-8'))
                 proc.stdin.write(b"\r\n")
                 proc.stdin.flush()
-        except:
+        except Exception as ex:
+            print ex
             pass # invalid json
 
 
