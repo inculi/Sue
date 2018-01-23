@@ -84,7 +84,7 @@ def run(signal_number, binary='signal-cli'):
 
     for msg in iter(proc.stdout.readline, b''):
         # pprint(msg)
-        msg = msg.decode().strip()
+        msg = msg.decode('utf-8').strip()
         print(msg)
 
         try:
