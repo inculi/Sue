@@ -13,7 +13,7 @@ def sue_signal(sender, groupId, inputText, fileName):
     """
     # inputText = inputText.replace('\"','¬¬¬')
     # print(inputText)
-    command = 'echo \"%s|~|%s|~|%s|~|%s\" | python a.py' % (sender, groupId, inputText, fileName)
+    command = 'echo \"%s|~|%s|~|%s|~|%s\" | python2 a.py' % (sender, groupId, inputText, fileName)
 
     output = subprocess.check_output(command, shell=True)
     return output
