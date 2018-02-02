@@ -7,7 +7,7 @@ import sys
 suedir = '/Users/lucifius/Documents/prog/Sue/'
 
 
-RESPONSES = []
+# RESPONSES = []
 
 
 # ==============================   Utilities   =================================
@@ -17,7 +17,7 @@ def clean(inputString):
 
 def rprint(inputString, newLine=True):
     if newLine:
-        RESPONSES.append(unicode(inputString+'\n')
+        RESPONSES.append(unicode(inputString+'\n'))
     else:
         RESPONSES.append(unicode(inputString))
 
@@ -371,6 +371,9 @@ def suehelp():
             pass
 
 def sue(sender,groupId,command,textBody,fileName):
+    global RESPONSES
+    RESPONSES = []
+
     if command == 'help':
         suehelp()
     elif command == 'groupId':
@@ -418,7 +421,12 @@ def sue(sender,groupId,command,textBody,fileName):
             rprint('Command not found.')
 
     if groupId[0:6] == 'signal':
-        return responses
+        # print('signal!')
+        outString = u''
+        for response in RESPONSES:
+            outString += unicode(response)
+        RESPONSES = []
+        return outString
     else:
-        for response in responses:
+        for response in RESPONSES:
             stdprint(response)

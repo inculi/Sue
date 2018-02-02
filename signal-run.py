@@ -23,7 +23,7 @@ from asignal import a_signal
 #     # return output
 
 def sendReply(message):
-    print('handling reply')
+    # print('handling reply')
     sender = message['envelope']['source']
     inputText = message['envelope']['dataMessage']['message']
     fileName = 'noFile' # I'll figure out where this is stored later
@@ -33,18 +33,19 @@ def sendReply(message):
     if groupInfo:
         groupId = groupInfo['groupId']
 
+    print('---------')
     print(sender)
     print(inputText)
-    print('signal-'+groupId)
-    print(fileName)
+    # print('signal-'+groupId)
+    # print(fileName)
 
     # call sue to examine the messageBody as per usual
-    print('sending to sue')
+    # print('sending to sue')
     text_reply = a_signal(sender, 'signal-'+groupId, inputText, fileName)
     if not text_reply:
-        print('Nothing to say')
+        # print('Nothing to say')
         return None # nothing to say.
-    print('Done!')
+    # print('Done!')
     reply = {
         "type": "send",
         "messageBody": text_reply, # we'll set this when we know what it is
@@ -66,7 +67,7 @@ def sendReply(message):
 
 
 def _handle_message(message):
-    print('handling message')
+    # print('handling message')
     responses = []
     if not message.get('envelope', {}).get('isReceipt', True):
         datamessage = message.get('envelope', {}).get('dataMessage', {})
@@ -83,13 +84,12 @@ def _handle_message(message):
 def run(signal_number, binary='signal-cli'):
     command = [binary, '-u', signal_number, 'jsonevtloop']
     # hooks = {"message": self._handle_message}
-
+    print('Starting...')
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
-
     for msg in iter(proc.stdout.readline, b''):
         # pprint(msg)
         msg = msg.decode('utf-8').strip()
-        print(msg)
+        # print(msg)
 
         try:
             responses = []
@@ -99,7 +99,7 @@ def run(signal_number, binary='signal-cli'):
                 responses = _handle_message(msg)
 
             for response in responses:
-                print("Writing to signal-cli stdin: %s" % response)
+                # print("Writing to signal-cli stdin: %s" % response)
                 proc.stdin.write(response.encode('utf-8'))
                 proc.stdin.write(b"\r\n")
                 proc.stdin.flush()
