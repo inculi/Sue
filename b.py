@@ -88,6 +88,34 @@ def shuffle(textBody):
     items = textBody.split(' ')
     random.shuffle(items)
     rprint(reduce(lambda x,y: unicode(x)+' '+unicode(y), items))
+
+def eightBall():
+    """!8ball"""
+    possible_responses = [
+        "As I see it, yes",
+        "It is certain",
+        "It is decidedly so",
+        "Most likely",
+        "Outlook good",
+        "Signs point to yes",
+        "Without a doubt",
+        "Yes",
+        "Yes - definitely",
+        "You may rely on it",
+        "Reply hazy, try again",
+        "Ask again later",
+        "Better not tell you now",
+        "Cannot predict now",
+        "Concentrate and ask again",
+        "Don't count on it",
+        "My reply is no",
+        "My sources say no",
+        "Outlook not so good",
+        "Very doubtful"
+    ]
+
+    rprint(random.choice(possible_responses))
+
 # =====================   END RANDOMIZATION FUNCTIONS   ========================
 
 # ===========================   USER DEFINITIONS   =============================
@@ -412,6 +440,7 @@ def suehelp():
     choose,
     randomDist,
     shuffle,
+    eightBall,
     define,
     wiki,
     wikis,
@@ -450,6 +479,8 @@ def sue(sender,groupId,command,textBody,fileName):
         randomDist(textBody)
     elif command == 'shuffle':
         shuffle(textBody)
+    elif command == '8ball':
+        eightBall()
     elif command == 'choose':
         choose(textBody,sender)
     elif command == 'define':
