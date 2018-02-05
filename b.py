@@ -134,7 +134,7 @@ def phrases():
 def callDefn(defnName):
     q = mongo.findDefn(defnName)
     if q:
-        rprint(q[u'meaning'].encode('utf-8'))
+        rprint(q[u'meaning'].decode('utf-8'))
     else:
         rprint('Not found. Add it with !define')
 # =========================   END USER DEFINITIONS   ===========================
@@ -344,6 +344,63 @@ def identify(fileName):
             rprint(reduce(lambda x,y: x+', '+y, imageData))
         except:
             rprint('Error, most likely with the reduce function. Unicode maybe?')
+
+def person(fileName):
+    """!person <image>"""
+    # gets demographic information about a given photo.
+    if fileName == 'noFile':
+        rprint('Please supply a file.')
+    elif fileName == 'fileError':
+        rprint('There was an error selecting the last file transfer.')
+    else:
+        from clarifai.rest import ClarifaiApp
+        from clarifai.rest import Image as ClImage
+
+        app = ClarifaiApp(api_key='ab4ea7efce5a4398bcbed8329a3d81c7')
+        model = app.models.get('demographics')
+        image = ClImage(file_obj=open(fileName, 'rb'))
+
+        imageData = model.predict([image])
+        imageData = imageData['outputs'][0]['data']
+        if 'regions' not in imageData:
+            rprint('No faces detected.')
+            return None
+        for face in imageData['regions']:
+            face = face['data']['face']
+            try:
+                face_age = face['age_appearance']['concepts'][0]['name']
+                face_gender = face['gender_appearance']['concepts'][0]['name']
+                face_culture = face['multicultural_appearance']['concepts'][0]['name']
+                rprint('age : %s' % face_age)
+                rprint('gender : %s' % face_gender)
+                rprint('ethnicity : %s' % face_culture)
+            except:
+                rprint('Error, most likely with the reduce function. Unicode maybe?')
+
+def lewd(fileName):
+    """!lewd <image>"""
+    # detect whether an image is lewd or not
+
+    if fileName == 'noFile':
+        rprint('Please supply a file.')
+    elif fileName == 'fileError':
+        rprint('There was an error selecting the last file transfer.')
+    else:
+        from clarifai.rest import ClarifaiApp
+        from clarifai.rest import Image as ClImage
+
+        app = ClarifaiApp(api_key='ab4ea7efce5a4398bcbed8329a3d81c7')
+        model = app.models.get('nsfw-v1.0')
+        image = ClImage(file_obj=open(fileName, 'rb'))
+
+        imageData = model.predict([image])
+        result = imageData['outputs'][0]['data']['concepts'][0]
+        if result['name'] == u'nsfw':
+            rprint('LEEEWWWDDD!!!!!')
+        else:
+            rprint('not lewd')
+        rprint('accuracy: %f' % result['value'])
+
 # ========================   END IMAGE RECOGNITION   ===========================
 
 def suehelp():
@@ -356,13 +413,16 @@ def suehelp():
     shuffle,
     define,
     wiki,
+    wikis,
     wolf,
     urbanDictionary,
     searchImage,
     fortune,
     dirty,
     uptime,
-    identify]
+    identify,
+    person,
+    lewd]
 
     for f in funcs:
         try:
@@ -414,6 +474,12 @@ def sue(sender,groupId,command,textBody,fileName):
     elif command == 'identify':
         # print('Ice cream machine broken until I add image logging.')
         identify(fileName)
+    elif command == 'person':
+        # print('Ice cream machine broken until I add image logging.')
+        person(fileName)
+    elif command == 'lewd':
+        # print('Ice cream machine broken until I add image logging.')
+        lewd(fileName)
     else:
         try:
             callDefn(command)

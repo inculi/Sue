@@ -3,49 +3,67 @@ import random
 from pprint import pprint
 import os
 import mongo # load our database interface from mongo.py
+import sys
 suedir = '/Users/lucifius/Documents/prog/Sue/'
+
+
+# RESPONSES = []
+
 
 # ==============================   Utilities   =================================
 
 def clean(inputString):
     return inputString.strip().lower()
 
+def rprint(inputString, newLine=True):
+    if newLine:
+        RESPONSES.append(unicode(inputString+'\n'))
+    else:
+        RESPONSES.append(unicode(inputString))
+
+def stdprint(inputString):
+    sys.stdout.write(inputString)
+
 # ============================   END Utilities   ===============================
 
 def name(sender,command,textBody):
     """!name <newname>"""
+
     # make changes to our names collection.
     if len(textBody) == 0:
-        print('Please specify a name.')
+        rprint('Please specify a name.')
     else:
         mongo.updateName(sender,textBody)
-        print(sender+' shall now be known as '+textBody)
+        rprint(sender+' shall now be known as '+textBody)
 
 def whoami(sender,command,textBody):
     """!whoami"""
+
     # load names from pickle file
     nameFound = mongo.findName(sender)
 
     if nameFound:
-        print('You are '+ nameFound + '.')
+        rprint('You are '+ nameFound + '.')
     else:
-        print('I do not know you. Set your name with !name')
+        rprint('I do not know you. Set your name with !name')
 
 # =======================   RANDOMIZATION FUNCTIONS   ==========================
 def flip():
     """!flip"""
-    print(random.choice(['heads','tails']))
+
+    rprint(random.choice(['heads','tails']))
 
 def choose(textBody,sender):
     """!choose <1> <2> ... <n>"""
+
     options = textBody.split(' ')
     meguminOption = 'megumin' in map(lambda x: x.lower(), options)
     if meguminOption and sender == '12107485865':
-        print('megumin')
+        rprint('megumin')
     elif meguminOption and sender == '12108342408':
-        print('http://megumin.club Roses are Red, Violets are Blue. Megumin best girl and glorious waifu.')
+        rprint('http://megumin.club Roses are Red, Violets are Blue. Megumin best girl and glorious waifu.')
     else:
-        print(random.choice(options))
+        rprint(random.choice(options))
 
 def randomDist(textBody):
     """!random <lower> <upper>"""
@@ -57,26 +75,26 @@ def randomDist(textBody):
         if numberBased == {True}:
             randRange = map(int, randRange)
             randRange.sort()
-            print(int(round(random.uniform(randRange[0],randRange[1]))))
+            rprint(int(round(random.uniform(randRange[0],randRange[1]))))
         elif numberBased == {False}:
             randRange = map(ord, randRange)
             randRange.sort()
-            print(chr(int(round(random.uniform(randRange[0],randRange[1])))))
+            rprint(chr(int(round(random.uniform(randRange[0],randRange[1])))))
     except:
-        print(random.random())
+        rprint(random.random())
 
 def shuffle(textBody):
     """!shuffle <1> <2> ... <n>"""
     items = textBody.split(' ')
     random.shuffle(items)
-    print(reduce(lambda x,y: unicode(x)+' '+unicode(y), items))
+    rprint(reduce(lambda x,y: unicode(x)+' '+unicode(y), items))
 # =====================   END RANDOMIZATION FUNCTIONS   ========================
 
 # ===========================   USER DEFINITIONS   =============================
 def define(textBody):
     """!define <word> <... meaning ...>"""
     if len(textBody) == 0:
-        print('Please supply a word to define.')
+        rprint('Please supply a word to define.')
         return 1
 
     try:
@@ -84,21 +102,21 @@ def define(textBody):
         if len(textBody) == 2:
             defnName, meaning = textBody[0], textBody[1]
         else:
-            print('Please supply a meaning for the word.')
+            rprint('Please supply a meaning for the word.')
             return 1
     except:
         # There was an error.
-        print('Error adding definition. No unicode pls :(')
+        rprint('Error adding definition. No unicode pls :(')
         return 1
 
     defnName = clean(defnName)
     q = mongo.findDefn(defnName)
     if q:
         mongo.updateDefn(defnName, meaning)
-        print(defnName + ' updated.')
+        rprint(defnName + ' updated.')
     else:
         mongo.addDefn(defnName, meaning)
-        print(defnName + ' added.')
+        rprint(defnName + ' added.')
 
     return 0
 
@@ -111,33 +129,33 @@ def phrases():
         output += (x + ', ')
     output += data[30]
 
-    print(output.encode('utf-8'))
+    rprint(output.encode('utf-8'))
 
 def callDefn(defnName):
     q = mongo.findDefn(defnName)
     if q:
-        print(q[u'meaning'].encode('utf-8'))
+        rprint(q[u'meaning'].decode('utf-8'))
     else:
-        print('Not found. Add it with !define')
+        rprint('Not found. Add it with !define')
 # =========================   END USER DEFINITIONS   ===========================
 
 def fortune():
     """!fortune"""
     import subprocess
     output = subprocess.check_output("/usr/local/bin/fortune", shell=True)
-    print(output)
+    rprint(output)
 
 def dirty():
     """!dirty"""
     import subprocess
     output = subprocess.check_output("/usr/local/bin/fortune -o", shell=True)
-    print(output)
+    rprint(output)
 
 def uptime():
     """!uptime"""
     import subprocess
     output = subprocess.check_output("uptime", shell=True)
-    print(output)
+    rprint(output)
 
 def wiki(searchTerm):
     """!wiki <... topic ...>"""
@@ -148,9 +166,9 @@ def wiki(searchTerm):
         if len(data) < 50:
             data = wikip.summary(searchTerm,sentences=2)
 
-        print(data.encode('utf-8'))
+        rprint(data.encode('utf-8'))
     except:
-        print("Hmm, couldn't find that...")
+        rprint("Hmm, couldn't find that...")
 
 def wikis(searchTerm):
     """!wiki <... topic ...> , <... search filter ...>"""
@@ -158,7 +176,7 @@ def wikis(searchTerm):
     searchTerm = searchTerm.split(',',1)
 
     if len(searchTerm) != 2:
-        print('Please separate the topic and search term with a comma.\
+        rprint('Please separate the topic and search term with a comma.\
         \nEx: !wikis george washington, was born')
         return
 
@@ -168,10 +186,10 @@ def wikis(searchTerm):
     data = [x for x in data if searchTerm[1] in x.lower()]
     data = data[:10] # we don't want too many sentences.
     if len(data) == 0:
-        print('No sentences match that...')
+        rprint('No sentences match that...')
         return
     for sent in data:
-        print(sent.encode('utf-8'))
+        rprint(sent.encode('utf-8'))
 
     # try:
     #     from nltk.tokenize import sent_tokenize
@@ -201,18 +219,18 @@ def wolf(inputQuestion):
     #       there are more things that still need extraction.
 
     if interp:
-        print('Input:')
+        rprint('Input:')
         for item in interp:
             try:
                 print(item['subpod']['img']['@alt'])
             except:
                 pass # didn't have the right keys.
-        print('\nResult:')
+        rprint('\nResult:')
 
     # TODO: if results is empty, the answer was in image form. extract that.
     for res in results:
         try:
-            print(res['subpod']['img']['@alt'])
+            rprint(res['subpod']['img']['@alt'])
         except:
             pass # didn't have the right keys.
 
@@ -235,14 +253,14 @@ def urbanDictionary(term):
     r = requests.get(url)
     data = json.loads(r.content)
     if not data['list']:
-        print("Sorry, couldn't find that...")
+        rprint("Sorry, couldn't find that...")
 
     clean = lambda x: x.replace('\r\n', '\n').strip()
-    print((data['list'][0]['word']).encode('utf-8'))
+    rprint((data['list'][0]['word']).encode('utf-8'))
     for entry in data['list'][:1]:
         output = 'def: ' + clean(entry['definition']) + '\n'
         output += 'ex: ' + clean(entry['example'])
-        print(output.encode('utf-8'))
+        rprint(output.encode('utf-8'))
 
 def searchImage(searchText):
     """!img <... query ...>"""
@@ -268,6 +286,7 @@ def searchImage(searchText):
     else:
         return None
 
+# ============================   DOES NOT WORK   ===============================
 # TODO: Make this actually work
 def downloadImage(imageUrl):
     os.system('aria2c -q '+imageUrl+' -d ./images')
@@ -289,15 +308,16 @@ def imgHandler(groupId,imageInfo):
             sendImage(groupId, imgPath)
     else:
         sendImage(groupId,imageInfo)
+# ==========================   END DOES NOT WORK   =============================
+
 
 def img(groupId,textBody):
     imgUrl = searchImage(textBody)
 
     if imgUrl:
-        import sys
-        sys.stdout.write(imgUrl)
+        rprint(imgUrl, newLine=False)
     else:
-        print('Sorry, I could not find a photo of that...')
+        rprint('Sorry, I could not find a photo of that...')
 
     # imgHandler(groupId,imgUrl)
 
@@ -306,9 +326,9 @@ def identify(fileName):
     """!identify <image>"""
     # print(fileName)
     if fileName == 'noFile':
-        print('Please supply a file.')
+        rprint('Please supply a file.')
     elif fileName == 'fileError':
-        print('There was an error selecting the last file transfer.')
+        rprint('There was an error selecting the last file transfer.')
     else:
         from clarifai.rest import ClarifaiApp
         from clarifai.rest import Image as ClImage
@@ -321,9 +341,66 @@ def identify(fileName):
         try:
             imageData = imageData['outputs'][0]['data']['concepts'][:10]
             imageData = map(lambda x: x['name'], imageData)
-            print(reduce(lambda x,y: x+', '+y, imageData))
+            rprint(reduce(lambda x,y: x+', '+y, imageData))
         except:
-            print('Error, most likely with the reduce function. Unicode maybe?')
+            rprint('Error, most likely with the reduce function. Unicode maybe?')
+
+def person(fileName):
+    """!person <image>"""
+    # gets demographic information about a given photo.
+    if fileName == 'noFile':
+        rprint('Please supply a file.')
+    elif fileName == 'fileError':
+        rprint('There was an error selecting the last file transfer.')
+    else:
+        from clarifai.rest import ClarifaiApp
+        from clarifai.rest import Image as ClImage
+
+        app = ClarifaiApp(api_key='ab4ea7efce5a4398bcbed8329a3d81c7')
+        model = app.models.get('demographics')
+        image = ClImage(file_obj=open(fileName, 'rb'))
+
+        imageData = model.predict([image])
+        imageData = imageData['outputs'][0]['data']
+        if 'regions' not in imageData:
+            rprint('No faces detected.')
+            return None
+        for face in imageData['regions']:
+            face = face['data']['face']
+            try:
+                face_age = face['age_appearance']['concepts'][0]['name']
+                face_gender = face['gender_appearance']['concepts'][0]['name']
+                face_culture = face['multicultural_appearance']['concepts'][0]['name']
+                rprint('age : %s' % face_age)
+                rprint('gender : %s' % face_gender)
+                rprint('ethnicity : %s' % face_culture)
+            except:
+                rprint('Error, most likely with the reduce function. Unicode maybe?')
+
+def lewd(fileName):
+    """!lewd <image>"""
+    # detect whether an image is lewd or not
+
+    if fileName == 'noFile':
+        rprint('Please supply a file.')
+    elif fileName == 'fileError':
+        rprint('There was an error selecting the last file transfer.')
+    else:
+        from clarifai.rest import ClarifaiApp
+        from clarifai.rest import Image as ClImage
+
+        app = ClarifaiApp(api_key='ab4ea7efce5a4398bcbed8329a3d81c7')
+        model = app.models.get('nsfw-v1.0')
+        image = ClImage(file_obj=open(fileName, 'rb'))
+
+        imageData = model.predict([image])
+        result = imageData['outputs'][0]['data']['concepts'][0]
+        if result['name'] == u'nsfw':
+            rprint('LEEEWWWDDD!!!!!')
+        else:
+            rprint('not lewd')
+        rprint('accuracy: %f' % result['value'])
+
 # ========================   END IMAGE RECOGNITION   ===========================
 
 def suehelp():
@@ -336,26 +413,32 @@ def suehelp():
     shuffle,
     define,
     wiki,
+    wikis,
     wolf,
     urbanDictionary,
     searchImage,
     fortune,
     dirty,
     uptime,
-    identify]
+    identify,
+    person,
+    lewd]
 
     for f in funcs:
         try:
-            print(f.__doc__)
+            rprint(f.__doc__)
         except:
             pass
 
 def sue(sender,groupId,command,textBody,fileName):
+    global RESPONSES
+    RESPONSES = []
+
     if command == 'help':
         suehelp()
     elif command == 'groupId':
-        print('The id for this group is:')
-        print(groupId)
+        rprint('The id for this group is:')
+        rprint(groupId)
     elif command == 'name':
         name(sender, command, textBody)
     elif command == 'whoami':
@@ -391,8 +474,25 @@ def sue(sender,groupId,command,textBody,fileName):
     elif command == 'identify':
         # print('Ice cream machine broken until I add image logging.')
         identify(fileName)
+    elif command == 'person':
+        # print('Ice cream machine broken until I add image logging.')
+        person(fileName)
+    elif command == 'lewd':
+        # print('Ice cream machine broken until I add image logging.')
+        lewd(fileName)
     else:
         try:
             callDefn(command)
         except:
-            print('Command not found.')
+            rprint('Command not found.')
+
+    if groupId[0:6] == 'signal':
+        # print('signal!')
+        outString = u''
+        for response in RESPONSES:
+            outString += unicode(response)
+        RESPONSES = []
+        return outString
+    else:
+        for response in RESPONSES:
+            stdprint(response)
