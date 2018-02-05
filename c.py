@@ -254,10 +254,11 @@ def urbanDictionary(term):
     data = json.loads(r.content)
     if not data['list']:
         rprint("Sorry, couldn't find that...")
+        return None
 
     clean = lambda x: x.replace('\r\n', '\n').strip()
-    rprint((data['list'][0]['word']).encode('utf-8'))
     for entry in data['list'][:1]:
+        rprint((data['list'][0]['word']).encode('utf-8'))
         output = 'def: ' + clean(entry['definition']) + '\n'
         output += 'ex: ' + clean(entry['example'])
         rprint(output.encode('utf-8'))
