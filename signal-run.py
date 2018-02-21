@@ -100,7 +100,12 @@ def run(signal_number, binary='signal-cli'):
 
             for response in responses:
                 # print("Writing to signal-cli stdin: %s" % response)
-                proc.stdin.write(response.encode('utf-8'))
+                try:
+                    proc.stdin.write(response)
+                except UnicodeEncodeError:
+                    proc.stdin.write(inputString.encode('utf-8'))
+                except UnicodeDecodeError:
+                    proc.stdin.write(inputString.decode('utf-8'))
                 proc.stdin.write(b"\r\n")
                 proc.stdin.flush()
         except Exception as ex:

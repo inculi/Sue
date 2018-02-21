@@ -10,6 +10,7 @@ def a_signal(sender, groupId, inputText, fileName):
         buddyId, chatId, inputText, fileName becomes
         sender, groupId, textBody, fileName. """
 
+
         if groupId != 'singleUser':
             if groupId[0:6] != 'signal':
                 groupId = groupId.split('chat')[1]
@@ -40,5 +41,6 @@ def a_signal(sender, groupId, inputText, fileName):
         #     exit()
 
         from b import sue
+        # outString = "%s %s %s %s %s" % (sender, groupId, command.lower(), textBody, fileName)
         outString = sue(sender, groupId, command.lower(), textBody, fileName)
         return outString

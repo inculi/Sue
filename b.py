@@ -162,7 +162,7 @@ def phrases():
 def callDefn(defnName):
     q = mongo.findDefn(defnName)
     if q:
-        rprint(q[u'meaning'].decode('utf-8'))
+        rprint(q[u'meaning'].encode('utf-8'))
     else:
         rprint('Not found. Add it with !define')
 # =========================   END USER DEFINITIONS   ===========================
@@ -516,7 +516,7 @@ def sue(sender,groupId,command,textBody,fileName):
         try:
             callDefn(command)
         except:
-            rprint('Command not found.')
+            rprint('My benevolent master is working on fixing Unicode.')
 
     if groupId[0:6] == 'signal':
         # print('signal!')
