@@ -24,7 +24,7 @@ class Message(object):
         cls.textBody = textBody.replace('¬¬¬', '$')
         cls.textBody = textBody.replace('ƒƒƒ', '+')
 
-        cls.chatId = msgForm['chatId']
+        cls.chatId = msgForm['chatId'].replace('ƒƒƒ', '+')
 
         # use our chatId to infer the type of group chat we're in.
         if cls.chatId == 'singleUser':
@@ -38,7 +38,7 @@ class Message(object):
         else:
             cls.chatType = '?'
 
-        cls.buddyId = msgForm['buddyId']
+        cls.buddyId = msgForm['buddyId'].replace('ƒƒƒ', '+')
 
         # specify iMessage or signal as the platform
         if 'imessage' in cls.chatType:
@@ -47,7 +47,7 @@ class Message(object):
             cls.platform = 'signal'
         else:
             cls.platform = '?'
-        
+
         # extract the phone number of the sender
         if cls.platform is 'imessage':
             sender = cls.buddyId.split(':',1)
@@ -92,7 +92,7 @@ class Response(object):
                    origin_message.chatId,
                    origin_message.buddyId,
                    sue_response]
-        
+
         print('Sending response.')
         subprocess.Popen(command, stdout=FNULL)
 

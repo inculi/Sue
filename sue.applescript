@@ -35,8 +35,10 @@ using terms from application "Messages"
 		end try
 		
 		try
-			set textBody to replaceText(theText, "$", "Â¬Â¬Â¬")
-			set textBody to replaceText(theText, "+", "Æ’Æ’Æ’")
+			set textBody to replaceText(theText, "$", "ÂÂÂ")
+			set textBody to replaceText(theText, "+", "ÄÄÄ")
+			set buddyId to replaceText(buddyId, "+", "ÄÄÄ")
+			set chatId to replaceText(chatId, "+", "ÄÄÄ")
 			
 			-- build curl command
 			set command to "curl -X GET --data " & curlify("buddyId", buddyId) & " "
@@ -94,8 +96,10 @@ using terms from application "Messages"
 		
 		-- use the info we have to formulate our response
 		try
-			set textBody to replaceText(theText, "$", "Â¬Â¬Â¬")
-			set textBody to replaceText(theText, "+", "Æ’Æ’Æ’")
+			set textBody to replaceText(theText, "$", "ÂÂÂ")
+			set textBody to replaceText(theText, "+", "ÄÄÄ")
+			set buddyId to replaceText(buddyId, "+", "ÄÄÄ")
+			set chatId to replaceText(chatId, "+", "ÄÄÄ")
 			
 			-- build curl command
 			set command to "curl -X GET --data " & curlify("buddyId", buddyId) & " "

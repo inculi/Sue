@@ -4,18 +4,18 @@ use scripting additions
 on run argv
 	tell application "Messages"
 		try
-			set chatType to item 1 of argv
+			set chatId to item 1 of argv
 			set recipientId to item 2 of argv
 			set responseMsg to item 3 of argv
 			
-			if chatType is "singleUser" then
+			if chatId is "singleUser" then
 				--sending messages to individual users.
 				set theBuddy to a reference to buddy id recipientId
 				set dMsg to my urlDecode(responseMsg)
 				send dMsg to theBuddy
 			else
 				-- sending messages to groups
-				set thisChat to a reference to text chat id recipientId
+				set thisChat to a reference to text chat id chatId
 				set dMsg to my urlDecode(responseMsg)
 				send dMsg to thisChat
 			end if

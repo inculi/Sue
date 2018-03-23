@@ -4,6 +4,9 @@ notes/
 # OSX Stuff
 .DS_Store
 
+# Other
+.vscode/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

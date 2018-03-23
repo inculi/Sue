@@ -95,7 +95,6 @@ def a_signal(sender, groupId, inputText, fileName):
 
 
 def _handle_message(message):
-    # print('handling message')
     responses = []
     if not message.get('envelope', {}).get('isReceipt', True):
         datamessage = message.get('envelope', {}).get('dataMessage', {})
@@ -111,34 +110,37 @@ def _handle_message(message):
 
 def run(signal_number, binary='signal-cli'):
     command = [binary, '-u', signal_number, 'jsonevtloop']
-    # hooks = {"message": self._handle_message}
+
     print('Starting...')
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
-    for msg in iter(proc.stdout.readline, b''):
-        # pprint(msg)
-        msg = msg.decode('utf-8').strip()
-        # print(msg)
 
+    for msg in iter(proc.stdout.readline, b''):
+        msg = msg.decode('utf-8').strip()
         try:
+            # the responses we will write back to the signal-cli process
             responses = []
 
+            # read the message JSON
             msg = json.loads(msg)
             if msg.get('type') == 'message':
+                # prepare the message for Sue's eyes.
                 responses = _handle_message(msg)
 
+            # write our responses back to the signal-cli
             for response in responses:
-                # print("Writing to signal-cli stdin: %s" % response)
                 try:
                     proc.stdin.write(response)
-                except UnicodeEncodeError:
-                    proc.stdin.write(inputString.encode('utf-8'))
-                except UnicodeDecodeError:
-                    proc.stdin.write(inputString.decode('utf-8'))
+                except Exception as ex:
+                    print('There was an error writing to stdin.')
+                    print(ex)
                 proc.stdin.write(b"\r\n")
                 proc.stdin.flush()
+
         except Exception as ex:
-            print ex
-            pass # invalid json
+            print('There was an error reading stdout.')
+            print(ex)
 
+BINARY = 'sue_signal/signal-cli/build/install/signal-cli/bin/signal-cli'
+SIGNAL_NUMBER = '+12079560670'
 
-run('+12079560670', 'signal-cli/build/install/signal-cli/bin/signal-cli')
+run(BINARY, SIGNAL_NUMBER)
