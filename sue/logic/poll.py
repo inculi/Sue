@@ -1,0 +1,86 @@
+__credits__ = ["Jeff Hykin"]
+
+import flask
+
+import sue.db as db
+from sue.models import Message
+from sue.utils import reduce_output
+
+app = flask.current_app
+bp = flask.Blueprint('poll', __name__)
+
+@bp.route('/poll')
+def poll():
+    """!poll <topic>\\n<opt1>\\n<opt2> ..."""
+
+    msg = Message._create_message(flask.request.form)
+    options = msg.textBody.split('\n')
+
+    response = []
+
+    if len(options) < 2:
+        return 'Please specify a topic with options delimited by newlines.'
+    
+    # set this to the current poll for our group.
+    poll_data = {
+        "letter_options" : set(),
+        "options" : options[1:],
+        "question" : options[0],
+        "votes" : {}
+    }
+
+    response.append(poll_data['question'])
+
+    for i, cur_option in enumerate(poll_data["options"]):
+        _option_letter = chr(ord('a') + i)
+        poll_data["letter_options"].add(_option_letter)
+        response.append("{0}. {1}".format(_option_letter, cur_option))
+    
+    # mongo doesn't like sets so I have to convert to list.
+    poll_data["letter_options"] = list(poll_data["letter_options"])
+    db.mUpdate('polls',
+               {'group' : msg.chatId},
+               {'group' : msg.chatId, 'data' : poll_data })
+
+    return reduce_output(response, delimiter='\n')
+
+@bp.route('/vote')
+def vote():
+    """!vote <letter>"""
+
+    msg = Message._create_message(flask.request.form)
+    options = msg.textBody.split(' ')
+    poll_data = db.mFind('polls', 'group', msg.chatId).get('data', {})
+    print(poll_data)
+    if not poll_data:
+        return 'Could not find a poll for your group. Make one with !poll'
+    response = []
+
+    # if there is actually a correct input
+    if len(options) == 1:
+        the_letter = options[0].lower()
+        if the_letter in poll_data.get('letter_options', set()):
+            poll_data['votes'][msg.sender] = the_letter
+        else:
+            return 'That is not a option in this poll.'
+    
+    response.append(poll_data["question"])
+
+    # display the new status
+    votes = poll_data.get('votes', {}).values()
+    vote_counts = [list(votes).count(x) for x in poll_data.get('letter_options')]
+    entries = list(zip(vote_counts, poll_data['letter_options'], poll_data.get('options', ['?'])))
+    entries.sort(key=lambda x: x[1])
+
+    for num_votes, letter, option in entries:
+        # (0 votes) A. Dog
+        response.append(
+            '({0} votes) {1}. {2}'.format(num_votes, letter, option)
+        )
+    
+    # mongo doesn't like sets so I have to convert to list.
+    db.mUpdate('polls',
+               {'group' : msg.chatId},
+               {'group' : msg.chatId, 'data' : poll_data })
+    
+    return reduce_output(response, delimiter='\n')

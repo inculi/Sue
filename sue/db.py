@@ -4,13 +4,17 @@ client = MongoClient('mongodb://localhost:27017')
 db = client.sue
 
 def mFind(collection,key,value):
-    return db[collection].find_one({key : value})
+    q = db[collection].find_one({key : value})
+    if not q:
+        return {}
+    else:
+        return q
 
 def mAdd(collection,item):
     db[collection].insert_one(item)
 
 def mUpdate(collection,searchitem,updateitem):
-    db[collection].update_one(searchitem, {'$set' : updateitem})
+    db[collection].update_one(searchitem, {'$set' : updateitem}, upsert=True)
 
 ### !DEFINE
 def findDefn(defnName):
