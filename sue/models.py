@@ -21,8 +21,7 @@ class Message(object):
         textBody = textBody[1].strip() if len(textBody) > 1 else ''
 
         # replace the unicode characters we changed in AppleScript back.
-        cls.textBody = textBody.replace('¬¬¬', '$')
-        cls.textBody = textBody.replace('ƒƒƒ', '+')
+        cls.textBody = textBody.replace('¬¬¬', '$').replace('ƒƒƒ', '+')
 
         cls.chatId = msgForm['chatId'].replace('ƒƒƒ', '+')
 
@@ -67,18 +66,7 @@ class Message(object):
 
 
 class Response(object):
-    def __init__(self, flask_request, sue_response):
-        origin_message = Message._create_message(flask_request)
-
-        if isinstance(sue_response, list):
-            sue_response = reduce_output(sue_response, delimiter='\n')
-        elif not isinstance(sue_response, str):
-            try:
-                sue_response = str(sue_response)
-            except:
-                sue_response = "Couldn't convert from {0} to str".format(
-                    type(sue_response))
-
+    def __init__(self, origin_message, sue_response):
         if origin_message.buddyId == 'debug':
             print('### DEBUG ###')
             pprint(sue_response)
