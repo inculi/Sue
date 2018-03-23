@@ -84,3 +84,59 @@ def vote():
                {'group' : msg.chatId, 'data' : poll_data })
     
     return reduce_output(response, delimiter='\n')
+
+
+
+@bp.route('/lunchPlaces')
+def lunchPlaces():
+    """!lunchPlaces <place1>, <place2>, ..."""
+
+    msg = Message._create_message(flask.request.form)
+    
+    # split by commas and trim whitespace
+    lunchPlaces = [each.strip() for each in msg.textBody.split(',')]
+
+    # add lunchPlaces to the mongo polls collection 
+    db.mUpdate('polls',
+               {'group' : msg.chatId},
+               {'group' : msg.chatId, 'lunchPlaces' : lunchPlaces })
+
+
+@bp.route('/lunch')
+def lunch():
+    """!lunch"""
+
+    # retrieve the group-specific lunchPlaces
+    options =  ["Where should we get lunch?"] + db.mFind('polls', 'group', msg.chatId).get('lunchPlaces', [])
+    msg = Message._create_message(flask.request.form)
+
+    #
+    # the rest of this code is copy-paste from !poll
+    #
+    response = []
+
+    if len(options) < 2:
+        return 'Please specify a topic with options delimited by newlines.'
+    
+    # set this to the current poll for our group.
+    poll_data = {
+        "letter_options" : set(),
+        "options" : options[1:],
+        "question" : options[0],
+        "votes" : {}
+    }
+
+    response.append(poll_data['question'])
+
+    for i, cur_option in enumerate(poll_data["options"]):
+        _option_letter = chr(ord('a') + i)
+        poll_data["letter_options"].add(_option_letter)
+        response.append("{0}. {1}".format(_option_letter, cur_option))
+    
+    # mongo doesn't like sets so I have to convert to list.
+    poll_data["letter_options"] = list(poll_data["letter_options"])
+    db.mUpdate('polls',
+               {'group' : msg.chatId},
+               {'group' : msg.chatId, 'data' : poll_data })
+
+    return reduce_output(response, delimiter='\n')
