@@ -107,9 +107,9 @@ def lunch():
     """!lunch"""
 
     # retrieve the group-specific lunchPlaces
-    options = db.mFind('polls', 'group', msg.chatId).get('lunchPlaces', [])
+    options = db.mFind('polls', 'group', msg.chatId).get('lunchPlaces', None)
     # if lunchPlaces isn't in the database
-    if options == {}:
+    if options == None:
         return "There are no lunchPlaces set,\nset with !lunchPlaces <place1>, <place2>, ..."
     options =  ["Where should we get lunch?"] + options
     msg = Message._create_message(flask.request.form)
