@@ -24,35 +24,34 @@ def process_reply():
     if f:
         # get the response back from Sue.
         sue_response = f()
-
-        # cast her response to a string. (ex: lists are reduced).
-        if isinstance(sue_response, list):
-            sue_response = reduce_output(sue_response, delimiter='\n')
-        elif not isinstance(sue_response, str):
-            try:
-                sue_response = str(sue_response)
-            except:
-                sue_response = "Couldn't convert from {0} to str".format(
-                    type(sue_response))
-        
-        # message metadata will be used to direct response output.
-        msg = Message._create_message(flask.request.form)
-
-        if msg.platform is 'imessage':
-            # forward to applescript handler
-            Response(msg, sue_response)
-            return 'success'
-        elif msg.platform is 'signal':
-            # return to GET request from run_signal.py
-            return sue_response
-        else:
-            print('Unfamiliar message platform: {0}'.format(msg.platform))
-            return 'failure'
     else:
         # see if it is user defined
         sue_response = sue_funcs['/callDefn']()
-        Response(flask.request.form, sue_response)
+
+    # cast her response to a string. (ex: lists are reduced).
+    if isinstance(sue_response, list):
+        sue_response = reduce_output(sue_response, delimiter='\n')
+    elif not isinstance(sue_response, str):
+        try:
+            sue_response = str(sue_response)
+        except:
+            sue_response = "Couldn't convert from {0} to str".format(
+                type(sue_response))
+    
+    # message metadata will be used to direct response output.
+    msg = Message._create_message(flask.request.form)
+
+    if msg.platform is 'imessage':
+        # forward to applescript handler
+        Response(msg, sue_response)
         return 'success'
+    elif msg.platform is 'signal':
+        # return to GET request from run_signal.py
+        return sue_response
+    else:
+        print('Unfamiliar message platform: {0}'.format(msg.platform))
+        return 'failure'
+    
 
 @bp.route('/help')
 def sue_help():

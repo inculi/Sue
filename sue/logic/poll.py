@@ -23,7 +23,7 @@ def poll():
     
     # set this to the current poll for our group.
     poll_data = {
-        "letter_options" : set(),
+        "letter_options" : [],
         "options" : options[1:],
         "question" : options[0],
         "votes" : {}
@@ -33,11 +33,9 @@ def poll():
 
     for i, cur_option in enumerate(poll_data["options"]):
         _option_letter = chr(ord('a') + i)
-        poll_data["letter_options"].add(_option_letter)
+        poll_data["letter_options"].append(_option_letter)
         response.append("{0}. {1}".format(_option_letter, cur_option))
     
-    # mongo doesn't like sets so I have to convert to list.
-    poll_data["letter_options"] = list(poll_data["letter_options"])
     db.mUpdate('polls',
                {'group' : msg.chatId},
                {'group' : msg.chatId, 'data' : poll_data })
@@ -51,15 +49,16 @@ def vote():
     msg = Message._create_message(flask.request.form)
     options = msg.textBody.split(' ')
     poll_data = db.mFind('polls', 'group', msg.chatId).get('data', {})
-    print(poll_data)
+
     if not poll_data:
         return 'Could not find a poll for your group. Make one with !poll'
+    
     response = []
 
     # if there is actually a correct input
     if len(options) == 1:
         the_letter = options[0].lower()
-        if the_letter in poll_data.get('letter_options', set()):
+        if the_letter in poll_data.get('letter_options', []):
             poll_data['votes'][msg.sender] = the_letter
         else:
             return 'That is not a option in this poll.'
@@ -67,15 +66,14 @@ def vote():
     response.append(poll_data["question"])
 
     # display the new status
-    votes = poll_data.get('votes', {}).values()
-    vote_counts = [list(votes).count(x) for x in poll_data.get('letter_options')]
-    entries = list(zip(vote_counts, poll_data['letter_options'], poll_data.get('options', ['?'])))
-    entries.sort(key=lambda x: x[1])
+    total_letters = poll_data.get('letter_options')
+    voted_letters = list(poll_data.get('votes', {}).values())
+    vote_counts = [voted_letters.count(x) for x in total_letters]
 
-    for num_votes, letter, option in entries:
+    for cnt, ltr, option in zip(vote_counts, total_letters, poll_data['options']):
         # (0 votes) A. Dog
         response.append(
-            '({0} votes) {1}. {2}'.format(num_votes, letter, option)
+            '({0} votes) {1}. {2}'.format(cnt, ltr, option)
         )
     
     # mongo doesn't like sets so I have to convert to list.
