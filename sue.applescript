@@ -1,3 +1,6 @@
+use framework "Foundation"
+use scripting additions
+
 using terms from application "Messages"
 	
 	on message sent theMessage with eventDescription
@@ -25,9 +28,31 @@ using terms from application "Messages"
 		
 		try
 			set buddyId to get id of theBuddy
-			set inputText to replaceText(theText, "\"", "ÂÂÂ")
-			set finalText to do shell script "echo \"" & buddyId & "|~|" & chatId & "|~|" & inputText & "|~|" & fileName & "\"" & " | /usr/local/bin/python2 ~/Documents/prog/Sue/test.py" as Çclass utf8È without altering line endings
-			send finalText to theBuddy
+		on error errMsg
+			set errMsgParts to splitText(errMsg, "\"")
+			set errCount to count of errMsgParts
+			set buddyId to item (errCount - 1) of errMsgParts
+		end try
+		
+		try
+			set textBody to replaceText(theText, "$", "Â¬Â¬Â¬")
+			set textBody to replaceText(theText, "+", "Æ’Æ’Æ’")
+			
+			-- build curl command
+			set command to "curl -X GET --data " & curlify("buddyId", buddyId) & " "
+			set command to command & "--data " & curlify("chatId", chatId) & " "
+			set command to command & "--data " & curlify("fileName", fileName) & " "
+			set command to command & "--data " & curlify("textBody", textBody) & " "
+			set command to command & " http://localhost:5000 "
+			
+			-- run in background
+			set runBackground to "> /dev/null 2>&1 &"
+			
+			-- send inputs to server and return
+			do shell script command & runBackground
+			-- do shell script command & runBackground
+			
+			-- send inputs to server and return
 		on error errorLog
 			send errorLog to theBuddy
 		end try
@@ -59,12 +84,31 @@ using terms from application "Messages"
 			set chatId to item (errCount - 1) of errMsgParts
 		end try
 		
-		-- use the info we have to formulate our response
 		try
 			set buddyId to get id of theBuddy
-			set inputText to replaceText(theText, "\"", "ÂÂÂ")
-			set finalText to do shell script "echo \"" & buddyId & "|~|" & chatId & "|~|" & inputText & "|~|" & fileName & "\"" & " | /usr/local/bin/python2 ~/Documents/prog/Sue/a.py" as Çclass utf8È without altering line endings
-			send finalText to theChat
+		on error errMsg
+			set errMsgParts to splitText(errMsg, "\"")
+			set errCount to count of errMsgParts
+			set buddyId to item (errCount - 1) of errMsgParts
+		end try
+		
+		-- use the info we have to formulate our response
+		try
+			set textBody to replaceText(theText, "$", "Â¬Â¬Â¬")
+			set textBody to replaceText(theText, "+", "Æ’Æ’Æ’")
+			
+			-- build curl command
+			set command to "curl -X GET --data " & curlify("buddyId", buddyId) & " "
+			set command to command & "--data " & curlify("chatId", chatId) & " "
+			set command to command & "--data " & curlify("fileName", fileName) & " "
+			set command to command & "--data " & curlify("textBody", textBody) & " "
+			set command to command & " http://localhost:5000 "
+			
+			-- run in background
+			set runBackground to "> /dev/null 2>&1 &"
+			
+			-- send inputs to server and return
+			do shell script command & runBackground
 		on error errorLog
 			send errorLog to theChat
 		end try
@@ -131,6 +175,24 @@ using terms from application "Messages"
 	end completed file transfer
 	
 end using terms from
+
+on urlEncode(input)
+	tell current application's NSString to set rawUrl to stringWithString_(input)
+	set theEncodedURL to rawUrl's stringByAddingPercentEscapesUsingEncoding:4 -- 4 is NSUTF8StringEncoding
+	return theEncodedURL as Unicode text
+end urlEncode
+
+on urlDecode(theText)
+	set theString to stringWithString_(theText) of NSString of current application
+	set theEncoding to NSUTF8StringEncoding of current application
+	set theAdjustedString to stringByReplacingPercentEscapesUsingEncoding_(theEncoding) of theString
+	return (theAdjustedString as string)
+end urlDecode
+
+on curlify(key, val)
+	set curlString to "\"" & key & "=" & urlEncode(val) & "\""
+	return curlString
+end curlify
 
 on splitText(sourceText, textDelimiter)
 	set AppleScript's text item delimiters to {textDelimiter}

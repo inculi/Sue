@@ -1,0 +1,1 @@
+LOG_FILE = "suelog.log"
