@@ -15,7 +15,7 @@ def mUpdate(collection,searchitem,updateitem):
 
 ### !DEFINE
 def findDefn(defnName):
-    q = db.defns.find_one({'name' : defnName})
+    q = db.defns.find_one({'name' : defnName.lower()})
     return q if q else {}
 
 def addDefn(defnName, meaning):

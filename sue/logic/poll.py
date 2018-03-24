@@ -16,6 +16,11 @@ def poll():
     msg = Message._create_message(flask.request.form)
     options = msg.textBody.split('\n')
 
+    return create_poll(options, msg)
+
+def create_poll(options, msg):
+    """Allows !poll, !food, and eventually other commands to construct polls.
+    """
     response = []
 
     if len(options) < 2:
@@ -72,8 +77,9 @@ def vote():
 
     for cnt, ltr, option in zip(vote_counts, total_letters, poll_data['options']):
         # (0 votes) A. Dog
+        vote_plurality = 'vote' if (cnt == 1) else 'votes' # thanks, Rick :/
         response.append(
-            '({0} votes) {1}. {2}'.format(cnt, ltr, option)
+            '({0} {1}) {2}. {3}'.format(cnt, vote_plurality, ltr, option)
         )
     
     # mongo doesn't like sets so I have to convert to list.
@@ -82,3 +88,21 @@ def vote():
                {'group' : msg.chatId, 'data' : poll_data })
     
     return reduce_output(response, delimiter='\n')
+
+@bp.route('/lunch')
+def lunch():
+    """!lunch"""
+    # we need the chatId for when we search the database...
+    msg = Message._create_message(flask.request.form)
+
+    # retrieve the group-specific lunchplaces
+    places = db.findDefn('lunchplaces').get('meaning','')
+
+    # if lunchPlaces isn't in the database
+    if not places:
+        return "Please !define lunchplaces <place1>, <place2>, ..."
+    
+    options = ["Where should we get lunch?"]
+    options.extend([x.strip() for x in places.split(',')])
+
+    return create_poll(options, msg)
