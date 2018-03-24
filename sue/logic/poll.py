@@ -16,6 +16,11 @@ def poll():
     msg = Message._create_message(flask.request.form)
     options = msg.textBody.split('\n')
 
+    return create_poll(options, msg)
+
+def create_poll(options, msg):
+    """Allows !poll, !food, and eventually other commands to construct polls.
+    """
     response = []
 
     if len(options) < 2:
@@ -72,8 +77,9 @@ def vote():
 
     for cnt, ltr, option in zip(vote_counts, total_letters, poll_data['options']):
         # (0 votes) A. Dog
+        vote_plurality = 'vote' if (cnt == 1) else 'votes' # thanks, Rick :/
         response.append(
-            '({0} votes) {1}. {2}'.format(cnt, ltr, option)
+            '({0} {1}) {2}. {3}'.format(cnt, vote_plurality, ltr, option)
         )
     
     # mongo doesn't like sets so I have to convert to list.
@@ -83,62 +89,20 @@ def vote():
     
     return reduce_output(response, delimiter='\n')
 
-
-
-@bp.route('/lunchPlaces')
-def lunchPlaces():
-    """!lunchPlaces <place1>, <place2>, ..."""
-
-    msg = Message._create_message(flask.request.form)
-    
-    # split by commas and trim whitespace
-    lunchPlaces = [each.strip() for each in msg.textBody.split(',')]
-
-    # add lunchPlaces to the mongo polls collection 
-    db.mUpdate('polls',
-               {'group' : msg.chatId},
-               {'group' : msg.chatId, 'lunchPlaces' : lunchPlaces })
-
-
 @bp.route('/lunch')
 def lunch():
     """!lunch"""
-
-    # retrieve the group-specific lunchPlaces
-    options = db.mFind('polls', 'group', msg.chatId).get('lunchPlaces', None)
-    # if lunchPlaces isn't in the database
-    if options == None:
-        return "There are no lunchPlaces set,\nset with !lunchPlaces <place1>, <place2>, ..."
-    options =  ["Where should we get lunch?"] + options
+    # we need the chatId for when we search the database...
     msg = Message._create_message(flask.request.form)
 
-    #
-    # the rest of this code is copy-paste from !poll
-    #
-    response = []
+    # retrieve the group-specific lunchplaces
+    places = db.findDefn('lunchplaces').get('meaning','')
 
-    if len(options) < 2:
-        return 'Please specify a topic with options delimited by newlines.'
+    # if lunchPlaces isn't in the database
+    if not places:
+        return "Please !define lunchplaces <place1>, <place2>, ..."
     
-    # set this to the current poll for our group.
-    poll_data = {
-        "letter_options" : set(),
-        "options" : options[1:],
-        "question" : options[0],
-        "votes" : {}
-    }
+    options = ["Where should we get lunch?"]
+    options.extend([x.strip() for x in places.split(',')])
 
-    response.append(poll_data['question'])
-
-    for i, cur_option in enumerate(poll_data["options"]):
-        _option_letter = chr(ord('a') + i)
-        poll_data["letter_options"].add(_option_letter)
-        response.append("{0}. {1}".format(_option_letter, cur_option))
-    
-    # mongo doesn't like sets so I have to convert to list.
-    poll_data["letter_options"] = list(poll_data["letter_options"])
-    db.mUpdate('polls',
-               {'group' : msg.chatId},
-               {'group' : msg.chatId, 'data' : poll_data })
-
-    return reduce_output(response, delimiter='\n')
+    return create_poll(options, msg)
