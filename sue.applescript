@@ -35,9 +35,12 @@ using terms from application "Messages"
 		end try
 		
 		try
-			set textBody to replaceText(theText, "$", "ÂÂÂ")
-			set textBody to replaceText(theText, "+", "ÄÄÄ")
+			set dollarSign to ASCII character 36
+			set textBody to replace_chars(theText, dollarSign, "ÂÂÂ")
+			set textBody to replaceText(textBody, "+", "ÄÄÄ")
+			set buddyId to replace_chars(buddyId, dollarSign, "ÂÂÂ")
 			set buddyId to replaceText(buddyId, "+", "ÄÄÄ")
+			set chatId to replace_chars(chatId, dollarSign, "ÂÂÂ")
 			set chatId to replaceText(chatId, "+", "ÄÄÄ")
 			
 			-- build curl command
@@ -96,9 +99,12 @@ using terms from application "Messages"
 		
 		-- use the info we have to formulate our response
 		try
-			set textBody to replaceText(theText, "$", "ÂÂÂ")
-			set textBody to replaceText(theText, "+", "ÄÄÄ")
+			set dollarSign to ASCII character 36
+			set textBody to replace_chars(theText, dollarSign, "ÂÂÂ")
+			set textBody to replaceText(textBody, "+", "ÄÄÄ")
+			set buddyId to replace_chars(buddyId, dollarSign, "ÂÂÂ")
 			set buddyId to replaceText(buddyId, "+", "ÄÄÄ")
+			set chatId to replace_chars(chatId, dollarSign, "ÂÂÂ")
 			set chatId to replaceText(chatId, "+", "ÄÄÄ")
 			
 			-- build curl command
@@ -217,3 +223,12 @@ on replaceText(someText, oldItem, newItem)
 	
 	return someText
 end replaceText
+
+on replace_chars(this_text, search_string, replacement_string)
+	set AppleScript's text item delimiters to the search_string
+	set the item_list to every text item of this_text
+	set AppleScript's text item delimiters to the replacement_string
+	set this_text to the item_list as string
+	set AppleScript's text item delimiters to ""
+	return this_text
+end replace_chars

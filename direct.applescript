@@ -5,8 +5,17 @@ on run argv
 	tell application "Messages"
 		try
 			set chatId to item 1 of argv
+			set chatId to my urlDecode(chatId)
+			set chatId to my replaceText(chatId, "ÄÄÄ", "+")
+			set chatId to my replaceText(chatId, "ÂÂÂ", "$")
 			set recipientId to item 2 of argv
+			set recipientId to my urlDecode(recipientId)
+			set recipientId to my replaceText(recipientId, "ÄÄÄ", "+")
+			set recipientId to my replaceText(recipientId, "ÂÂÂ", "$")
 			set responseMsg to item 3 of argv
+			set responseMsg to my urlDecode(responseMsg)
+			set responseMsg to my replaceText(responseMsg, "ÄÄÄ", "+")
+			set responseMsg to my replaceText(responseMsg, "ÂÂÂ", "$")
 			
 			if chatId is "singleUser" then
 				--sending messages to individual users.
@@ -37,3 +46,16 @@ on urlDecode(theText)
 	set theAdjustedString to stringByReplacingPercentEscapesUsingEncoding_(theEncoding) of theString
 	return (theAdjustedString as string)
 end urlDecode
+
+on replaceText(someText, oldItem, newItem)
+	set {tempTID, AppleScript's text item delimiters} to {AppleScript's text item delimiters, oldItem}
+	try
+		set {itemList, AppleScript's text item delimiters} to {text items of someText, newItem}
+		set {someText, AppleScript's text item delimiters} to {itemList as text, tempTID}
+	on error errorMessage number errorNumber
+		set AppleScript's text item delimiters to tempTID
+		error errorMessage number errorNumber
+	end try
+	
+	return someText
+end replaceText

@@ -3,6 +3,8 @@ import sys
 import os
 from pprint import pprint
 
+from urllib.parse import quote
+
 from sue.utils import reduce_output
 
 class Message(object):
@@ -75,11 +77,18 @@ class Response(object):
 
     def send_to_queue(self, origin_message, sue_response):
         FNULL = open(os.devnull, 'wb')
+
+        origin_message.chatId = origin_message.chatId.replace(
+            '+','ƒƒƒ').replace('$','¬¬¬')
+        origin_message.buddyId = origin_message.buddyId.replace(
+            '+','ƒƒƒ').replace('$','¬¬¬')
+        
         command = ["osascript",
                    "direct.applescript",
-                   origin_message.chatId,
-                   origin_message.buddyId,
-                   sue_response]
+                   quote(origin_message.chatId),
+                   quote(origin_message.buddyId),
+                   quote(sue_response)]
+        print(command)
 
         print('Sending response.')
         subprocess.Popen(command, stdout=FNULL)
