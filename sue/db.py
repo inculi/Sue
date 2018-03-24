@@ -5,10 +5,7 @@ db = client.sue
 
 def mFind(collection,key,value):
     q = db[collection].find_one({key : value})
-    if not q:
-        return {}
-    else:
-        return q
+    return q if q else {}
 
 def mAdd(collection,item):
     db[collection].insert_one(item)
@@ -19,13 +16,15 @@ def mUpdate(collection,searchitem,updateitem):
 ### !DEFINE
 def findDefn(defnName):
     q = db.defns.find_one({'name' : defnName})
-    return q
+    return q if q else {}
 
 def addDefn(defnName, meaning):
     db.defns.insert_one({'name' : defnName, 'meaning' : meaning})
 
 def updateDefn(defnName, meaning):
-    db.defns.update_one({'name' : defnName}, {'$set' : {'meaning' : meaning}})
+    db.defns.update_one({'name' : defnName},
+                        {'$set' : {'meaning' : meaning}},
+                        upsert=True)
 
 def listDefns():
     return [item['name'] for item in db.defns.find({})]
