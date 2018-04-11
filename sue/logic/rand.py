@@ -15,17 +15,12 @@ def flip():
 def choose():
     """!choose <1> <2> ... <n>"""
     msg = Message._create_message(flask.request.form)
+    options = msg.textBody.split(' ')
 
-    print(msg.__dict__)
-
-    textBody = msg.textBody
-    sender = msg.buddyId
-    
-    options = textBody.split(' ')
-    meguminOption = 'megumin' in map(lambda x: x.lower(), options)
-    if meguminOption and sender == '12107485865':
+    meguminOption = ('megumin' in map(lambda x: x.lower(), options))
+    if meguminOption and msg.sender == '+12107485865':
         return 'megumin'
-    elif meguminOption and sender == '12108342408':
+    elif meguminOption and msg.sender == '+12108342408':
         return 'http://megumin.club Roses are Red, Violets are Blue. Megumin best girl and glorious waifu.'
     else:
         return random.choice(options)
@@ -70,7 +65,7 @@ def shuffle():
     """!shuffle <1> <2> ... <n>"""
     from functools import reduce
 
-    msg = Message(flask.request.form)
+    msg = Message._create_message(flask.request.form)
     
     items = msg.textBody.split(' ')
     random.shuffle(items)
