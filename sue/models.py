@@ -125,14 +125,14 @@ class DirectResponse(object):
         
         # TODO: rename the applescript files to actually reflect what they do.
         command = ["osascript",
-                   "~/actuallydirect.applescript",
+                   "actuallydirect.applescript",
                    quote(recipient),
                    quote(method),
                    quote(sue_response)]
         print(command)
 
         print('Sending response.')
-        # subprocess.Popen(command, stdout=FNULL)
+        subprocess.Popen(command, stdout=FNULL)
 
         FNULL.flush()
         FNULL.close()

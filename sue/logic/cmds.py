@@ -1,4 +1,5 @@
 import flask
+from pprint import pprint
 
 app = flask.current_app
 bp = flask.Blueprint('cmds', __name__)
@@ -32,7 +33,20 @@ def dirty():
 @bp.route('/uptime')
 def uptime():
     """!uptime
-    
+
     Show how long Sue's server has been running.
     """
     return do_command("uptime")
+
+@bp.route('/rancher', methods=['GET', 'POST'])
+def rancher():
+    import json
+    from sue.models import DirectResponse
+
+    a = json.loads(flask.request.data.decode('utf-8'))
+    b = "Alert from Rancher:\n%s" % json.dumps(a, indent=2)
+
+    DirectResponse('robert', b)
+    # DirectResponse('james', b)
+
+    return ''
