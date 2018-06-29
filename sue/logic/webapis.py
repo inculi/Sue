@@ -7,7 +7,11 @@ bp = flask.Blueprint('webapis', __name__)
 
 @bp.route('/wiki')
 def wiki():
-    """!wiki <... topic ...>"""
+    """!wiki <... topic ...>
+    
+    Fetch the first 1-2 sentences of a wikipedia article.
+    Usage: !wiki bill gates
+    """
     import wikipedia as wikip
 
     msg = Message._create_message(flask.request.form)
@@ -23,7 +27,12 @@ def wiki():
 
 @bp.route('/wikis')
 def wikis():
-    """!wiki <... topic ...> , <... search filter ...>"""
+    """!wikis <... topic ...> , <... search filter ...>
+    
+    Extract sentences from a wikipedia article that pertain to a certain search
+    filter.
+    Usage: !wikis obama, president
+    """
     import wikipedia as wikip
     msg = Message._create_message(flask.request.form)
     searchTerm = msg.textBody.split(',',1)
@@ -44,7 +53,12 @@ def wikis():
 
 @bp.route('/wolf')
 def wolf():
-    """!wolf <... question ...>"""
+    """!wolf <... question ...>
+    
+    Query wolframalpha to answer certain questions.
+
+    Usage: !wolf temperature in london on new years eve 2017
+    """
     import wolframalpha
 
     responses = []

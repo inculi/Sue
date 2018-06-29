@@ -95,3 +95,44 @@ class Response(object):
 
         FNULL.flush()
         FNULL.close()
+
+class DirectResponse(object):
+    def __init__(self, recipient, sue_response):
+        self.send_to_queue(recipient, sue_response)
+    
+    def send_to_queue(self, recipient, sue_response):
+        VIPs = {
+            'robert' : ('+12107485865', 'phone'),
+            'james'  : ('+12108603312', 'phone')
+        }
+
+         # detect if recipient is phoneNumber or iMessage email
+        if '+' in recipient:
+            method = 'phone'
+        elif '@' in recipient:
+            method = 'email'
+        else:
+            recipient, method = VIPs.get(recipient, (None, None))
+
+        if not recipient:
+            # still can't find it.
+            print('Error matching recipient.')
+            return
+
+        FNULL = open(os.devnull, 'wb')
+
+        recipient = recipient.replace('+','ƒƒƒ').replace('$','¬¬¬')
+        
+        # TODO: rename the applescript files to actually reflect what they do.
+        command = ["osascript",
+                   "~/actuallydirect.applescript",
+                   quote(recipient),
+                   quote(method),
+                   quote(sue_response)]
+        print(command)
+
+        print('Sending response.')
+        # subprocess.Popen(command, stdout=FNULL)
+
+        FNULL.flush()
+        FNULL.close()
