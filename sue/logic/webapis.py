@@ -76,8 +76,11 @@ def wolf():
         # WA returned an error.
         return 'There was an error processing your query.'
     
-    pprint(dict(res))
-    results = res.details # dict-like
+    try:
+        # no details data.
+        results = res.details # dict-like
+    except:
+        results = {}
 
     inputInterp = dict()
     mainResult = dict()
@@ -103,10 +106,10 @@ def wolf():
         return responses
     
     # otherwise, there is some hidden data that made it escape the error.
-    for key, val in res.items()
+    for key, val in res.items():
         if (key[0] != '@') and (key != 'assumptions'):
             responses.append(
-                pformat({key : value}) + '\n'
+                pformat({key : val}) + '\n'
             )
     
     if not responses:
