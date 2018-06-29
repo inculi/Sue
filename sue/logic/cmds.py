@@ -1,25 +1,52 @@
 import flask
+from pprint import pprint
 
 app = flask.current_app
 bp = flask.Blueprint('cmds', __name__)
 
+def do_command(cmdString):
+    """Utility function to execute command in bash and return output as a
+    unicode string.
+    """
+    import subprocess
+    output = subprocess.check_output(cmdString, shell=True)
+    return output.decode('utf-8')
+
 @bp.route('/fortune')
 def fortune():
-    """!fortune"""
-    import subprocess
-    output = subprocess.check_output("/usr/local/bin/fortune", shell=True)
-    return output
+    """!fortune
+
+    Tell a random, hopefully interesting adage.
+    """
+
+    return do_command("/usr/local/bin/fortune")
 
 @bp.route('/dirty')
 def dirty():
-    """!dirty"""
-    import subprocess
-    output = subprocess.check_output("/usr/local/bin/fortune -o", shell=True)
-    return output
+    """!dirty
+
+    Like fortune, but the output is selected from potentially offensive
+    aphorisms
+    """
+    return do_command("/usr/local/bin/fortune -o")
 
 @bp.route('/uptime')
 def uptime():
-    """!uptime"""
-    import subprocess
-    output = subprocess.check_output("uptime", shell=True)
-    return output
+    """!uptime
+
+    Show how long Sue's server has been running.
+    """
+    return do_command("uptime")
+
+@bp.route('/rancher', methods=['GET', 'POST'])
+def rancher():
+    import json
+    from sue.models import DirectResponse
+
+    a = json.loads(flask.request.data.decode('utf-8'))
+    b = "Alert from Rancher:\n%s" % json.dumps(a, indent=2)
+
+    DirectResponse('robert', b)
+    # DirectResponse('james', b)
+
+    return ''

@@ -59,6 +59,6 @@ def sue_help():
     for r in app.url_map.iter_rules():
         current_doc = app.view_functions[r.endpoint].__doc__
         if current_doc and ('static' not in r.rule):
-            help_docs.append(current_doc.strip())
+            help_docs.append(current_doc.strip().split('\n')[0])
     
     return reduce_output(sorted(help_docs), delimiter='\n')
