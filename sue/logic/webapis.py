@@ -1,3 +1,5 @@
+from pprint import pprint, pformat
+
 import flask
 
 from sue.models import Message
@@ -7,7 +9,11 @@ bp = flask.Blueprint('webapis', __name__)
 
 @bp.route('/wiki')
 def wiki():
-    """!wiki <... topic ...>"""
+    """!wiki <... topic ...>
+    
+    Fetch the first 1-2 sentences of a wikipedia article.
+    Usage: !wiki bill gates
+    """
     import wikipedia as wikip
 
     msg = Message._create_message(flask.request.form)
@@ -23,7 +29,12 @@ def wiki():
 
 @bp.route('/wikis')
 def wikis():
-    """!wiki <... topic ...> , <... search filter ...>"""
+    """!wikis <... topic ...> , <... search filter ...>
+    
+    Extract sentences from a wikipedia article that pertain to a certain search
+    filter.
+    Usage: !wikis obama, president
+    """
     import wikipedia as wikip
     msg = Message._create_message(flask.request.form)
     searchTerm = msg.textBody.split(',',1)
@@ -44,7 +55,12 @@ def wikis():
 
 @bp.route('/wolf')
 def wolf():
-    """!wolf <... question ...>"""
+    """!wolf <... question ...>
+    
+    Query wolframalpha to answer certain questions.
+
+    Usage: !wolf temperature in london on new years eve 2017
+    """
     import wolframalpha
 
     responses = []
@@ -56,27 +72,45 @@ def wolf():
 
     res = client.query(inputQuestion)
 
-    interp = [pod for pod in res.pods if pod['@title'] == 'Input interpretation']
-    results = [pod for pod in res.pods if pod['@title'] == 'Result']
+    if res.get('@error', 'true').lower() == 'true':
+        # WA returned an error.
+        return 'There was an error processing your query.'
+    
+    pprint(dict(res))
+    results = res.details # dict-like
 
-    # TODO: "integral of sigmoid function" returns empty interp and results.
-    #       there are more things that still need extraction.
-
-    if interp:
-        responses.append('Input:')
-        for item in interp:
-            try:
-                print(item['subpod']['img']['@alt'])
-            except:
-                pass # didn't have the right keys.
-        responses.append('\nResult:')
-
-    # TODO: if results is empty, the answer was in image form. extract that.
-    for res in results:
-        try:
-            responses.append(res['subpod']['img']['@alt'])
-        except:
-            pass # didn't have the right keys.
+    inputInterp = dict()
+    mainResult = dict()
+    otherResults = []
+    for key, val in results.items():
+        if key == 'Input interpretation':
+            inputInterp = { 'Input' : val }
+        elif key == 'Result':
+            mainResult = { key : val }
+        else:
+            if val:
+                otherResults.append({ key : val })
+            continue
+    
+    for item in [inputInterp, mainResult]:
+        if item:
+            responses.append(item)
+    
+    responses.extend(otherResults)
+    responses = [('%s:\n%s\n' % tuple(x)[0]) for x in [y.items() for y in responses]]
+    
+    if responses:
+        return responses
+    
+    # otherwise, there is some hidden data that made it escape the error.
+    for key, val in res.items()
+        if (key[0] != '@') and (key != 'assumptions'):
+            responses.append(
+                pformat({key : value}) + '\n'
+            )
+    
+    if not responses:
+        return 'WA did not give an error, but no useful data was found. Strange.'
     
     return responses
 
