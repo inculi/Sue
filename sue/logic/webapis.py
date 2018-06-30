@@ -1,3 +1,5 @@
+from pprint import pprint, pformat
+
 import flask
 
 from sue.models import Message
@@ -70,33 +72,55 @@ def wolf():
 
     res = client.query(inputQuestion)
 
-    interp = [pod for pod in res.pods if pod['@title'] == 'Input interpretation']
-    results = [pod for pod in res.pods if pod['@title'] == 'Result']
+    if res.get('@error', 'true').lower() == 'true':
+        # WA returned an error.
+        return 'There was an error processing your query.'
+    
+    pprint(dict(res))
+    results = res.details # dict-like
 
-    # TODO: "integral of sigmoid function" returns empty interp and results.
-    #       there are more things that still need extraction.
-
-    if interp:
-        responses.append('Input:')
-        for item in interp:
-            try:
-                print(item['subpod']['img']['@alt'])
-            except:
-                pass # didn't have the right keys.
-        responses.append('\nResult:')
-
-    # TODO: if results is empty, the answer was in image form. extract that.
-    for res in results:
-        try:
-            responses.append(res['subpod']['img']['@alt'])
-        except:
-            pass # didn't have the right keys.
+    inputInterp = dict()
+    mainResult = dict()
+    otherResults = []
+    for key, val in results.items():
+        if key == 'Input interpretation':
+            inputInterp = { 'Input' : val }
+        elif key == 'Result':
+            mainResult = { key : val }
+        else:
+            if val:
+                otherResults.append({ key : val })
+            continue
+    
+    for item in [inputInterp, mainResult]:
+        if item:
+            responses.append(item)
+    
+    responses.extend(otherResults)
+    responses = [('%s:\n%s\n' % tuple(x)[0]) for x in [y.items() for y in responses]]
+    
+    if responses:
+        return responses
+    
+    # otherwise, there is some hidden data that made it escape the error.
+    for key, val in res.items()
+        if (key[0] != '@') and (key != 'assumptions'):
+            responses.append(
+                pformat({key : value}) + '\n'
+            )
+    
+    if not responses:
+        return 'WA did not give an error, but no useful data was found. Strange.'
     
     return responses
 
 @bp.route('/ud')
 def urbanDictionary():
-    """!ud <... term ...>"""
+    """!ud <... term ...>
+    
+    Query a phrase on urban dictionary.
+    Usage: !ud meme
+    """
     import sys
     import json
     import requests
@@ -132,7 +156,10 @@ def urbanDictionary():
 
 @bp.route('/img')
 def searchImage():
-    """!img <... query ...>"""
+    """!img <... query ...>
+    
+    Query imgur.com to return a url to a related image (selects randomly from results).
+    Usage: !img flower"""
     # use imgur's API to return the link to the first non-album result.
     from json import loads
     import random
@@ -144,17 +171,15 @@ def searchImage():
 
     url = "https://api.imgur.com/3/gallery/search/{{sort}}/{{window}}/{{page}}"
     querystring = {"q":searchText}
-    headers = {'authorization': 'Client-ID 01aa1688f43ca6c'}
+    headers = {'authorization' : 'Client-ID 01aa1688f43ca6c'}
     response = requests.request("GET", url, headers=headers, params=querystring)
 
     a = loads(response.text)['data']
     # a = filter(lambda x: 'imgur.com/a/' not in x['link'], a)
 
     if len(a) > 0:
-        # imageUrl = a[0]['link']
-        # return random.choice(a)['link']
         try:
-            return random.choice(a)['link']
+            return random.choice(a).get('link', 'Error selecting link from response...')
         except:
             # there was an error finding a link key in the item's dict.
             return "Sorry, I couldn't find a photo of that..."

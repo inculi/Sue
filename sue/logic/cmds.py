@@ -17,6 +17,7 @@ def fortune():
     """!fortune
 
     Tell a random, hopefully interesting adage.
+    Usage: !fortune
     """
 
     return do_command("/usr/local/bin/fortune")
@@ -27,6 +28,7 @@ def dirty():
 
     Like fortune, but the output is selected from potentially offensive
     aphorisms
+    Usage: !dirty
     """
     return do_command("/usr/local/bin/fortune -o")
 
@@ -35,6 +37,7 @@ def uptime():
     """!uptime
 
     Show how long Sue's server has been running.
+    Usage: !uptime
     """
     return do_command("uptime")
 

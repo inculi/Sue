@@ -11,7 +11,13 @@ bp = flask.Blueprint('poll', __name__)
 
 @bp.route('/poll')
 def poll():
-    """!poll <topic>\\n<opt1>\\n<opt2> ..."""
+    """!poll <topic>\\n<opt1>\\n<opt2> ...
+    
+    Create a poll for people to !vote on.
+    Usage: !poll which movie?
+    grand budapest
+    tron
+    bee movie"""
 
     msg = Message._create_message(flask.request.form)
     options = msg.textBody.split('\n')
@@ -19,7 +25,8 @@ def poll():
     return create_poll(options, msg)
 
 def create_poll(options, msg):
-    """Allows !poll, !food, and eventually other commands to construct polls.
+    """Allows !poll, !lunch, and eventually other commands to construct polls in
+    a more abstracted way.
     """
     response = []
 
@@ -49,7 +56,10 @@ def create_poll(options, msg):
 
 @bp.route('/vote')
 def vote():
-    """!vote <letter>"""
+    """!vote <letter>
+    
+    Used to vote on a poll that is currently ongoing.
+    Usage: !vote a"""
 
     msg = Message._create_message(flask.request.form)
     options = msg.textBody.split(' ')
@@ -91,7 +101,11 @@ def vote():
 
 @bp.route('/lunch')
 def lunch():
-    """!lunch"""
+    """!lunch
+    
+    Creates a poll to vote on a lunchplace, using the defn of !lunchplaces as \
+    the input.
+    """
     # we need the chatId for when we search the database...
     msg = Message._create_message(flask.request.form)
 

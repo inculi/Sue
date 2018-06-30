@@ -8,12 +8,20 @@ bp = flask.Blueprint('rand', __name__)
 
 @bp.route('/flip')
 def flip():
-    """!flip"""
+    """!flip
+    
+    Flip a coin. Will return heads or tails.
+    Usage: !flip"""
+
     return random.choice(['heads','tails'])
 
 @bp.route('/choose')
 def choose():
-    """!choose <1> <2> ... <n>"""
+    """!choose <1> <2> ... <n>
+    
+    Returns a random object in your space-delimited argument.
+    Usage: !choose up down left right"""
+
     msg = Message._create_message(flask.request.form)
     options = msg.textBody.split(' ')
 
@@ -21,13 +29,23 @@ def choose():
     if meguminOption and msg.sender == '+12107485865':
         return 'megumin'
     elif meguminOption and msg.sender == '+12108342408':
-        return 'http://megumin.club Roses are Red, Violets are Blue. Megumin best girl and glorious waifu.'
+        return 'Roses are Red, Violets are Blue. Megumin best girl and glorious waifu.'
     else:
         return random.choice(options)
 
 @bp.route('/random')
 def sue_random():
-    """!random <upper> <lower>"""
+    """!random <upper> <lower>
+    
+    Returns a random number between two positive integers.
+    Usage: !random 1 10
+    
+    Return a random letter between two letters
+    Usage: !random a z
+    
+    Return a random floating point number between 0 and 1 (0.47655569922929364)
+    Usage: !random"""
+
     msg = Message._create_message(flask.request.form)
 
     if not msg:
@@ -62,7 +80,9 @@ def sue_random():
 
 @bp.route('/shuffle')
 def shuffle():
-    """!shuffle <1> <2> ... <n>"""
+    """!shuffle <1> <2> ... <n>
+    
+    Shuffles and then returns your input."""
     from functools import reduce
 
     msg = Message._create_message(flask.request.form)
@@ -73,7 +93,10 @@ def shuffle():
 
 @bp.route('/8ball')
 def eightBall():
-    """!8ball"""
+    """!8ball
+    
+    Ask it a question and it shall answer.
+    Usage: !8ball will I die?"""
     
     possible_responses = [
         "As I see it, yes",

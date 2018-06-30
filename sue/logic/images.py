@@ -8,7 +8,10 @@ bp = flask.Blueprint('images', __name__)
 
 @bp.route('/identify')
 def identify():
-    """!identify <image>"""
+    """!identify <image>
+    
+    Queries clarif.ai to identify the top 10 concepts within an image.
+    Usage: !identify <image>"""
     
     msg = Message._create_message(flask.request.form)
     fileName = msg.fileName
@@ -36,7 +39,11 @@ def identify():
 
 @bp.route('/person')
 def person():
-    """!person <image>"""
+    """!person <image>
+    
+    Queries clarif.ai to identify the age, gender, and 'multicultural apperance'\
+    of detected faces in the photo.
+    Usage: !person <image>"""
     msg = Message._create_message(flask.request.form)
     fileName = msg.fileName
 
@@ -59,8 +66,8 @@ def person():
         if 'regions' not in imageData:
             return 'No faces detected.'
         for face in imageData['regions']:
-            face = face['data']['face']
-            try:
+            face = face.get('data',{}).get('face')
+            if face:
                 face_age = face['age_appearance']['concepts'][0]['name']
                 face_gender = face['gender_appearance']['concepts'][0]['name']
                 face_culture = face['multicultural_appearance']['concepts'][0]['name']
@@ -74,8 +81,10 @@ def person():
 
 @bp.route('/lewd')
 def lewd():
-    """!lewd <image>"""
-    # detect whether an image is lewd or not
+    """!lewd <image>
+    
+    Queries clarif.ai to detect if an image is 'lewd'.
+    Usage: !lewd <image>"""
 
     msg = Message._create_message(flask.request.form)
     fileName = msg.fileName

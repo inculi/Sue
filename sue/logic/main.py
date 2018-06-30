@@ -8,6 +8,11 @@ bp = flask.Blueprint('main', __name__)
 
 @bp.route('/')
 def process_reply():
+    # Main route for processing requests. Based on information we detect in the
+    #   flask.request.form (logic provided in models.py), we can figure out if
+    #   we are sending the response back to Signal, iMessage, and from there--
+    #   a group, or an individual. Cool, huh?
+
     if app.config['DEBUG']:
         print(flask.request.form)
     
@@ -56,9 +61,29 @@ def process_reply():
 @bp.route('/help')
 def sue_help():
     help_docs = []
+    msg = Message._create_message(flask.request.form)
+
+    # iterate through our routes, getting the doc-strings we defined as
+    # miniature man-pages for these commands.
     for r in app.url_map.iter_rules():
         current_doc = app.view_functions[r.endpoint].__doc__
         if current_doc and ('static' not in r.rule):
-            help_docs.append(current_doc.strip().split('\n')[0])
-    
+            docString = current_doc.strip()
+            firstLine = docString.split('\n', 1)[0]
+
+            # if someone wants help about a specific command, get them
+            # the extra info we placed after the first line-break.
+            if msg.textBody:
+                if firstLine.split(' ',1)[0].replace('!','') == msg.textBody.lower():
+                    specificDocumentation = docString.split('\n',1)[1]
+                    if specificDocumentation:
+                        return specificDocumentation
+                    else:
+                        return 'No documentation for {0} yet. Add it to the\
+                        repo! https://github.com/inculi/Sue'.format(msg.textBody)
+                else:
+                    return 'Sorry, I could not find that command.'
+                    
+            help_docs.append(firstLine)
+
     return reduce_output(sorted(help_docs), delimiter='\n')
