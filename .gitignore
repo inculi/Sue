@@ -1,5 +1,6 @@
-# Notes
+# Stuffs
 notes/
+*.log.*
 
 # OSX Stuff
 .DS_Store
