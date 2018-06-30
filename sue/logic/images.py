@@ -67,13 +67,14 @@ def person():
             return 'No faces detected.'
         for face in imageData['regions']:
             face = face.get('data',{}).get('face')
-            if face:
-                face_age = face['age_appearance']['concepts'][0]['name']
-                face_gender = face['gender_appearance']['concepts'][0]['name']
-                face_culture = face['multicultural_appearance']['concepts'][0]['name']
-                responses.append('age : %s' % face_age)
-                responses.append('gender : %s' % face_gender)
-                responses.append('ethnicity : %s' % face_culture)
+            try:
+                if face:
+                    face_age = face['age_appearance']['concepts'][0]['name']
+                    face_gender = face['gender_appearance']['concepts'][0]['name']
+                    face_culture = face['multicultural_appearance']['concepts'][0]['name']
+                    responses.append('age : %s' % face_age)
+                    responses.append('gender : %s' % face_gender)
+                    responses.append('ethnicity : %s' % face_culture)
             except:
                 return 'Error'
     
