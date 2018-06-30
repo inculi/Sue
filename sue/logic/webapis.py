@@ -103,7 +103,7 @@ def wolf():
         return responses
     
     # otherwise, there is some hidden data that made it escape the error.
-    for key, val in res.items()
+    for key, val in res.items():
         if (key[0] != '@') and (key != 'assumptions'):
             responses.append(
                 pformat({key : value}) + '\n'
