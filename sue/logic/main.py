@@ -79,14 +79,15 @@ def sue_help():
             # the extra info we placed after the first line-break.
             if msg.textBody:
                 if firstLine.split(' ',1)[0].replace('!','') == msg.textBody.lower():
-                    specificDocumentation = docString.split('\n',1)[1]
+                    specificDocumentation = docString.split('\n')[1:]
                     if specificDocumentation:
-                        return specificDocumentation
+                        return reduce_output([x.strip() for x in specificDocumentation], delimiter='\n')
                     else:
                         return 'No documentation for {0} yet. Add it to the\
                         repo! https://github.com/inculi/Sue'.format(msg.textBody)
-                else:
-                    return 'Sorry, I could not find that command.'
+                # else:
+                #     print(firstLine.split(' ',1)[0].replace('!',''))
+                #     print(msg.textBody.lower())
                     
             help_docs.append(firstLine)
 
