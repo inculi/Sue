@@ -36,6 +36,8 @@ class Message(object):
             cls.chatType = 'signal-individual'
         elif 'signal-' in cls.chatId:
             cls.chatType = 'signal-group'
+        elif cls.chatId == 'debug':
+            cls.chatType = 'debug'
         else:
             cls.chatType = '?'
 
@@ -46,6 +48,8 @@ class Message(object):
             cls.platform = 'imessage'
         elif 'signal' in cls.chatType:
             cls.platform = 'signal'
+        elif cls.chatType == 'debug':
+            cls.platform = 'debug'
         else:
             cls.platform = '?'
 

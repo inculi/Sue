@@ -18,6 +18,7 @@ def process_reply():
     
     command = check_command(flask.request.form)
     if not command:
+        # User isn't talking to Sue. Ignore.
         return ''
 
     # get a list of our available functions
@@ -27,10 +28,10 @@ def process_reply():
     
     f = sue_funcs.get('/' + command)
     if f:
-        # get the response back from Sue.
+        # Command exists. Execute it and get the response.
         sue_response = f()
     else:
-        # see if it is user defined
+        # It's not a command we made. Check to see if it is user defined.
         sue_response = sue_funcs['/callDefn']()
 
     # cast her response to a string. (ex: lists are reduced).
@@ -46,6 +47,7 @@ def process_reply():
     # message metadata will be used to direct response output.
     msg = Message._create_message(flask.request.form)
 
+    # TODO: Create consts for these, so we have less `magic string` usage.
     if msg.platform is 'imessage':
         # forward to applescript handler
         Response(msg, sue_response)
@@ -53,6 +55,8 @@ def process_reply():
     elif msg.platform is 'signal':
         # return to GET request from run_signal.py
         return sue_response
+    elif msg.platform is 'debug':
+        print('SUE: {0}'.format(sue_response))
     else:
         print('Unfamiliar message platform: {0}'.format(msg.platform))
         return 'failure'
