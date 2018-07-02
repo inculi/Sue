@@ -100,6 +100,10 @@ def lewd():
 
         app = ClarifaiApp(api_key='ab4ea7efce5a4398bcbed8329a3d81c7')
         model = app.models.get('nsfw-v1.0')
+
+        if not model:
+            return 'Model no longer exists.'
+        
         image = ClImage(file_obj=open(fileName, 'rb'))
 
         responses = []

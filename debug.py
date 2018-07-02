@@ -8,12 +8,15 @@ that stuff.
 import requests
 
 while True:
+    print('================================================================================')
     inputStr = input('YOU : ')
 
     payload = {
         'chatId' : 'debug',
-        'textBody' : inputStr
+        'textBody' : inputStr,
+        'buddyId' : '',
+        'fileName' : ''
     }
 
     r = requests.get('http://localhost:5000/', data=payload)
-    print(r.content)
+    print(r.content.decode('utf8'))

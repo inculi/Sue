@@ -1,7 +1,9 @@
 import flask
+from werkzeug import ImmutableMultiDict
 
 from sue.models import Message, Response
 from sue.utils import check_command, reduce_output
+from sue.db import inject_user_structures
 
 app = flask.current_app
 bp = flask.Blueprint('main', __name__)
@@ -14,13 +16,35 @@ def process_reply():
     #   a group, or an individual. Cool, huh?
 
     if app.config['DEBUG']:
+        print('Old form:')
         print(flask.request.form)
+        # flask.request.form'textBody'] = flask.request.form['textBody'].upper()
     
     command = check_command(flask.request.form)
     if not command:
         # User isn't talking to Sue. Ignore.
         return ''
+    
+    # message metadata will be used to direct response output.
+    msg = Message._create_message(flask.request.form)
 
+    # parse message textBody to see if we need to inject any user-defined
+    # variables into it.
+    if msg.textBody:
+        newFormItems = []
+        for key, val in flask.request.form.to_dict().items():
+            if key == 'textBody':
+                # inject our variables into it.
+                if '#' in val:
+                    newTextBody = inject_user_structures(val)
+                    newFormItems.append((key, newTextBody))
+                    continue
+
+            newFormItems.append((key,val))
+        flask.request.form = ImmutableMultiDict(newFormItems)
+    
+    print('new form:')
+    print(flask.request.form)
     # get a list of our available functions
     sue_funcs = {}
     for r in app.url_map.iter_rules():
@@ -43,9 +67,6 @@ def process_reply():
         except:
             sue_response = "Couldn't convert from {0} to str".format(
                 type(sue_response))
-    
-    # message metadata will be used to direct response output.
-    msg = Message._create_message(flask.request.form)
 
     # TODO: Create consts for these, so we have less `magic string` usage.
     if msg.platform is 'imessage':
@@ -56,11 +77,20 @@ def process_reply():
         # return to GET request from run_signal.py
         return sue_response
     elif msg.platform is 'debug':
-        print('SUE: {0}'.format(sue_response))
+        return 'SUE :\n{0}'.format(sue_response)
     else:
         print('Unfamiliar message platform: {0}'.format(msg.platform))
         return 'failure'
     
+@bp.route('/echo')
+def echo():
+    """!echo <... text ...>
+    
+    Used to debug member-defined data structures.
+    You: !echo !choose #lunchplaces
+    Sue: !choose fuego, antonios, potbelly, taco bell"""
+    msg = Message._create_message(flask.request.form)
+    return msg.textBody
 
 @bp.route('/help')
 def sue_help():

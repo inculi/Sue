@@ -39,5 +39,17 @@ def reduce_output(strList, delimiter=None):
     else:
         return reduce(lambda x,y: x+y, strList)
 
-def clean(inputString):
-    return inputString.strip().lower()
+def clean(istr):
+    return istr.strip().lower()
+
+def tokenize(istr):
+    """Used to parse lists of items in commands such as !choose and !poll
+    """
+    istr = istr.strip()
+
+    if '\n' in istr:
+        return istr.split('\n')
+    elif ',' in istr:
+        return [x.strip() for x in istr.split(',')]
+    else:
+        return istr.split(' ')

@@ -2,6 +2,7 @@ import random
 
 import flask
 from sue.models import Message
+from sue.utils import tokenize
 
 app = flask.current_app
 bp = flask.Blueprint('rand', __name__)
@@ -23,7 +24,7 @@ def choose():
     Usage: !choose up down left right"""
 
     msg = Message._create_message(flask.request.form)
-    options = msg.textBody.split(' ')
+    options = tokenize(msg.textBody)
 
     meguminOption = ('megumin' in map(lambda x: x.lower(), options))
     if meguminOption and msg.sender == '+12107485865':
@@ -87,7 +88,7 @@ def shuffle():
 
     msg = Message._create_message(flask.request.form)
     
-    items = msg.textBody.split(' ')
+    items = tokenize(msg.textBody)
     random.shuffle(items)
     return reduce(lambda x,y: str(x)+' '+str(y), items)
 

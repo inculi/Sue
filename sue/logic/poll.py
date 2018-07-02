@@ -1,10 +1,12 @@
 __credits__ = ["Jeff Hykin"]
 
+from pprint import pprint
+
 import flask
 
 import sue.db as db
 from sue.models import Message
-from sue.utils import reduce_output
+from sue.utils import reduce_output, tokenize
 
 app = flask.current_app
 bp = flask.Blueprint('poll', __name__)
@@ -20,7 +22,21 @@ def poll():
     bee movie"""
 
     msg = Message._create_message(flask.request.form)
-    options = msg.textBody.split('\n')
+    options = tokenize(msg.textBody)
+
+    if len(options) < 2:
+        return 'Please specify a topic with options delimited by newlines.'
+
+    if '?' in options[0]:
+        # Injected user data may have messed up tokenization...
+        # !poll Where should we have lunch? #lunchplaces (no comma)
+        # instead of: !poll Where should we have lunch?, #lunchplaces (comma)
+
+        firstQuestionIdx = options[0].find('?')
+        if options[0][-1] != '?':
+            # The question ended earlier in the string. Find it.
+            pollQuestion, firstOption = options[0].split('?', 1)
+            options = [pollQuestion.strip() + '?', firstOption.strip()] + options[1:]
 
     return create_poll(options, msg)
 
@@ -28,10 +44,8 @@ def create_poll(options, msg):
     """Allows !poll, !lunch, and eventually other commands to construct polls in
     a more abstracted way.
     """
+    pprint(options)
     response = []
-
-    if len(options) < 2:
-        return 'Please specify a topic with options delimited by newlines.'
     
     # set this to the current poll for our group.
     poll_data = {
