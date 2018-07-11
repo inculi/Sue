@@ -53,3 +53,15 @@ def rancher():
     # DirectResponse('james', b)
 
     return ''
+
+@bp.route('/webhook', methods=['GET', 'POST'])
+def webhook():
+    import json
+    from sue.models import DirectResponse
+    
+    data = flask.request.form
+    if data.get('message'):
+        # couchpotato server notifications webhook
+        DirectResponse('robert', data.get('message'))
+    
+    return ''
