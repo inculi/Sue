@@ -72,7 +72,8 @@ class Message(object):
 
 
 class Response(object):
-    def __init__(self, origin_message, sue_response):
+    def __init__(self, origin_message, sue_response, attachment=None):
+        self.attachment = attachment
         if origin_message.buddyId == 'debug':
             print('### DEBUG ###')
             pprint(sue_response)
@@ -82,6 +83,7 @@ class Response(object):
     def send_to_queue(self, origin_message, sue_response):
         FNULL = open(os.devnull, 'wb')
 
+        # TODO: make helper function to do this string safety stuff.
         origin_message.chatId = origin_message.chatId.replace(
             '+','ƒƒƒ').replace('$','¬¬¬')
         origin_message.buddyId = origin_message.buddyId.replace(
@@ -92,6 +94,14 @@ class Response(object):
                    quote(origin_message.chatId),
                    quote(origin_message.buddyId),
                    quote(sue_response)]
+        
+        if self.attachment:
+            f = self.attachment
+            f = quote(f.replace('+','ƒƒƒ').replace('$','¬¬¬'))
+            command.extend(['file', f])
+        else:
+            command.append('msg')
+        
         print(command)
 
         print('Sending response.')
@@ -133,6 +143,7 @@ class DirectResponse(object):
                    quote(recipient),
                    quote(method),
                    quote(sue_response)]
+        
         print(command)
 
         print('Sending response.')

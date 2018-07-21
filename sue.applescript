@@ -12,11 +12,12 @@ using terms from application "Messages"
 		-- get attachments if there are any
 		set fileName to "noFile"
 		try
-			if direction of last file transfer is incoming then
+			tell application "Messages" to set f to the last file transfer
+			if direction of f is incoming then
 				-- compare diff in seconds
-				if (current date) - (started of last file transfer) < 5 then
-					set f to file of the last file transfer
-					set fileName to POSIX path of f
+				if (current date) - (started of f) < 5 then
+					set fFile to file of f
+					set fileName to POSIX path of fFile
 				end if
 			end if
 		on error fileError
@@ -69,11 +70,12 @@ using terms from application "Messages"
 		-- get attachments if there are any
 		set fileName to "noFile"
 		try
-			if direction of last file transfer is incoming then
+			tell application "Messages" to set f to the last file transfer
+			if direction of f is incoming then
 				-- compare diff in seconds
-				if (current date) - (started of last file transfer) < 5 then
-					set f to file of the last file transfer
-					set fileName to POSIX path of f
+				if (current date) - (started of f) < 5 then
+					set fFile to file of f
+					set fileName to POSIX path of fFile
 				end if
 			end if
 		on error fileError

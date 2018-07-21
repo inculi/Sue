@@ -1,3 +1,5 @@
+from pprint import pprint
+
 import flask
 from werkzeug import ImmutableMultiDict
 
@@ -17,7 +19,7 @@ def process_reply():
 
     if app.config['DEBUG']:
         print('Old form:')
-        print(flask.request.form)
+        pprint(flask.request.form)
         # flask.request.form'textBody'] = flask.request.form['textBody'].upper()
     
     command = check_command(flask.request.form)
