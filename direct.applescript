@@ -29,11 +29,11 @@ on run argv
 			-- check if she is sending a file or message
 			if responseType is "file" then
 				-- she is sending a file. Get the path.
-				set filePath to item 4 of argv
+				set filePath to item 5 of argv
 				set filePath to my urlDecode(filePath)
 				set filePath to my replaceText(filePath, "���", "+")
 				set filePath to my replaceText(filePath, "���", "$")
-				set fileResponse to POSIX file filePath
+				set fileResponse to filePath as �class furl�
 			else
 				-- by default the only other option should be "msg"
 				--   if we can figure out stickers or other things,
@@ -45,7 +45,6 @@ on run argv
 			if chatId is "singleUser" then
 				--sending messages to individual users.
 				set theBuddy to a reference to buddy id recipientId
-				-- set dMsg to my urlDecode(responseMsg)
 				
 				if fileResponse is false then
 					send responseMsg to theBuddy

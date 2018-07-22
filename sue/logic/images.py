@@ -1,6 +1,9 @@
+import os
+import random
+
 import flask
 
-from sue.models import Message
+from sue.models import Message, DataResponse
 from sue.utils import reduce_output
 
 app = flask.current_app
@@ -117,3 +120,13 @@ def lewd():
             return responses
         else:
             return 'not lewd'
+
+@bp.route('/qt')
+def qt():
+    """!qt
+
+    Sends a cute image.
+    """
+    # get random image from our qt folder.
+    files = [f for f in os.listdir('resources/qt') if f[0] != '.']
+    return  DataResponse(os.path.abspath('resources/qt/' + random.choice(files)))

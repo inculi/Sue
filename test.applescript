@@ -23,7 +23,7 @@ on run argv
 			-- if "file", then we will be sending a file.
 			-- otherwise, just send a standard message.
 			
-			set fileMessage to POSIX file "/Users/lucifius/Documents/Sue/test.png"
+			set fileMessage to POSIX file "/Users/lucifius/Documents/Sue/resources/qt/file_714514.png"
 			
 			set theBuddy to buddy recipient of service id myid
 			send fileMessage to theBuddy

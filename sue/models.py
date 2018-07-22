@@ -151,3 +151,9 @@ class DirectResponse(object):
 
         FNULL.flush()
         FNULL.close()
+
+class DataResponse(object):
+    """Used to pass attachments into responses.
+    """
+    def __init__(self, data):
+        self.data = data

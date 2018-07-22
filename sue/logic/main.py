@@ -3,7 +3,7 @@ from pprint import pprint
 import flask
 from werkzeug import ImmutableMultiDict
 
-from sue.models import Message, Response
+from sue.models import Message, Response, DataResponse
 from sue.utils import check_command, reduce_output
 from sue.db import inject_user_structures
 
@@ -61,8 +61,15 @@ def process_reply():
         sue_response = sue_funcs['/callDefn']()
 
     # cast her response to a string. (ex: lists are reduced).
+    attachment = None
     if isinstance(sue_response, list):
         sue_response = reduce_output(sue_response, delimiter='\n')
+    elif isinstance(sue_response, DataResponse):
+        # set the attachment to our image path
+        attachment = sue_response.data
+
+        # set the sue_response to a blank string (we won't send it anyway)
+        sue_response = ''
     elif not isinstance(sue_response, str):
         try:
             sue_response = str(sue_response)
@@ -73,7 +80,7 @@ def process_reply():
     # TODO: Create consts for these, so we have less `magic string` usage.
     if msg.platform is 'imessage':
         # forward to applescript handler
-        Response(msg, sue_response)
+        Response(msg, sue_response, attachment=attachment)
         return 'success'
     elif msg.platform is 'signal':
         # return to GET request from run_signal.py
