@@ -7,21 +7,21 @@ on run argv
 			-- the id of the group chat we will respond to
 			set chatId to item 1 of argv
 			set chatId to my urlDecode(chatId)
-			set chatId to my replaceText(chatId, "ÄÄÄ", "+")
-			set chatId to my replaceText(chatId, "ÂÂÂ", "$")
+			set chatId to my replaceText(chatId, "ï¿½ï¿½ï¿½", "+")
+			set chatId to my replaceText(chatId, "ï¿½ï¿½ï¿½", "$")
 			
 			-- if it isn't a groupchat but rather a single person
 			--   then this will be their number/email
 			set recipientId to item 2 of argv
 			set recipientId to my urlDecode(recipientId)
-			set recipientId to my replaceText(recipientId, "ÄÄÄ", "+")
-			set recipientId to my replaceText(recipientId, "ÂÂÂ", "$")
+			set recipientId to my replaceText(recipientId, "ï¿½ï¿½ï¿½", "+")
+			set recipientId to my replaceText(recipientId, "ï¿½ï¿½ï¿½", "$")
 			
 			-- sue's response that we will be sending.
 			set responseMsg to item 3 of argv
 			set responseMsg to my urlDecode(responseMsg)
-			set responseMsg to my replaceText(responseMsg, "ÄÄÄ", "+")
-			set responseMsg to my replaceText(responseMsg, "ÂÂÂ", "$")
+			set responseMsg to my replaceText(responseMsg, "ï¿½ï¿½ï¿½", "+")
+			set responseMsg to my replaceText(responseMsg, "ï¿½ï¿½ï¿½", "$")
 			
 			-- lets us know if sue is sending a file or message.
 			set responseType to item 4 of argv
@@ -31,8 +31,8 @@ on run argv
 				-- she is sending a file. Get the path.
 				set filePath to item 4 of argv
 				set filePath to my urlDecode(filePath)
-				set filePath to my replaceText(filePath, "ÄÄÄ", "+")
-				set filePath to my replaceText(filePath, "ÂÂÂ", "$")
+				set filePath to my replaceText(filePath, "ï¿½ï¿½ï¿½", "+")
+				set filePath to my replaceText(filePath, "ï¿½ï¿½ï¿½", "$")
 				set fileResponse to POSIX file filePath
 			else
 				-- by default the only other option should be "msg"

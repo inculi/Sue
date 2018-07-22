@@ -54,8 +54,6 @@ def sue_random():
 
     textBody = msg.textBody.lower()
 
-    print(textBody)
-
     randRange = sorted(textBody.split(' '))
     if len(randRange) != 2:
         # can't have a range between 3 elements

@@ -6,7 +6,8 @@ from sue.logic import (
     webapis,
     cmds,
     images,
-    poll
+    poll,
+    server
 )
 
 def register_logic(flask_app):
@@ -18,5 +19,6 @@ def register_logic(flask_app):
     flask_app.register_blueprint(cmds.bp)
     flask_app.register_blueprint(images.bp)
     flask_app.register_blueprint(poll.bp)
+    flask_app.register_blueprint(server.bp)
 
     return flask_app
