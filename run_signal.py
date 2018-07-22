@@ -1,16 +1,29 @@
 import subprocess
 import sys
-
+import os
 import json
 import re
 import logging
 from pprint import pprint
+import mimetypes
 
 import requests
+
+mimetypes.init()
 
 # global consts for running the signal server binary.
 BINARY = 'sue_signal/signal-cli/build/install/signal-cli/bin/signal-cli'
 SIGNAL_NUMBER = '+12079560670'
+
+contentTypes = {
+    'image/jpeg' : '.jpg',
+    'image/png' : '.png',
+    'video/mp4' : '.mp4'
+}
+
+def getExtension(mimeType):
+    global contentTypes
+    return contentTypes.get(mimeType, mimetypes.guess_extension(mimeType))
 
 def _handle_message(message):
     responses = []
@@ -21,12 +34,31 @@ def _handle_message(message):
     if groupInfo:
         groupId = 'signal-{0}'.format(groupInfo['groupId'])
     
+    attachments = [
+        (x.get('storedFilename'), x.get('contentType')) for x in
+        message['envelope']['dataMessage']['attachments']
+    ]
+
+    if len(attachments) > 0:
+        for idx, f in enumerate(attachments):
+            newExtension = getExtension(f[1])
+            if not newExtension:
+                print('Cannot get extension for type: {}'.format(f[1]))
+                continue
+            
+            newFile = '{}{}'.format(f[0], newExtension)
+            os.rename(f[0], newFile)
+            attachments[idx] = newFile
+        attachments = attachments[0]
+    else:
+        attachments = 'noFile'
+    
     # construct a GET data payload we can send to our flask server
     message_payload = {
         'textBody' : message['envelope']['dataMessage']['message'],
         'chatId' : groupId,
         'buddyId' : sender,
-        'fileName' : 'noFile' # I'll figure out where this is stored later
+        'fileName' : attachments # I'll figure out where this is stored later
     }
 
     print('---------')
@@ -52,7 +84,7 @@ def _handle_message(message):
     
     return [json.dumps(sue_reply)]
 
-def run(signal_number, binary='signal-cli'):
+def run(signal_number, binary='signal-cli', debug=False):
     command = [binary, '-u', signal_number, 'jsonevtloop']
 
     print('Starting...')
@@ -65,7 +97,9 @@ def run(signal_number, binary='signal-cli'):
             responses = []
 
             msg = json.loads(msg.decode('utf-8').strip())
-            # pprint(msg) # uncomment when debugging :)
+
+            if debug:
+                pprint(msg) # uncomment when debugging :)
 
             if msg.get('type') == 'message':
                 # only respond to jsonevents that are messages.
@@ -89,4 +123,4 @@ def run(signal_number, binary='signal-cli'):
 
 if __name__ == "__main__":
     # run server
-    run(SIGNAL_NUMBER, BINARY)
+    run(SIGNAL_NUMBER, BINARY, debug=False)
