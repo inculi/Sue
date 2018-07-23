@@ -9,6 +9,12 @@ from sue.utils import reduce_output
 app = flask.current_app
 bp = flask.Blueprint('images', __name__)
 
+VALID_IMAGE_PARAMS = set([
+    'smile', 'smile_2', 'hot', 'old', 'young', 'hollywood', 'fun_glasses',
+    'hitman', 'mustache_free', 'pan', 'heisenberg', 'female', 'female_2',
+    'male', 'no-filter', 'impression', 'goatee', 'mustache', 'hipster',
+    'lion', 'bangs', 'glasses', 'wave', 'makeup'])
+
 @bp.route('/identify')
 def identify():
     """!identify <image>
@@ -130,3 +136,41 @@ def qt():
     # get random image from our qt folder.
     files = [f for f in os.listdir('resources/qt') if f[0] != '.']
     return  DataResponse(os.path.abspath('resources/qt/' + random.choice(files)))
+
+@bp.route('/i')
+def image():
+    """!i <param> <image>
+    
+    Available parameters are: smile, smile_2, hot, old, young, hollywood, fun_glasses, hitman, mustache_free, pan, heisenberg, female, female_2, male, impression, goatee, mustache, hipster, lion, bangs, glasses, wave, makeup
+    """
+    global VALID_IMAGE_PARAMS
+    
+    msg = Message._create_message(flask.request.form)
+    _param = msg.textBody.lower()
+
+    if _param not in VALID_IMAGE_PARAMS:
+        return 'Not a valid parameter. See !help i'
+    
+    if msg.fileName == 'noFile':
+        return 'Please supply a file.'
+    elif msg.fileName == 'fileError':
+        return 'There was an error selecting the last file transfer.'
+
+    import faces
+    import uuid
+
+    try:
+        img = faces.FaceAppImage(file=open(msg.fileName, 'rb'))
+        outimg = img.apply_filter(_param, cropped=False)
+    except faces.ImageHasNoFaces:
+        return 'No faces on this image.'
+
+    # Create the directory for us to store these files if it doesn't exist.
+    if not os.path.exists('resources/iout/'):
+        os.mkdir('resources/iout')
+    
+    outPath = os.path.abspath('resources/iout/{}.jpg'.format(uuid.uuid4()))
+    with open(outPath, 'wb') as f:
+        f.write(outimg)
+    
+    return DataResponse(outPath)
