@@ -10,10 +10,9 @@ app = flask.current_app
 bp = flask.Blueprint('images', __name__)
 
 VALID_IMAGE_PARAMS = set([
-    'smile', 'smile_2', 'hot', 'old', 'young', 'hollywood', 'fun_glasses',
-    'hitman', 'mustache_free', 'pan', 'heisenberg', 'female', 'female_2',
-    'male', 'no-filter', 'impression', 'goatee', 'mustache', 'hipster',
-    'lion', 'bangs', 'glasses', 'wave', 'makeup'])
+    'smile', 'smile_2', 'hot', 'old', 'young', 'hollywood', 'glasses',
+    'hitman', 'mustache', 'pan', 'heisenberg', 'female', 'female_2',
+    'male'])
 
 @bp.route('/identify')
 def identify():
@@ -141,15 +140,24 @@ def qt():
 def image():
     """!i <param> <image>
     
-    Available parameters are: smile, smile_2, hot, old, young, hollywood, fun_glasses, hitman, mustache_free, pan, heisenberg, female, female_2, male, impression, goatee, mustache, hipster, lion, bangs, glasses, wave, makeup
+    Available parameters are: smile, smile2, hot, old, young, hollywood, glasses, hitman, mustache, pan, heisenberg, female, female2, male
     """
     global VALID_IMAGE_PARAMS
     
     msg = Message._create_message(flask.request.form)
     _param = msg.textBody.lower()
 
+    paramAliases = {
+        'mustache' : 'mustache_free',
+        'glasses' : 'fun_glasses',
+        'smile2' : 'smile_2',
+        'female2' : 'female_2'
+    }
+
     if _param not in VALID_IMAGE_PARAMS:
-        return 'Not a valid parameter. See !help i'
+        _param = paramAliases.get(_param)
+        if not _param:
+            return 'Not a valid parameter. See !help i'
     
     if msg.fileName == 'noFile':
         return 'Please supply a file.'
@@ -164,6 +172,8 @@ def image():
         outimg = img.apply_filter(_param, cropped=False)
     except faces.ImageHasNoFaces:
         return 'No faces on this image.'
+    except faces.BadInfo as ex:
+        return str(ex)
 
     # Create the directory for us to store these files if it doesn't exist.
     if not os.path.exists('resources/iout/'):

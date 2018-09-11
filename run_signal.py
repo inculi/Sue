@@ -71,9 +71,12 @@ def _handle_message(message):
     
     # json.dumps() requires string input, but proc.stdin requires bytes.
     # we will .encode('utf-8') before feeding it to the process.
+
+    # responseAttachments = ["/Users/lucifius/Downloads/file2.JPG"]
     sue_reply = {
         "type": "send",
         "messageBody": r.content.decode('utf-8'),
+        # "attachmentFilenames": responseAttachments,
         "id": "1"
     }
 

@@ -3,18 +3,21 @@ from pprint import pprint, pformat
 import flask
 import requests
 from requests.exceptions import ConnectionError
+import json
 
 from sue.models import Message
 
 app = flask.current_app
 bp = flask.Blueprint('server', __name__)
 
-
 def query_couch_potato(q):
     uri = 'http://localhost:5050/api/{0}/'.format(app.config['COUCH_POTATO_API'])
 
     try:
         data = requests.get(uri, data={'q' : q})
+        print(data.content)
+        return 'meh'
+        data = json.loads(data.content)
     except ConnectionError:
         return 'CouchPotato not installed, or service not up.'
 
@@ -40,5 +43,6 @@ def movie():
     #   downloaded.
     # TODO: Implement.
     # return 'Needs to be implemented.'
+    print('doing something')
     msg = Message._create_message(flask.request.form)
     return query_couch_potato(msg.textBody)
