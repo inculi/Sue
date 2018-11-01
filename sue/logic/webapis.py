@@ -191,7 +191,7 @@ def searchImage():
 
     url = "https://api.imgur.com/3/gallery/search/{{sort}}/{{window}}/{{page}}"
     querystring = {"q":searchText}
-    headers = {'authorization' : 'Client-ID 01aa1688f43ca6c'}
+    headers = {'authorization' : app.config['IMGUR_CLIENT_ID']}
     response = requests.request("GET", url, headers=headers, params=querystring)
 
     a = loads(response.text)['data']

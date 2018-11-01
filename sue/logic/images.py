@@ -32,7 +32,7 @@ def identify():
         from clarifai.rest import ClarifaiApp
         from clarifai.rest import Image as ClImage
 
-        app = ClarifaiApp(api_key='ab4ea7efce5a4398bcbed8329a3d81c7')
+        app = ClarifaiApp(api_key=app.config['CLARIFAI_KEY'])
         model = app.models.get('general-v1.3')
         image = ClImage(file_obj=open(fileName, 'rb'))
 
@@ -65,7 +65,7 @@ def person():
 
         responses = []
 
-        app = ClarifaiApp(api_key='ab4ea7efce5a4398bcbed8329a3d81c7')
+        app = ClarifaiApp(api_key=app.config['CLARIFAI_KEY'])
         model = app.models.get('demographics')
         image = ClImage(file_obj=open(fileName, 'rb'))
 
@@ -106,7 +106,7 @@ def lewd():
         from clarifai.rest import ClarifaiApp
         from clarifai.rest import Image as ClImage
 
-        app = ClarifaiApp(api_key='ab4ea7efce5a4398bcbed8329a3d81c7')
+        app = ClarifaiApp(api_key=app.config['CLARIFAI_KEY'])
         model = app.models.get('nsfw-v1.0')
 
         if not model:

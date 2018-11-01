@@ -2,6 +2,10 @@ LOG_FILE = "suelog.log"
 
 COUCH_POTATO_API = "changeme"
 
+CLARIFAI_KEY = "chang3m3"
+
+IMGUR_CLIENT_ID = "Client-ID changem3"
+
 WOLFRAM_KEY = "CHANGE-ME"
 
 REDDIT_CLIENT_ID = "CHANG3M3"
