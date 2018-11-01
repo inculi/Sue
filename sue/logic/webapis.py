@@ -1,11 +1,28 @@
 from pprint import pprint, pformat
+import random
 
 import flask
+import praw
 
 from sue.models import Message
 
 app = flask.current_app
 bp = flask.Blueprint('webapis', __name__)
+
+# TODO: Check to see if the user has specified Reddit API credentials.
+reddit = None
+def init_reddit():
+    """We can't initialize this globally, as app.config hasn't loaded for some
+    reason by the time we import webapis in __init__.py
+
+    I'll look into it. It has something to do with app.app_context().
+    """
+    global reddit
+    if not reddit:
+        print('Initializing Reddit credentials')
+        reddit = praw.Reddit(client_id=app.config['REDDIT_CLIENT_ID'],
+                             client_secret=app.config['REDDIT_CLIENT_SECRET'],
+                             user_agent=app.config['REDDIT_USER_AGENT'])
 
 @bp.route('/wiki')
 def wiki():
@@ -68,7 +85,7 @@ def wolf():
     msg = Message._create_message(flask.request.form)
     inputQuestion = msg.textBody
 
-    client = wolframalpha.Client('HWP8QY-EL2KR2KKLW')
+    client = wolframalpha.Client(app.config['WOLFRAM_KEY'])
 
     res = client.query(inputQuestion)
 
@@ -188,3 +205,14 @@ def searchImage():
             return "Sorry, I couldn't find a photo of that..."
     else:
         return "Sorry, I couldn't find a photo of that..."
+
+@bp.route('/pasta')
+def pasta():
+    """!pasta
+
+    Randomly send one of the top 5 posts on /r/copypasta at this moment.
+    Usage: !pasta
+    """
+    init_reddit()
+    topFivePosts = [*reddit.subreddit('copypasta').hot(limit=5)]
+    return random.choice(topFivePosts).selftext

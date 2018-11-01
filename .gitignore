@@ -2,6 +2,7 @@
 notes/
 Resources/iout/*
 *.log.*
+config.py
 
 # OSX Stuff
 .DS_Store

@@ -1,6 +1,7 @@
-import flask
 import logging
 import uuid
+
+import flask
 
 from sue.extensions import assets
 from sue.logic import register_logic
@@ -31,7 +32,8 @@ def create_app(config):
                              exc_info=exception)
 
     # Database
-    # configure database here once it's up and running
+    # TODO: configure database here once it's up and running
+
     assets.init_app(app)
     register_logic(app)
 

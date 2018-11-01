@@ -45,7 +45,6 @@ def process_reply():
             newFormItems.append((key,val))
         flask.request.form = ImmutableMultiDict(newFormItems)
     
-    print('new form:')
     print(flask.request.form)
     # get a list of our available functions
     sue_funcs = {}
@@ -118,9 +117,10 @@ def sue_help():
             # the extra info we placed after the first line-break.
             if msg.textBody:
                 if firstLine.split(' ',1)[0].replace('!','') == msg.textBody.lower():
-                    specificDocumentation = docString.split('\n')[1:]
-                    if specificDocumentation:
-                        return reduce_output([x.strip() for x in specificDocumentation], delimiter='\n')
+                    specificDocumentation = docString.split('\n',1)
+                    if len(specificDocumentation) == 2:
+                        return reduce_output(specificDocumentation[1].strip(),
+                                             delimiter='\n')
                     else:
                         return 'No documentation for {0} yet. Add it to the\
                         repo! https://github.com/inculi/Sue'.format(msg.textBody)
