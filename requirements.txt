@@ -31,3 +31,4 @@ Werkzeug==0.14.1
 wikipedia==1.4.0
 wolframalpha==3.0.1
 xmltodict==0.11.0
+git+https://github.com/vasilysinitsin/Faces@acabe68

@@ -1,4 +1,5 @@
 from pprint import pprint
+import json
 
 import flask
 from werkzeug import ImmutableMultiDict
@@ -20,7 +21,6 @@ def process_reply():
     if app.config['DEBUG']:
         print('Old form:')
         pprint(flask.request.form)
-        # flask.request.form'textBody'] = flask.request.form['textBody'].upper()
     
     command = check_command(flask.request.form)
     if not command:
@@ -83,7 +83,10 @@ def process_reply():
         return 'success'
     elif msg.platform is 'signal':
         # return to GET request from run_signal.py
-        return sue_response
+        return json.dumps({
+            'messageBody': sue_response,
+            'attachmentFilenames': [attachment]
+        })
     elif msg.platform is 'debug':
         return 'SUE :\n{0}'.format(sue_response)
     else:

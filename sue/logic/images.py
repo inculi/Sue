@@ -32,8 +32,8 @@ def identify():
         from clarifai.rest import ClarifaiApp
         from clarifai.rest import Image as ClImage
 
-        app = ClarifaiApp(api_key=app.config['CLARIFAI_KEY'])
-        model = app.models.get('general-v1.3')
+        capp = ClarifaiApp(api_key=app.config['CLARIFAI_KEY'])
+        model = capp.models.get('general-v1.3')
         image = ClImage(file_obj=open(fileName, 'rb'))
 
         imageData = model.predict([image])
