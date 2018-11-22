@@ -4,12 +4,47 @@ import json
 import flask
 from werkzeug import ImmutableMultiDict
 
-from sue.models import Message, Response, DataResponse
+from sue.models import Message, IMessageResponse, DataResponse
 from sue.utils import check_command, reduce_output
 from sue.db import inject_user_structures
 
 app = flask.current_app
 bp = flask.Blueprint('main', __name__)
+
+# stores the functions for our commands. ex: !flip -> sue.logic.rand.flip()
+sue_funcs = {}
+
+def init_sue_funcs():
+    """ Get a list of available functions by iterating over our routes.
+    """
+    global sue_funcs
+    if not sue_funcs:
+        for r in app.url_map.iter_rules():
+            sue_funcs[r.rule] = app.view_functions[r.endpoint]
+
+def prepare_message(msgForm):
+    command = check_command(msgForm)
+    if not command:
+        return None
+    
+    msg = Message(msgForm)
+
+    # Inject user-defined variables into the initial text, by parsing its
+    #   textBody for tokens prefixced with '#'
+    if msg.textBody:
+        newFormItems = []
+        for key, val in msgForm.to_dict().items():
+            if key == 'textBody':
+                # inject our variables into it.
+                if '#' in val:
+                    newTextBody = inject_user_structures(val)
+                    newFormItems.append((key, newTextBody))
+                    continue
+
+            newFormItems.append((key,val))
+        msgForm = ImmutableMultiDict(newFormItems)
+    
+    return msgForm
 
 @bp.route('/')
 def process_reply():
@@ -19,40 +54,16 @@ def process_reply():
       in models.py), we can figure out if we are sending the response back to
       Signal, iMessage, and from there-- a group, or an individual. Cool, huh?
     """
-
-    if app.config['DEBUG']:
-        pprint(flask.request.form)
     
-    command = check_command(flask.request.form)
-    if not command:
+    if not check_command(flask.request.form):
         # User isn't talking to Sue. Ignore.
         return ''
     
-    # message metadata will be used to direct response output.
+    flask.request.form = prepare_message(flask.request.form)
     msg = Message(flask.request.form)
 
-    # parse message textBody to see if we need to inject any user-defined
-    # variables into it.
-    if msg.textBody:
-        newFormItems = []
-        for key, val in flask.request.form.to_dict().items():
-            if key == 'textBody':
-                # inject our variables into it.
-                if '#' in val:
-                    newTextBody = inject_user_structures(val)
-                    newFormItems.append((key, newTextBody))
-                    continue
-
-            newFormItems.append((key,val))
-        flask.request.form = ImmutableMultiDict(newFormItems)
-    
-    print(flask.request.form)
-    # get a list of our available functions
-    sue_funcs = {}
-    for r in app.url_map.iter_rules():
-        sue_funcs[r.rule] = app.view_functions[r.endpoint]
-    
-    f = sue_funcs.get('/' + command)
+    init_sue_funcs()
+    f = sue_funcs.get('/' + msg.command)
     if f:
         # Command exists. Execute it and get the response.
         sue_response = f()
@@ -123,8 +134,8 @@ def sue_help():
     help_docs = []
     msg = Message(flask.request.form)
 
-    # iterate through our routes, getting the doc-strings we defined as
-    # miniature man-pages for these commands.
+    # Iterate through our routes, getting the doc-strings we defined as
+    #   miniature man-pages for these commands.
     hiddenEndpoints = set(['/', '/help'])
     for r in app.url_map.iter_rules():
         current_doc = app.view_functions[r.endpoint].__doc__
