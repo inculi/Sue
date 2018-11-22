@@ -33,7 +33,7 @@ def wiki():
     """
     import wikipedia as wikip
 
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
     searchTerm = msg.textBody
 
     try:
@@ -53,7 +53,7 @@ def wikis():
     Usage: !wikis obama, president
     """
     import wikipedia as wikip
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
     searchTerm = msg.textBody.split(',',1)
 
     if len(searchTerm) != 2:
@@ -82,7 +82,7 @@ def wolf():
 
     responses = []
 
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
     inputQuestion = msg.textBody
 
     client = wolframalpha.Client(app.config['WOLFRAM_KEY'])
@@ -145,7 +145,7 @@ def urbanDictionary():
     import json
     import requests
 
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
     term = msg.textBody
 
     responses = []
@@ -186,7 +186,7 @@ def searchImage():
 
     import requests
 
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
     searchText = msg.textBody
 
     url = "https://api.imgur.com/3/gallery/search/{{sort}}/{{window}}/{{page}}"

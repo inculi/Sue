@@ -23,7 +23,7 @@ def choose():
     Returns a random object in your space-delimited argument.
     Usage: !choose up down left right"""
 
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
     options = tokenize(msg.textBody)
 
     meguminOption = ('megumin' in map(lambda x: x.lower(), options))
@@ -47,7 +47,7 @@ def sue_random():
     Return a random floating point number between 0 and 1 (0.47655569922929364)
     Usage: !random"""
 
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
 
     if not msg:
         return 'Error with message.'
@@ -84,7 +84,7 @@ def shuffle():
     Shuffles and then returns your input."""
     from functools import reduce
 
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
     
     items = tokenize(msg.textBody)
     random.shuffle(items)

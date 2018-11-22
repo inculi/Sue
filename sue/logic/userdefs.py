@@ -15,7 +15,7 @@ def define():
     You: !define ping pong
     You: !ping
     Sue: pong"""
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
     textBody = msg.textBody
 
     if len(textBody) == 0:
@@ -46,7 +46,7 @@ def define():
 def callDefn():
     # the route used to call !define'd objects.
 
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
     defnName = msg.command
 
     q = db.findDefn(defnName)
@@ -74,7 +74,7 @@ def name():
     Create a new name for Sue to call you by. This currently isn't used for anything.
     You: !name Robert
     Sue: +1234567890 shall now be known as Robert"""
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
     sender = msg.sender
     textBody = msg.textBody
     # make changes to our names collection.
@@ -92,7 +92,7 @@ def whoami():
     You: !whoami
     Sue: You are Robert."""
 
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
     sender = msg.sender
     # load names from pickle file
     nameFound = db.findName(sender)

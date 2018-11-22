@@ -44,5 +44,5 @@ def movie():
     # TODO: Implement.
     # return 'Needs to be implemented.'
     print('doing something')
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
     return query_couch_potato(msg.textBody)

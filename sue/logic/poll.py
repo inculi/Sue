@@ -21,7 +21,7 @@ def poll():
     tron
     bee movie"""
 
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
     options = tokenize(msg.textBody)
 
     if len(options) < 2:
@@ -75,7 +75,7 @@ def vote():
     Used to vote on a poll that is currently ongoing.
     Usage: !vote a"""
 
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
     options = msg.textBody.split(' ')
     poll_data = db.mFind('polls', 'group', msg.chatId).get('data', {})
 
@@ -121,7 +121,7 @@ def lunch():
     the input.
     """
     # we need the chatId for when we search the database...
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
 
     # retrieve the group-specific lunchplaces
     places = db.findDefn('lunchplaces').get('meaning','')

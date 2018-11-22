@@ -1,4 +1,5 @@
 from functools import reduce
+from urllib.parse import quote
 
 def check_command(msgForm):
     """
@@ -38,6 +39,9 @@ def reduce_output(strList, delimiter=None):
         return reduce(lambda x,y: x+delimiter+y, strList)
     else:
         return reduce(lambda x,y: x+y, strList)
+
+def secure_string(istr):
+    return quote(istr.replace('+','ƒƒƒ').replace('$','¬¬¬'))
 
 def clean(istr):
     return istr.strip().lower()

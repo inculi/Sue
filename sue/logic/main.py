@@ -13,13 +13,14 @@ bp = flask.Blueprint('main', __name__)
 
 @bp.route('/')
 def process_reply():
-    # Main route for processing requests. Based on information we detect in the
-    #   flask.request.form (logic provided in models.py), we can figure out if
-    #   we are sending the response back to Signal, iMessage, and from there--
-    #   a group, or an individual. Cool, huh?
+    """Main route for processing requests.
+    
+    Based on information we detect in the flask.request.form (logic provided
+      in models.py), we can figure out if we are sending the response back to
+      Signal, iMessage, and from there-- a group, or an individual. Cool, huh?
+    """
 
     if app.config['DEBUG']:
-        print('Old form:')
         pprint(flask.request.form)
     
     command = check_command(flask.request.form)
@@ -28,7 +29,7 @@ def process_reply():
         return ''
     
     # message metadata will be used to direct response output.
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
 
     # parse message textBody to see if we need to inject any user-defined
     # variables into it.
@@ -79,7 +80,7 @@ def process_reply():
     # TODO: Create consts for these, so we have less `magic string` usage.
     if msg.platform is 'imessage':
         # forward to applescript handler
-        Response(msg, sue_response, attachment=attachment)
+        IMessageResponse(msg, sue_response, attachment=attachment)
         return 'success'
     elif msg.platform is 'signal':
         # return to GET request from run_signal.py
@@ -91,6 +92,7 @@ def process_reply():
         return 'SUE :\n{0}'.format(sue_response)
     else:
         print('Unfamiliar message platform: {0}'.format(msg.platform))
+        # TODO: Throw exception?
         return 'failure'
     
 @bp.route('/echo')
@@ -100,19 +102,38 @@ def echo():
     Used to debug member-defined data structures.
     You: !echo !choose #lunchplaces
     Sue: !choose fuego, antonios, potbelly, taco bell"""
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
     return msg.textBody
 
 @bp.route('/help')
 def sue_help():
+    """Returns a sorted list of commands available for the user to use. If you
+      give it a command name as an argument, it will read you the extended
+      "manpage" for that command.
+
+    Usage
+    -----
+    !help
+    !help <command>
+
+    Examples
+    --------
+    """
+
     help_docs = []
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
 
     # iterate through our routes, getting the doc-strings we defined as
     # miniature man-pages for these commands.
+    hiddenEndpoints = set(['/', '/help'])
     for r in app.url_map.iter_rules():
         current_doc = app.view_functions[r.endpoint].__doc__
-        if current_doc and ('static' not in r.rule):
+        if current_doc:
+            if 'static'in r.rule:
+                continue
+            if r.rule in hiddenEndpoints:
+                continue
+            
             docString = current_doc.strip()
             firstLine = docString.split('\n', 1)[0]
 
@@ -126,10 +147,7 @@ def sue_help():
                                              delimiter='\n')
                     else:
                         return 'No documentation for {0} yet. Add it to the\
-                        repo! https://github.com/inculi/Sue'.format(msg.textBody)
-                # else:
-                #     print(firstLine.split(' ',1)[0].replace('!',''))
-                #     print(msg.textBody.lower())
+                        repo! https://github.com/inculi/Sue'.format(msg.command)
                     
             help_docs.append(firstLine)
 

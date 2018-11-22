@@ -21,7 +21,7 @@ def identify():
     Queries clarif.ai to identify the top 10 concepts within an image.
     Usage: !identify <image>"""
     
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
     fileName = msg.fileName
 
     if fileName == 'noFile':
@@ -52,7 +52,7 @@ def person():
     Queries clarif.ai to identify the age, gender, and 'multicultural apperance'\
     of detected faces in the photo.
     Usage: !person <image>"""
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
     fileName = msg.fileName
 
     if fileName == 'noFile':
@@ -95,7 +95,7 @@ def lewd():
     Queries clarif.ai to detect if an image is 'lewd'.
     Usage: !lewd <image>"""
 
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
     fileName = msg.fileName
 
     if fileName == 'noFile':
@@ -134,7 +134,7 @@ def qt():
     """
     # get random image from our qt folder.
     files = [f for f in os.listdir('resources/qt') if f[0] != '.']
-    return  DataResponse(os.path.abspath('resources/qt/' + random.choice(files)))
+    return DataResponse(os.path.abspath('resources/qt/' + random.choice(files)))
 
 @bp.route('/i')
 def image():
@@ -144,7 +144,7 @@ def image():
     """
     global VALID_IMAGE_PARAMS
     
-    msg = Message._create_message(flask.request.form)
+    msg = Message(flask.request.form)
     _param = msg.textBody.lower()
 
     paramAliases = {
