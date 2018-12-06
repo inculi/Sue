@@ -148,17 +148,27 @@ def sue_help():
             docString = current_doc.strip()
             firstLine = docString.split('\n', 1)[0]
 
-            # if someone wants help about a specific command, get them
+            # If someone wants help about a specific command, get them
             # the extra info we placed after the first line-break.
             if msg.textBody:
-                if firstLine.split(' ',1)[0].replace('!','') == msg.textBody.lower():
-                    specificDocumentation = docString.split('\n',1)
-                    if len(specificDocumentation) == 2:
-                        return reduce_output(specificDocumentation[1].strip(),
-                                             delimiter='\n')
+                if firstLine.split(' ',1)[0].replace('!','') != msg.command:
+                    continue
+
+                cmdDocs = docString.split('\n',1)
+                if len(cmdDocs) != 2:
+                    return 'No documentation for {0} yet. Add it to the\
+                    repo! https://github.com/inculi/Sue'.format(msg.command)
+                
+                response = ''
+                for line in cmdDocs[1].split('\n'):
+                    if not line:
+                        continue
+                    if line[0] == ' ':
+                        response += ' ' + line.strip()
                     else:
-                        return 'No documentation for {0} yet. Add it to the\
-                        repo! https://github.com/inculi/Sue'.format(msg.command)
+                        response += '\n' + line.strip()
+                    
+                return response
                     
             help_docs.append(firstLine)
 

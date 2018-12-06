@@ -208,11 +208,25 @@ def searchImage():
 
 @bp.route('/pasta')
 def pasta():
-    """!pasta
+    """!pasta [<searchTerm>]
+    
+    Read a post from /r/copypasta, either by searching with a term, or letting
+    it pick from the currently trending.
 
-    Randomly send one of the top 5 posts on /r/copypasta at this moment.
-    Usage: !pasta
+    Usage:
+    !pasta
+    !pasta <searchTerm>
     """
+    # initialize reddit api
     init_reddit()
-    topFivePosts = [*reddit.subreddit('copypasta').hot(limit=5)]
-    return random.choice(topFivePosts).selftext
+
+    msg = Message(flask.request.form)
+    
+    if msg.textBody:
+        # search argument specified.
+        results = reddit.subreddit('copypasta').search(msg.textBody, limit=5)
+    else:
+        # no search argument, look at currently trending.
+        results = reddit.subreddit('copypasta').hot(limit=5)
+    
+    return random.choice([*results]).selftext

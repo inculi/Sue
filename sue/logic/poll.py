@@ -44,7 +44,6 @@ def create_poll(options, msg):
     """Allows !poll, !lunch, and eventually other commands to construct polls in
     a more abstracted way.
     """
-    pprint(options)
     response = []
     
     # set this to the current poll for our group.
