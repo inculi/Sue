@@ -126,15 +126,30 @@ def lewd():
         else:
             return 'not lewd'
 
+def send_random_image(directory):
+    if not directory.endswith('/'):
+        directory = directory + '/'
+    files = [f for f in os.listdir(directory) if f[0] != '.']
+    return DataResponse(os.path.abspath(directory + random.choice(files)))
+
+
 @bp.route('/qt')
 def qt():
     """!qt
 
     Sends a cute image.
     """
-    # get random image from our qt folder.
-    files = [f for f in os.listdir('resources/qt') if f[0] != '.']
-    return DataResponse(os.path.abspath('resources/qt/' + random.choice(files)))
+    return send_random_image('resources/qt/')
+
+
+@bp.route('/cringe')
+def cringe():
+    """!cringe
+
+    Sends a cringe compilation image.
+    """
+    return send_random_image('resources/cringe/')
+
 
 @bp.route('/i')
 def image():

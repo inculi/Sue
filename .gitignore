@@ -1,6 +1,6 @@
 # Stuffs
 notes/
-Resources/iout/*
+resources/iout/*
 *.log.*
 config.py
 
