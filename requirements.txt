@@ -25,7 +25,7 @@ pymongo==3.6.1
 requests>=2.20.0
 six==1.11.0
 update-checker==0.16
-urllib3==1.22
+urllib3==1.24.2
 webassets==0.12.1
 Werkzeug==0.14.1
 wikipedia==1.4.0
