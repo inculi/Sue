@@ -17,7 +17,7 @@ Jinja2>=2.10.1
 jsonschema==2.5.1
 MarkupSafe==1.0
 more-itertools==4.1.0
-nltk==3.2.5
+nltk==3.4.5
 Pillow>=3.3.2
 praw==6.0.0
 prawcore==1.0.0
