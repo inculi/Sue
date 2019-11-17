@@ -93,7 +93,7 @@ class IMessageResponse(object):
         FNULL = open(os.devnull, 'wb')
         
         command = ["osascript",
-                   "direct.applescript",
+                   "reply.applescript",
                    secure_string(origin_message.chatId),
                    secure_string(origin_message.buddyId),
                    secure_string(sue_response)]
@@ -139,7 +139,7 @@ class DirectResponse(object):
         
         # TODO: rename the applescript files to actually reflect what they do.
         command = ["osascript",
-                   "actuallydirect.applescript",
+                   "replydirect.applescript",
                    secure_string(recipient),
                    secure_string(method),
                    secure_string(sue_response)]

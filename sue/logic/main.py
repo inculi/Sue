@@ -20,13 +20,11 @@ def init_sue_funcs():
     global sue_funcs
     if not sue_funcs:
         for r in app.url_map.iter_rules():
+            if r.rule.startswith('/api/'):
+                continue # keep these endpoints hidden from user use ;)
             sue_funcs[r.rule] = app.view_functions[r.endpoint]
 
 def prepare_message(msgForm):
-    command = check_command(msgForm)
-    if not command:
-        return None
-    
     msg = Message(msgForm)
 
     # Inject user-defined variables into the initial text, by parsing its
@@ -56,9 +54,7 @@ def process_reply():
     """
     
     if not check_command(flask.request.form):
-        # User isn't talking to Sue. Ignore.
-        return ''
-    
+        return '' # User isn't talking to Sue. Ignore.
     flask.request.form = prepare_message(flask.request.form)
     msg = Message(flask.request.form)
 
@@ -100,7 +96,7 @@ def process_reply():
             'attachmentFilenames': [attachment]
         })
     elif msg.platform is 'debug':
-        return 'SUE :\n{0}'.format(sue_response)
+        return sue_response
     else:
         print('Unfamiliar message platform: {0}'.format(msg.platform))
         # TODO: Throw exception?
@@ -140,7 +136,7 @@ def sue_help():
     for r in app.url_map.iter_rules():
         current_doc = app.view_functions[r.endpoint].__doc__
         if current_doc:
-            if 'static'in r.rule:
+            if 'static' in r.rule:
                 continue
             if r.rule in hiddenEndpoints:
                 continue
@@ -173,3 +169,8 @@ def sue_help():
             help_docs.append(firstLine)
 
     return reduce_output(sorted(help_docs), delimiter='\n')
+
+@bp.route('/api/functree')
+def functree():
+    init_sue_funcs()
+    return json.dumps([k[1:] for k in sue_funcs.keys() if ('/' not in k[1:]) and k != '/'])

@@ -1,4 +1,4 @@
-from functools import reduce
+from functools import reduce, wraps
 from urllib.parse import quote
 
 def check_command(msgForm):
@@ -57,3 +57,13 @@ def tokenize(istr):
         return [x.strip() for x in istr.split(',')]
     else:
         return istr.split(' ')
+
+def coroutine(func):
+    """Decorator: primes `func` by advancing to first `yield`"""
+    # courtesy of the great book ``Fluent Python''
+    @wraps(func)
+    def primer(*args,**kwargs):
+        gen = func(*args,**kwargs)
+        next(gen)
+        return gen
+    return primer

@@ -10,13 +10,11 @@ import requests
 while True:
     print('================================================================================')
     inputStr = input('YOU : ')
-
     payload = {
         'chatId' : 'debug',
         'textBody' : inputStr,
         'buddyId' : '',
         'fileName' : ''
     }
-
     r = requests.get('http://localhost:5000/', data=payload)
-    print(r.content.decode('utf8'))
+    print('SUE : \n{0}'.format(r.content.decode('utf8')))

@@ -38,3 +38,4 @@ def create_app(config):
     register_logic(app)
 
     return app
+    

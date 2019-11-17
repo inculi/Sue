@@ -8,7 +8,7 @@ import json
 from sue.models import Message
 
 app = flask.current_app
-bp = flask.Blueprint('server', __name__)
+bp = flask.Blueprint('homeserver', __name__)
 
 def query_couch_potato(q):
     uri = 'http://localhost:5050/api/{0}/'.format(app.config['COUCH_POTATO_API'])
