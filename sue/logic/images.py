@@ -2,12 +2,24 @@ import os
 import random
 
 import flask
+from clarifai.rest import ClarifaiApp
+from clarifai.rest import Image as ClImage
 
 from sue.models import Message, DataResponse
 from sue.utils import reduce_output
 
 app = flask.current_app
 bp = flask.Blueprint('images', __name__)
+
+# TODO: Check to see if the user has specified Clarifai API credentials.
+clarifai = None
+def init_clarifai():
+    """So we're only initializing once.
+    """
+    global clarifai
+    if not clarifai:
+        print('Initializing Clarifai credentials')
+        clarifai = ClarifaiApp(api_key=app.config['CLARIFAI_KEY'])
 
 VALID_IMAGE_PARAMS = set([
     'smile', 'smile_2', 'hot', 'old', 'young', 'hollywood', 'glasses',
@@ -29,11 +41,8 @@ def identify():
     elif fileName == 'fileError':
         return 'There was an error selecting the last file transfer.'
     else:
-        from clarifai.rest import ClarifaiApp
-        from clarifai.rest import Image as ClImage
-
-        capp = ClarifaiApp(api_key=app.config['CLARIFAI_KEY'])
-        model = capp.models.get('general-v1.3')
+        init_clarifai()
+        model = clarifai.models.get('general-v1.3')
         image = ClImage(file_obj=open(fileName, 'rb'))
 
         imageData = model.predict([image])
@@ -60,13 +69,10 @@ def person():
     elif fileName == 'fileError':
         return 'There was an error selecting the last file transfer.'
     else:
-        from clarifai.rest import ClarifaiApp
-        from clarifai.rest import Image as ClImage
-
         responses = []
 
-        app = ClarifaiApp(api_key=app.config['CLARIFAI_KEY'])
-        model = app.models.get('demographics')
+        init_clarifai()
+        model = clarifai.models.get('demographics')
         image = ClImage(file_obj=open(fileName, 'rb'))
 
         imageData = model.predict([image])
@@ -94,7 +100,7 @@ def lewd():
     
     Queries clarif.ai to detect if an image is 'lewd'.
     Usage: !lewd <image>"""
-
+    
     msg = Message(flask.request.form)
     fileName = msg.fileName
 
@@ -103,11 +109,8 @@ def lewd():
     elif fileName == 'fileError':
         return 'There was an error selecting the last file transfer.'
     else:
-        from clarifai.rest import ClarifaiApp
-        from clarifai.rest import Image as ClImage
-
-        app = ClarifaiApp(api_key=app.config['CLARIFAI_KEY'])
-        model = app.models.get('nsfw-v1.0')
+        init_clarifai()
+        model = clarifai.models.get('nsfw-v1.0')
 
         if not model:
             return 'Model no longer exists.'
