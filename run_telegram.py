@@ -28,12 +28,15 @@ class SueTelegram(object):
     
     def handler(self, update, context):
         cmd = self.get_command(update)
-        pprint(update.message.chat.__dict__)
-        pprint(update.message.from_user.__dict__)
+        # pprint({
+        #     'MESSAGE.CHAT': update.message.chat.__dict__,
+        #     'MESSAGE': update.message.__dict__,
+        #     'MESSAGE.FROM_USER': update.message.from_user.__dict__
+        # })
         payload = {
-            'chatId' : 'debug',
+            'chatId' : 'telegram-{0}-{1}'.format(update.message.chat['type'], update.message.chat['id']),
             'textBody' : '!' + update.message.text[1:],
-            'buddyId' : '',
+            'buddyId' : update.message.from_user['id'],
             'fileName' : ''
         }
         r = requests.get('http://localhost:5000/', data=payload)

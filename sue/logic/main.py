@@ -95,6 +95,8 @@ def process_reply():
             'messageBody': sue_response,
             'attachmentFilenames': [attachment]
         })
+    elif msg.platform is 'telegram':
+        return sue_response
     elif msg.platform is 'debug':
         return sue_response
     else:

@@ -30,6 +30,8 @@ class Message(object):
             self.chatType = 'signal-individual'
         elif 'signal-' in self.chatId:
             self.chatType = 'signal-group'
+        elif 'telegram-' in self.chatId:
+            self.chatType = 'telegram'
         elif self.chatId == 'debug':
             self.chatType = 'debug'
         else:
@@ -42,6 +44,8 @@ class Message(object):
             self.platform = 'imessage'
         elif 'signal' in self.chatType:
             self.platform = 'signal'
+        elif 'telegram' in self.chatType:
+            self.platform = 'telegram'
         elif self.chatType == 'debug':
             self.platform = 'debug'
         else:
@@ -55,11 +59,10 @@ class Message(object):
             else:
                 print('There was an error extracting the sender info.')
                 self.sender = self.buddyId
-        elif self.platform is 'signal':
+        elif (self.platform is 'signal') or (self.platform is 'telegram'):
             self.sender = self.buddyId
         else:
             self.sender = '?'
-
         self.fileName = msgForm['fileName'].replace('\n', '')
 
 
