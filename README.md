@@ -1,91 +1,45 @@
 # Sue
-### A Chatbot for iMessage
 
-Greetings, und willkommen to the lastest Inculi project— creating a chatbot for iMessage (and Signal).
+Greetings and welcome to Sue V3, a chatbot for iMessage (and soon also Telegram). The project is currently under renovation, though I hope to be done soonish.
 
-To use Sue with iMessage, it will have to be run on a Mac that has somewhat decent uptime (Signal should work on whatever). While most of the logic is in Python, it is interfaced with iMessage through an applescript handler that is set in iMessage's settings. You *might* want to make a new iCloud account to use with this (just sign into it in iMessage's settings). If you use your same iCloud account, you won't be able to send any commands— only your friends will.
+## What's New?
+We have switched from Python to Elixir, from Applescript to Sqlite calls, from Mongo to Mnesia, from global user definitions to scoped user definitions. Because it's Elixir, some parts of the code look beautiful. Because I'm still a n00b at Elixir, some parts will scare you. Sue's beauty has many dimensions... Two, to be precise.
 
-[Video Overview (YouTube)](https://www.youtube.com/watch?v=ocTAFPCH_A0)
+I'll hold off on making another [YouTube Video](https://www.youtube.com/watch?v=ocTAFPCH_A0) for V3 until I have more of it done. I've been wanting an excuse to buy a new server, and now that I can finally run Sue on an OS newer than Sierra, I want to get this done quickly.
 
-## Commands
+The following commands are currently supported:
 
 ```
-!8ball
-!choose <1> <2> ... <n>
-!define <word> <... meaning ...>
-!dirty
-!echo <... text ...>
+!choose
+!define
+!doog
 !flip
 !fortune
-!i <param> <image>
-!identify <image>
-!img <... query ...>
-!lewd <image>
-!lunch
-!name <newname>
-!pasta
-!person <image>
-!poll <topic>\n<opt1>\n<opt2> ...
-!qt
-!random <upper> <lower>
-!shuffle <1> <2> ... <n>
-!ud <... term ...>
+!ping
+!random
 !uptime
-!vote <letter>
-!whoami
-!wiki <... topic ...>
-!wikis <... topic ...> , <... search filter ...>
-!wolf <... question ...>
 ```
 
-## Pre-Requisites for Installation
+## How do I run it?
 
-- If you want to use iMessage, it requires MacOS Sierra, as High Sierra removes the Applescript Handler.
-- If you want to use Signal, you need Java.
+Again, it's still in development, so your Mnesia database may have to be cleared each update depending on what I change. If you're okay with that:
 
-**Note**: Apple's message handlers are a little... hacky. iMessage.app must be open, but its Window can't be in the foreground. If it's in the foreground, and the active chat you're looking at sends a message, it won't execute the script. If another chat other than the active chat sends a text, it will work, but then iMessage will switch to viewing that chat, and the next time they send something, it won't work. I'll let you ask Apple why that is.
+1. You need a mac with iMessage. You may be asked to enable disk access and Message control for this program (or, rather, Terminal/iTerm). I've been primarily testing this on Catalina, but it *should* work on older versions as well. I had some issues getting erlang's sqlite wrapper to compile on Sierra, but I think that was just my spaghetti system environment.
+2. `$ git clone https://github.com/inculi/Sue`
+3. `$ cd Sue`
+4. `$ mix deps.get`
+5. `$ iex -S mix`
 
-Just open iMessage and then command+tab to the terminal window you launched it in and you'll be fine.
+Now it should be running in Elixir's interactive shell. If you don't know much about Elixir, welcome to the party. As Griffin, P. & Megumin (2019) often wrote, "The joke here is that the author is inviting you to join him in the set of programmers not especially well-versed in the language, while also hinting at the joyous future that awaits all students of Elixir."
 
-## Setup
+## How do I help contribute?
 
-**Preface**: As this is still in alpha, I have not setup any build scripts or configuration/settings files. However, out of the kindness of my heart, I will explain how you can set this up for use (until I have the time to develop such things). You should know how to setup and install Mongo for this. If you don't, then you should know how to edit the Python code to remove the Mongo stuff.
+1. Submit an issue and I'll put together some instructions. Plugins are pretty simple: create a module under `lib/sue/commands/` and add its name to the top of `lib/sue.ex`
 
-`sue.applescript` is what is used to interface with iMessage. Open iMessage's preferences, and find the *applescript handler* dropdown. Select the *Open Folder* option, and move `sue.applescript` here. Close and reopen the preferences window, and select this as the new handler.
+## Special Thanks
 
-Now, for Mongo. Create a new database called `sue`, and four collections: `images`, `defns`, `polls`, `names`, `games`. Right now, only `defns` and `polls` are being used, but the others will come shortly.
-
-```bash
-$ mongod # now make a new tab in terminal
-$ mongo
-> use sue
-switched to db sue
-> db.createCollection('polls')
-{ "ok" : 1 }
-> db.createCollection('defns')
-{ "ok" : 1 }
-# ... do the rest yourself ...
-> show collections
-defns
-games
-images
-names
-polls
-```
-
-- Go to this directory.
-- `$ pip install -r requirements.txt`
-- Create a `config.py` file, and copy the stuff in `example_config.py` to it. Change as needed.
-
-Excellent. It should work now.
-
-## Usage
-
-- `$ python run.py`.
-- If you're using signal, open a new tab, and `$ python run_signal.py`.
-- If you want to test it out without using iMessage or signal, `$ python debug.py`
-
-## Setup Part II
-I'll put links here later about how to get the different API keys, but for now:
-
-If you want to create a vote on where to eat lunch, you need to define a `lunchplaces` variable. You can do it with: `!define lunchplaces taco bell, fuego, subway`. Then, `!lunch` See the video at the top of this README for more info on the commands.
+- Thanks for [Zeke's](https://github.com/ZekeSnider) work on [Jared](https://github.com/ZekeSnider/Jared). Your applescript files were cleaner than mine. Good thinking with sqlite.
+- [Peter's](https://github.com/reteps) work on [Otto](https://github.com/reteps/Otto), whose applescript handler was instrumental in Sue V1.
+- Multiple bloggers who wrote about iMessage's sqlite schema.
+- [Rick](https://github.com/rsrickshaw) for popping a shell in Sue V1, prompting the development of V2.
+- All the random [people](https://github.com/Sam1370) that have messaged and broken Sue, pushing me ever forward in its development.
