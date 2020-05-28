@@ -3,6 +3,7 @@ defmodule Sue do
   require Logger
 
   alias Sue.Commands.{Core, Defns, Images, Rand, Shell}
+  alias Sue.Models.{Message, Response, Attachment}
 
   @modules [Core, Defns, Images, Rand, Shell]
 
@@ -20,31 +21,48 @@ defmodule Sue do
   end
 
   @impl true
-  def handle_cast({:process, %Sue.Models.Message{command: "help"} = msg}, state) do
-    rsp = Core.help(msg, state.commands)
-    send_response(msg, rsp)
+  def handle_cast({:process, %Message{command: "help"} = msg}, state) do
+    {uSecs, :ok} =
+      :timer.tc(fn ->
+        rsp = Core.help(msg, state.commands)
+        send_response(msg, rsp)
+      end)
+
+    Logger.debug("[Sue] Processed msg #{inspect(msg.sue_id)} in #{uSecs / 1_000_000}s")
     {:noreply, state}
   end
 
   def handle_cast({:process, msg}, state) do
-    {module, f} =
-      case Map.get(state.commands, msg.command) do
-        nil -> {Defns, :calldefn}
-        {module, fname} -> {module, String.to_atom("c_" <> fname)}
-      end
+    {uSecs, :ok} =
+      :timer.tc(fn ->
+        {module, f} =
+          case Map.get(state.commands, msg.command) do
+            nil -> {Defns, :calldefn}
+            {module, fname} -> {module, String.to_atom("c_" <> fname)}
+          end
 
-    rsp = apply(module, f, [msg])
-    Logger.debug("Created response: #{rsp}")
-    send_response(msg, rsp)
+        rsp = apply(module, f, [msg])
+        send_response(msg, rsp)
+      end)
 
+    Logger.debug("[Sue] Processed msg #{inspect(msg.sue_id)} in #{uSecs / 1_000_000}s")
     {:noreply, state}
   end
 
-  def send_response(%Sue.Models.Message{platform: :imessage} = msg, rsp) do
+  def send_response(%Message{platform: :imessage} = msg, %Response{} = rsp) do
+    Logger.debug("[Sue] Created response: #{rsp}")
     Sue.Mailbox.IMessage.send_response(msg, rsp)
   end
 
-  @spec process_messages([Sue.Models.Message.t()]) :: :ok
+  def send_response(msg, %Attachment{} = att) do
+    send_response(msg, %Response{attachments: [att]})
+  end
+
+  def send_response(msg, [%Attachment{} | _] = atts) do
+    send_response(msg, %Response{attachments: atts})
+  end
+
+  @spec process_messages([Message.t()]) :: :ok
   def process_messages(msgs) do
     for msg <- msgs do
       if !msg.ignorable do
@@ -56,8 +74,8 @@ defmodule Sue do
   end
 
   defp process_message(msg) do
-    Logger.debug("Processing: #{inspect(msg)}")
-    GenServer.cast(__MODULE__, {:process, msg |> Sue.Models.Message.augment_two()})
+    Logger.debug("[Sue] Processing: #{inspect(msg)}")
+    GenServer.cast(__MODULE__, {:process, msg |> Message.augment_two()})
   end
 
   defp init_commands() do

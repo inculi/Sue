@@ -6,6 +6,7 @@ defmodule Sue.Models.Message do
   defstruct [
     :platform,
     :id,
+    :sue_id,
     :buddy,
     :body,
     :time,
@@ -36,6 +37,7 @@ defmodule Sue.Models.Message do
     %Message{
       platform: :imessage,
       id: message_id,
+      sue_id: make_ref(),
       buddy: %Buddy{id: handle_id, guid: handle_person_centric_id},
       body: body,
       time: DateTime.from_unix!(utc_date),
@@ -65,8 +67,7 @@ defmodule Sue.Models.Message do
     }
   end
 
-  @spec augment_two(Sue.Models.Message.t()) :: Sue.Models.Message.t()
-  def augment_two(msg) do
+  def augment_two(%Message{} = msg) do
     account = Account.resolve_and_relate(msg)
     %Message{msg | account: account}
   end
@@ -82,8 +83,13 @@ defmodule Sue.Models.Message do
 
   # to_string override
   defimpl String.Chars, for: Message do
-    def to_string(%Message{platform: protocol, buddy: %Buddy{id: bid}, chat: %Chat{id: cid}}) do
-      "#Message<#{protocol},#{bid},#{cid}>"
+    def to_string(%Message{
+          platform: protocol,
+          buddy: %Buddy{id: bid},
+          chat: %Chat{id: cid},
+          sue_id: sid
+        }) do
+      "#Message<#{protocol},#{bid},#{cid},#{sid |> inspect()}>"
     end
   end
 end

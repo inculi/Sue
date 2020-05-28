@@ -13,6 +13,7 @@ defmodule Sue.Commands.Defns do
 
   def calldefn(msg) do
     # meaning = get_defn!(msg) || "Command not found. Add it with !define."
+
     case DB.Defn.get(msg.command, msg.account, msg.chat) do
       {:ok, meaning} -> %Response{body: meaning}
       {:error, :not_found} -> %Response{body: "Command not found. Add it with !define."}

@@ -45,7 +45,7 @@ defmodule Sue.Commands.Core do
   end
 
   defp find_doc(fname_a, []) do
-    Logger.error("[Sue.find_doc] Improper searching of module docs for command: #{fname_a}")
+    Logger.error("[Sue.Commands.Core] Improper searching of module docs for command: #{fname_a}")
 
     "Hmm, I couldn't find that command. See the list of commands with !help"
   end
