@@ -1,21 +1,24 @@
 # Sue
 
-Greetings and welcome to Sue V3, a chatbot for iMessage (and soon also Telegram). The project is currently under renovation, though I hope to be done soonish.
+Greetings and welcome to Sue V3, a chatbot for iMessage and Telegram. The project is currently under renovation (Telegram portion is slightly unstable), though I hope to be done soonish.
 
 ## What's New?
+
 We have switched from Python to Elixir, from Applescript to Sqlite calls, from Mongo to Mnesia, from global user definitions to scoped user definitions. Because it's Elixir, some parts of the code look beautiful. Because I'm still a n00b at Elixir, some parts will scare you. Sue's beauty has many dimensions... Two, to be precise.
 
-I'll hold off on making another [YouTube Video](https://www.youtube.com/watch?v=ocTAFPCH_A0) for V3 until I have more of it done. I've been wanting an excuse to buy a new server, and now that I can finally run Sue on an OS newer than Sierra, I want to get this done quickly.
+I'll hold off on making a [YouTube Video](https://www.youtube.com/watch?v=ocTAFPCH_A0) for V3 until I have more of it done. I've been wanting an excuse to buy a new server, and now that I can finally run Sue on an OS newer than Sierra, I want to get this done quickly.
 
 The following commands are currently supported:
 
 ```
 !choose
+!cringe
 !define
 !doog
 !flip
 !fortune
 !ping
+!qt
 !random
 !uptime
 ```
@@ -24,11 +27,13 @@ The following commands are currently supported:
 
 Again, it's still in development, so your Mnesia database may have to be cleared each update depending on what I change. If you're okay with that:
 
-1. You need a mac with iMessage. You may be asked to enable disk access and Message control for this program (or, rather, Terminal/iTerm). I've been primarily testing this on Catalina, but it *should* work on older versions as well. I had some issues getting erlang's sqlite wrapper to compile on Sierra, but I think that was just my spaghetti system environment.
-2. `$ git clone https://github.com/inculi/Sue`
-3. `$ cd Sue`
-4. `$ mix deps.get`
-5. `$ iex -S mix`
+1. If you want to use iMessage, you need a mac with iMessage. You may be asked to enable disk access and Message control for this program (or, rather, Terminal/iTerm). I've been primarily testing this on Catalina, but it *should* work on older versions as well. I had some issues getting erlang's sqlite wrapper to compile on Sierra, but I think that was just my spaghetti system environment.
+2. If you want to use Telegram, you should make a Telegram API key. Look up how, it's pretty straightforward. Make a `config/config.secret.exs` file, using `config/config.secret.exs.example` as reference.
+3. `$ git clone https://github.com/inculi/Sue`
+4. `$ cd Sue`
+5. `$ mix deps.get`
+6. `$ iex -S mix`
+7. `$ Sue.post_init()` I told you Telegram stuff was still half-finished, didn't I?
 
 Now it should be running in Elixir's interactive shell. If you don't know much about Elixir, welcome to the party. As Griffin, P. & Megumin (2019) often wrote, "The joke here is that the author is inviting you to join him in the set of programmers not especially well-versed in the language, while also hinting at the joyous future that awaits all students of Elixir."
 
