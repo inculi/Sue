@@ -58,6 +58,7 @@ defmodule Sue.Mailbox.IMessage do
     ]
 
     System.cmd("osascript", args)
+    :ok
   end
 
   defp send_response_text(%Message{chat: %Chat{is_direct: false}} = msg, rsp) do
