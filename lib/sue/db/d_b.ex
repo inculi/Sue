@@ -85,7 +85,7 @@ defmodule Sue.DB do
       module.db_tables()
       |> Enum.map(fn {table_name, opts} ->
         res = create_table(table_name, opts |> Keyword.put_new(:disc_copies, nodes))
-        Logger.debug("[Sue.DB] create_table(#{table_name}) -> #{inspect(res)}")
+        Logger.info("[Sue.DB] create_table(#{table_name}) -> #{inspect(res)}")
       end)
     end)
   end

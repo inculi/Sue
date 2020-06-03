@@ -53,6 +53,29 @@ defmodule Sue.Models.Message do
     |> augment_one()
   end
 
+  def new(msg, command, context, :telegram) do
+    %Message{
+      platform: :telegram,
+      id: msg.chat.id,
+      sue_id: make_ref(),
+      buddy: %Buddy{id: msg.from.id},
+      body: context.update.message.text |> String.trim(),
+      time: DateTime.from_unix!(msg.date),
+      chat: %Chat{
+        platform: :telegram,
+        id: msg.chat.id,
+        is_direct: msg.chat.type == "private"
+      },
+      # account:
+      from_me: false,
+      ignorable: false,
+      # attachments:
+      has_attachments: false,
+      command: command,
+      args: msg.text
+    }
+  end
+
   defp augment_one(%Message{ignorable: true} = msg), do: msg
 
   defp augment_one(msg) do

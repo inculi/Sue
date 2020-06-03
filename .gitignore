@@ -1,8 +1,10 @@
 notes/
 Mnesia.nonode@nohost/
-.vscode/
-
 .DS_Store
+
+# Development crumbs
+.elixir_ls/
+.vscode/
 
 # The directory Mix will write compiled artifacts to.
 /_build/
@@ -28,3 +30,5 @@ erl_crash.dump
 # Ignore package tarball (built via "mix hex.build").
 sue-*.tar
 
+# API keys, etc.
+/config/*.secret.exs

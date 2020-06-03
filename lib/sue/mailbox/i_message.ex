@@ -34,9 +34,9 @@ defmodule Sue.Mailbox.IMessage do
     |> process_messages()
   end
 
-  def send_response(_msg, %Response{body: nil, attachments: nil}), do: :ok
+  def send_response(_msg, %Response{body: nil, attachments: []}), do: :ok
 
-  def send_response(msg, %Response{attachments: nil} = rsp) do
+  def send_response(msg, %Response{attachments: []} = rsp) do
     send_response_text(msg, rsp)
   end
 

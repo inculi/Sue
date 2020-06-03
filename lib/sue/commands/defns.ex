@@ -8,6 +8,9 @@ defmodule Sue.Commands.Defns do
   # TODO: re-implement #variable injection
   # TODO: User-defined lambdas
 
+  Module.register_attribute(__MODULE__, :is_persisted, persist: true)
+  @is_persisted "is persisted"
+
   alias Sue.DB
   alias Sue.Models.{Response, Message}
 

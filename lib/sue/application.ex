@@ -8,13 +8,15 @@ defmodule Sue.Application do
     import Supervisor.Spec
 
     children = [
+      Sue,
       Sue.DB,
       Sue.Mailbox.IMessage,
       worker(Sqlitex.Server, [
         Application.get_env(:sue, :chat_db_path),
         [name: Sue.IMessageChatDB]
       ]),
-      Sue
+      ExGram,
+      {Sue.Mailbox.Telegram, [method: :polling, token: Application.get_env(:ex_gram, :token)]}
     ]
 
     opts = [strategy: :one_for_one, name: Sue.Supervisor]

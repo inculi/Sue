@@ -1,4 +1,7 @@
 defmodule Sue.Commands.Core do
+  Module.register_attribute(__MODULE__, :is_persisted, persist: true)
+  @is_persisted "is persisted"
+
   alias Sue.Models.{Message, Response}
   require Logger
 
@@ -29,36 +32,18 @@ defmodule Sue.Commands.Core do
   def help(%Message{args: args}, commands) do
     [k | _] = args |> String.split(" ", parts: 2)
 
-    case commands |> Map.get(k) do
-      nil ->
-        %Response{
-          body: "Hmm, I couldn't find that command. See the list of commands with !help"
-        }
+    body =
+      case commands |> Map.get(k) do
+        nil ->
+          "Hmm, I couldn't find that command. See the list of commands with !help"
 
-      {module, fname} ->
-        fname_a = String.to_atom("c_" <> fname)
+        {_, _, ""} ->
+          "No documentation for that yet. Let us know! https://github.com/inculi/Sue"
 
-        {_, _, _, _, _, _, docs} = Code.fetch_docs(module)
-        body = find_doc(fname_a, docs)
-        %Response{body: body}
-    end
-  end
+        {_, _, doc} ->
+          doc
+      end
 
-  defp find_doc(fname_a, []) do
-    Logger.error("[Sue.Commands.Core] Improper searching of module docs for command: #{fname_a}")
-
-    "Hmm, I couldn't find that command. See the list of commands with !help"
-  end
-
-  defp find_doc(fname_a, [{{:function, fname_a, _}, _, _, :none, _} | _docs]) do
-    "No documentation for that yet. Let us know! https://github.com/inculi/Sue"
-  end
-
-  defp find_doc(fname_a, [{{:function, fname_a, _}, _, _, %{"en" => doc}, _} | _]) do
-    doc
-  end
-
-  defp find_doc(fname_a, [{{:function, _, _}, _, _, _, _} | docs]) do
-    find_doc(fname_a, docs)
+    %Response{body: body}
   end
 end

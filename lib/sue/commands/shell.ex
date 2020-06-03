@@ -1,4 +1,6 @@
 defmodule Sue.Commands.Shell do
+  Module.register_attribute(__MODULE__, :is_persisted, persist: true)
+  @is_persisted "is persisted"
   alias Sue.Models.Response
 
   @doc """
