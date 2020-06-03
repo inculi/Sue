@@ -54,6 +54,17 @@ defmodule Sue.Models.Message do
   end
 
   def new(msg, command, context, :telegram) do
+    botnameSuffix = "@" <> context.bot_info.username
+
+    command =
+      cond do
+        String.ends_with?(command, botnameSuffix) ->
+          String.slice(command, 0, String.length(command) - String.length(botnameSuffix))
+
+        true ->
+          command
+      end
+
     %Message{
       platform: :telegram,
       id: msg.chat.id,

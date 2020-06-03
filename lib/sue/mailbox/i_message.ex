@@ -68,6 +68,7 @@ defmodule Sue.Mailbox.IMessage do
     ]
 
     System.cmd("osascript", args)
+    :ok
   end
 
   defp send_response_attachments(_msg, []), do: :ok
