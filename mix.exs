@@ -22,7 +22,7 @@ defmodule Sue.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ex_gram, path: "/Users/robert/prog.nosync/ex_gram"},
+      {:ex_gram, git: "https://github.com/Manwholikespie/ex_gram.git"},
       {:tesla, "~> 1.3.3"},
       {:jason, "~> 1.2"},
       {:castore, "~> 0.1.0"},
