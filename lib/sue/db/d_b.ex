@@ -38,11 +38,13 @@ defmodule Sue.DB do
     |> elixirize_output()
   end
 
+  @spec get!(Atom.t(), any, any) :: any
   def get!(table, key, default \\ nil) do
     {:ok, val} = get(table, key, default)
     val
   end
 
+  @spec get(Atom.t(), any, any) :: {:error, any} | {:ok, any}
   def get(table, key, default \\ nil) do
     with {:atomic, res} <-
            fn -> Mnesia.read({table, key}) end

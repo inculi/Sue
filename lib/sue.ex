@@ -2,10 +2,10 @@ defmodule Sue do
   use GenServer
   require Logger
 
-  alias Sue.Commands.{Core, Defns, Images, Rand, Shell}
+  alias Sue.Commands.{Core, Defns, Images, Rand, Shell, Poll}
   alias Sue.Models.{Message, Response, Attachment}
 
-  @modules [Core, Defns, Images, Rand, Shell]
+  @modules [Core, Defns, Images, Rand, Shell, Poll]
 
   def start_link(args) do
     GenServer.start_link(__MODULE__, args, name: __MODULE__)
