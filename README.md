@@ -11,6 +11,7 @@ I'll hold off on making a [YouTube Video](https://www.youtube.com/watch?v=ocTAFP
 The following commands are currently supported:
 
 ```
+!8ball
 !choose
 !cringe
 !define
@@ -18,9 +19,11 @@ The following commands are currently supported:
 !flip
 !fortune
 !ping
+!poll
 !qt
 !random
 !uptime
+!vote
 ```
 
 ## How do I run it?
