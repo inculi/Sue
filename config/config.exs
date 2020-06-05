@@ -1,6 +1,7 @@
 import Config
 
 config :sue,
+  platforms: [:imessage, :telegram],
   chat_db_path: Path.join(System.user_home(), "Library/Messages/chat.db")
 
 config :tesla, adapter: Tesla.Adapter.Mint

@@ -102,7 +102,7 @@ defmodule Sue.Mailbox.IMessage do
   defp process_messages(msgs) do
     msgs
     |> Enum.sort_by(fn m -> Keyword.get(m, :utc_date) end)
-    |> Enum.map(fn m -> Message.new(m, :imessage) end)
+    |> Enum.map(fn m -> Message.new(:imessage, m) end)
     |> add_attachments()
     |> set_new_max_rowid()
     |> Sue.process_messages()

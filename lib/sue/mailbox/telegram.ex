@@ -17,16 +17,31 @@ defmodule Sue.Mailbox.Telegram do
 
   def handle({:command, command, msg}, context) do
     Logger.info("msg: #{inspect(msg)}\n\ncontext: #{inspect(context)}")
-
-    msg = Message.new(msg, command, context, :telegram)
+    msg = Message.new(:telegram, %{msg: msg, command: command, context: context})
     Sue.process_messages([msg])
+    :ok
   end
 
   def handle({:message, msg}, context) do
-    Logger.error("Can't handle this yet. msg: #{inspect(msg)}\n\ncontext: #{context}")
+    Logger.info("msg: #{inspect(msg)}\n\ncontext: #{inspect(context)}")
+    msg = Message.new(:telegram, %{msg: msg, context: context})
+    Sue.process_messages([msg])
+    :ok
   end
 
   def handle({:text, _text, _msg}, _context) do
+    # Direct text or reply in group
+    # Logger.info("text: #{inspect(text)}\nmsg: #{inspect(msg)}\n\ncontext: #{inspect(context)}")
+    :ok
+  end
+
+  def handle({:update, _update}, _context) do
+    # Poll responses
+    :ok
+  end
+
+  def send_response(_msg, %Response{body: nil, attachments: []}) do
+    # Likely already sent custom response (ex: polls)
     :ok
   end
 

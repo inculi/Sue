@@ -32,11 +32,12 @@ Again, it's still in development, so your Mnesia database may have to be cleared
 
 1. If you want to use iMessage, you need a mac with iMessage. You may be asked to enable disk access and Message control for this program (or, rather, Terminal/iTerm). I've been primarily testing this on Catalina, but it *should* work on older versions as well. I had some issues getting erlang's sqlite wrapper to compile on Sierra, but I think that was just my spaghetti system environment.
 2. If you want to use Telegram, you should make a Telegram API key. Look up how, it's pretty straightforward. Make a `config/config.secret.exs` file, using `config/config.secret.exs.example` as reference.
-3. `$ git clone https://github.com/inculi/Sue`
-4. `$ cd Sue`
-5. `$ mix deps.get`
-6. `$ iex -S mix`
-7. `$ Sue.post_init()` I told you Telegram stuff was still half-finished, didn't I?
+3. If you wish to disable the Telegram or iMessage half of this program, modify the platform list under `config/config.exs` to what you wish to keep.
+4. `$ git clone https://github.com/inculi/Sue`
+5. `$ cd Sue`
+6. `$ mix deps.get`
+7. `$ iex -S mix`
+8. `$ Sue.post_init()` I told you Telegram stuff was still half-finished, didn't I?
 
 Now it should be running in Elixir's interactive shell. If you don't know much about Elixir, welcome to the party. As Griffin, P. & Megumin (2019) often wrote, "The joke here is that the author is inviting you to join him in the set of programmers not especially well-versed in the language, while also hinting at the joyous future that awaits all students of Elixir."
 

@@ -17,6 +17,7 @@ defmodule Sue.DB.Poll do
   @spec set(Chat.t(), Map.t()) :: any()
   def set(chat, poll), do: DB.set({:polls, chat, poll})
 
+  @spec get(any) :: {:error, any} | {:ok, any}
   def get(chat), do: DB.get(:polls, chat)
 
   @doc """
@@ -27,6 +28,16 @@ defmodule Sue.DB.Poll do
     poll = %{topic: topic, choices: choices, votes: %{}}
     set(chat, poll)
     poll
+  end
+
+  @doc """
+  Marks a chat as having an active "custom" poll, where the poll is handled by
+    the application rather than Sue.
+  """
+  @spec new_custom(Chat.t(), String.t(), [String.t()]) :: Map.t()
+  def new_custom(chat, topic, choices) do
+    set(chat, :custom)
+    %{topic: topic, choices: choices, votes: %{}}
   end
 
   @spec update(Chat.t(), Account.t(), integer()) ::

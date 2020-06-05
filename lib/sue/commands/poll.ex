@@ -25,12 +25,25 @@ defmodule Sue.Commands.Poll do
   Usage: !vote a
   """
   def c_vote(msg) do
+    case DB.Poll.get(msg.chat) do
+      {:ok, :custom} ->
+        %Response{body: "Please use this messenger's custom polling interface."}
+
+      {:ok, nil} ->
+        %Response{body: "A poll does not exist for this chat."}
+
+      {:ok, _poll} ->
+        vote(msg)
+    end
+  end
+
+  def vote(msg) do
     args = String.downcase(msg.args)
 
     if String.match?(args, ~r/^[a-z]$/) do
       case DB.Poll.update(msg.chat, msg.account, alpha_to_idx(args)) do
         {:ok, newpoll} ->
-          poll_to_response(newpoll, msg.platform)
+          poll_to_response(newpoll, msg)
 
         {:error, reason} ->
           %Response{body: reason}
@@ -44,24 +57,48 @@ defmodule Sue.Commands.Poll do
     %Response{body: "Please specify options for the poll. See !help poll"}
   end
 
-  defp create_poll(msg, [topic | choices]) when is_list(choices) and length(choices) <= 26 do
-    DB.Poll.new(msg.chat, topic, choices)
-    |> poll_to_response(msg.platform)
+  defp create_poll(msg, [topic | choices])
+       when is_list(choices) and length(choices) <= 26 do
+    cond do
+      # Telegram's custom polling interface requires 10 options or less.
+      msg.platform == :telegram and length(choices) <= 10 ->
+        DB.Poll.new_custom(msg.chat, topic, choices)
+        |> poll_to_response(msg)
+
+      true ->
+        DB.Poll.new(msg.chat, topic, choices)
+        |> poll_to_response(msg)
+    end
   end
 
   defp create_poll(_msg, _) do
     %Response{body: "Please limit to 26 options or less."}
   end
 
-  @spec poll_to_response(Map.t(), Atom.t()) :: Response.t()
-  defp poll_to_response(%{topic: topic, choices: choices, votes: votes}, :imessage) do
+  @spec poll_to_response(Map.t(), Message.t()) :: Response.t()
+  defp poll_to_response(%{topic: topic, choices: choices, votes: votes}, %Message{
+         platform: :imessage
+       }) do
     # To text
     %Response{body: poll_text(topic, choices, votes)}
   end
 
-  defp poll_to_response(%{topic: topic, choices: choices, votes: votes}, :telegram) do
-    # TODO: Implement Telegram's poll object, I imagine as some form of attachment.
-    %Response{body: poll_text(topic, choices, votes)}
+  defp poll_to_response(%{topic: topic, choices: choices, votes: votes} = poll, %Message{
+         platform: :telegram,
+         chat: chat
+       }) do
+    if length(choices) > 10 do
+      # Resort to typical poll interface
+      %Response{body: poll_text(topic, choices, votes)}
+    else
+      # Use Telegram's custom interface.
+      poll
+      |> (fn %{topic: topic, choices: choices} ->
+            ExGram.send_poll(chat.id, topic, choices, is_anonymous: false)
+          end).()
+
+      %Response{}
+    end
   end
 
   defp poll_text(topic, choices, votes) when map_size(votes) == 0 do
