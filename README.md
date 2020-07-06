@@ -1,12 +1,10 @@
 # Sue
 
-Greetings and welcome to Sue V3, a chatbot for iMessage and Telegram. The project is currently under renovation (Telegram portion is slightly unstable), though I hope to be done soonish.
+Greetings and welcome to Sue V3, a chatbot for iMessage and Telegram. I'm sure portions of questionable stability exist, so please report any issues.
 
 ## What's New?
 
-We have switched from Python to Elixir, from Applescript to Sqlite calls, from Mongo to Mnesia, from global user definitions to scoped user definitions. Because it's Elixir, some parts of the code look beautiful. Because I'm still a n00b at Elixir, some parts will scare you. Sue's beauty has many dimensions... Two, to be precise.
-
-I'll hold off on making a [YouTube Video](https://www.youtube.com/watch?v=ocTAFPCH_A0) for V3 until I have more of it done. I've been wanting an excuse to buy a new server, and now that I can finally run Sue on an OS newer than Sierra, I want to get this done quickly.
+We have switched from Python to Elixir, from Applescript to Sqlite calls, from Mongo to Mnesia, from global user definitions to scoped user definitions. Because it's Elixir, some parts of the code look beautiful. Because I'm still a n00b at Elixir, some parts will scare you. I will refrain from making a [YouTube Video](https://www.youtube.com/watch?v=ocTAFPCH_A0) for V3 until I have more of it done.
 
 The following commands are currently supported:
 
@@ -25,6 +23,8 @@ The following commands are currently supported:
 !uptime
 !vote
 ```
+
+Telegram uses the slash (/) prefix instead. Sue will not respond to you unless you use the proper prefix. Don't just message her "hi", expecting a miracle.
 
 ## How do I run it?
 
