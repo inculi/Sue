@@ -28,15 +28,15 @@ defmodule Sue.Commands.Defns do
   ---
   You: !define myword this is my definition
   Sue: myword updated.
-  You: !word
+  You: !myword
   Sue: this is my definition
   """
-  def c_define(%Message{args: ""}), do: %Response{body: "Please supply a word and meaning."}
+  def c_define(%Message{args: ""}), do: %Response{body: "Please supply a word and meaning. See !help define"}
 
   def c_define(msg) do
     case msg.args |> String.split(" ", parts: 2) do
       [_word] ->
-        %Response{body: "Please supply a meaning for the word."}
+        %Response{body: "Please supply a meaning for the word. See !help define"}
 
       [word, val] ->
         {:ok, _} = Definition.set(word |> String.downcase(), val, :text, msg.chat, msg.account)

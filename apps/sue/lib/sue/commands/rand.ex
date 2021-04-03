@@ -15,6 +15,10 @@ defmodule Sue.Commands.Rand do
   Returns a random object in your space-delimited argument.
   Usage: !choose up down left right
   """
+  def c_choose(%Message{args: ""}) do
+    %Response{body: "Please provide a list of things to select. See !help choose"}
+  end
+
   def c_choose(%Message{args: args}) do
     %Response{
       body:
