@@ -16,7 +16,7 @@ defmodule Sue.Commands.Defns do
   def calldefn(msg) do
     # meaning = get_defn!(msg) || "Command not found. Add it with !define."
 
-    case Definition.get(msg.command, :text, msg.chat, msg.account) do
+    case Definition.get(msg.command |> String.downcase(), :text, msg.chat, msg.account) do
       nil -> %Response{body: "Command not found. Add it with !define."}
       defn -> %Response{body: defn.val}
     end
@@ -39,7 +39,8 @@ defmodule Sue.Commands.Defns do
         %Response{body: "Please supply a meaning for the word."}
 
       [word, val] ->
-        {:ok, _} = Definition.set(word, val, :text, msg.chat, msg.account)
+        {:ok, _} = Definition.set(word |> String.downcase(), val, :text, msg.chat, msg.account)
+
         %Response{body: "#{word} updated."}
     end
   end

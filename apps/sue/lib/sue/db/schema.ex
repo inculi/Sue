@@ -79,7 +79,7 @@ defmodule Sue.DB.Schema do
     graph_tables =
       for vtype <- vtypes() do
         table_name = Vertex.label(vtype)
-        table_opts = [type: :set, attributes: [:key, :val]]
+        table_opts = kv_opts()
         {table_name, table_opts}
       end ++
         [
