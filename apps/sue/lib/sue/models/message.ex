@@ -1,4 +1,6 @@
 defmodule Sue.Models.Message do
+  require Logger
+
   alias __MODULE__
   alias Sue.Models.{Platform, Account, PlatformAccount, Chat}
 
@@ -55,6 +57,7 @@ defmodule Sue.Models.Message do
       utc_date: utc_date
     ] = kw
 
+    Logger.debug("from_me: #{from_me}")
     from_me = from_me == 1
 
     %Message{
@@ -81,22 +84,13 @@ defmodule Sue.Models.Message do
   def new(:telegram, %{msg: msg, command: command, context: context}) do
     # When multiple bots are in the same chat, telegram sometimes suffixes
     #   commands with bot names
-    botnameSuffix = "@" <> context.bot_info.username
-
-    command =
-      cond do
-        String.ends_with?(command, botnameSuffix) ->
-          String.slice(command, 0, String.length(command) - String.length(botnameSuffix))
-
-        true ->
-          command
-      end
+    command = parse_command_with_botname_suffix(command, "@" <> context.bot_info.username)
 
     %Message{
       platform: :telegram,
       id: msg.chat.id,
       platform_account: %PlatformAccount{platform: :telegram, id: msg.from.id},
-      body: context.update.message.text |> String.trim(),
+      body: context.update.message.text |> better_trim(),
       time: DateTime.from_unix!(msg.date),
       chat: %Chat{
         platform: :telegram,
@@ -162,12 +156,12 @@ defmodule Sue.Models.Message do
   defp augment_one(%Message{is_ignorable: true} = msg), do: msg
 
   defp augment_one(%Message{platform: :imessage} = msg) do
-    "!" <> newbody = msg.body |> String.trim()
+    "!" <> newbody = msg.body |> better_trim()
     parse_command(msg, newbody)
   end
 
   defp augment_one(%Message{platform: :telegram} = msg) do
-    "/" <> newbody = msg.body |> String.trim()
+    "/" <> newbody = msg.body |> better_trim()
     parse_command(msg, newbody)
   end
 
@@ -191,6 +185,31 @@ defmodule Sue.Models.Message do
     }
   end
 
+  defp parse_command_with_botname_suffix(command, botname_suffix) do
+    cond do
+      String.ends_with?(command, botname_suffix) ->
+        String.slice(command, 0, String.length(command) - String.length(botname_suffix))
+
+      true ->
+        command
+    end
+  end
+
+  # character 65532 (OBJECT REPLACEMENT CHARACTER) is used in iMessage when you
+  #   also have an image, like a fancy carriage return. trim_leading doesn't
+  #   currently find this.
+  defp better_trim_leading(text) when is_bitstring(text) do
+    text
+    |> String.replace_leading(List.to_string([65532]), "")
+    |> String.trim_leading()
+  end
+
+  defp better_trim(text) do
+    text
+    |> better_trim_leading()
+    |> String.trim()
+  end
+
   # This binary classifier will grow in complexity over time.
   defp is_ignorable?(_platform, true, _body), do: true
 
@@ -201,7 +220,7 @@ defmodule Sue.Models.Message do
   end
 
   defp is_ignorable?(platform, _from_me, body) when platform in [:imessage, :debug] do
-    not Regex.match?(~r/^!(?! )./u, body |> String.trim_leading())
+    not Regex.match?(~r/^!(?! )./u, better_trim_leading(body))
   end
 
   # to_string override

@@ -125,14 +125,20 @@ defmodule Sue.Mailbox.IMessage do
           |> Enum.group_by(fn a -> a.message_id end)
       end
 
-    msgs
-    |> Enum.map(fn m ->
-      if m.has_attachments do
-        %Message{m | attachments: Map.get(attachments, m.id)}
-      else
-        %Message{m | attachments: []}
-      end
-    end)
+    Logger.debug("Attachments: #{attachments |> inspect()}")
+
+    blah =
+      msgs
+      |> Enum.map(fn m ->
+        if m.has_attachments do
+          %Message{m | attachments: Map.get(attachments, m.id)}
+        else
+          %Message{m | attachments: []}
+        end
+      end)
+
+    Logger.debug("msgs: #{blah |> inspect()}")
+    blah
   end
 
   defp set_new_max_rowid(msgs) do
@@ -176,7 +182,9 @@ defmodule Sue.Mailbox.IMessage do
     query(q)
   end
 
-  defp query_attachments_since(rowid) do
+  def query_attachments_since(rowid) do
+    Logger.debug("Querying attachments since rowid #{rowid}...?")
+
     q = """
     SELECT attachment.ROWID AS a_id, message_attachment_join.message_id AS m_id, attachment.filename, attachment.mime_type, attachment.total_bytes FROM attachment INNER JOIN message_attachment_join ON attachment.ROWID == message_attachment_join.attachment_id WHERE message_attachment_join.message_id >= #{
       rowid
