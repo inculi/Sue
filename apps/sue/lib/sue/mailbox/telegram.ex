@@ -40,16 +40,16 @@ defmodule Sue.Mailbox.Telegram do
     context
   end
 
-  # def handle({:text, text, msg}, _context) do
-  #   # Direct text or reply in group
-  #   # Logger.info("text: #{inspect(text)}\nmsg: #{inspect(msg)}\n\ncontext: #{inspect(context)}")
-  #   :ok
-  # end
+  def handle({:text, _text, _msg}, _context) do
+    # Direct text or reply in group
+    # Logger.info("text: #{inspect(text)}\nmsg: #{inspect(msg)}\n\ncontext: #{inspect(context)}")
+    :ok
+  end
 
-  # def handle({:update, update}, _context) do
-  #   # Poll responses
-  #   :ok
-  # end
+  def handle({:update, _update}, _context) do
+    # Poll responses
+    :ok
+  end
 
   def send_response(_msg, %Response{body: nil, attachments: []}) do
     # Likely already sent custom response (ex: polls)
