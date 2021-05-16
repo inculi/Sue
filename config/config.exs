@@ -36,7 +36,7 @@ config :mnesia,
   dir: String.to_charlist(mnesia_dir)
 
 config(:sue,
-  platforms: [:imessage, :telegram],
+  platforms: [:imessage],
   chat_db_path: Path.join(System.user_home(), "Library/Messages/chat.db")
 )
 
