@@ -1,6 +1,8 @@
 defmodule Sue.Models.Message do
+  require Logger
+
   alias __MODULE__
-  alias Sue.Models.{Platform, Account, PlatformAccount, Chat}
+  alias Sue.Models.{Platform, Account, PlatformAccount, Chat, Attachment}
 
   @enforce_keys [:platform, :id, :platform_account, :chat, :body, :is_ignorable]
   defstruct [
@@ -55,6 +57,7 @@ defmodule Sue.Models.Message do
       utc_date: utc_date
     ] = kw
 
+    Logger.debug("from_me: #{from_me}")
     from_me = from_me == 1
 
     %Message{
@@ -78,66 +81,76 @@ defmodule Sue.Models.Message do
     |> augment_one()
   end
 
-  def new(:telegram, %{msg: msg, command: command, context: context}) do
-    # When multiple bots are in the same chat, telegram sometimes suffixes
-    #   commands with bot names
-    botnameSuffix = "@" <> context.bot_info.username
+  # def new(:telegram, %{msg: msg, command: command, context: context}) do
+  #   # When multiple bots are in the same chat, telegram sometimes suffixes
+  #   #   commands with bot names
 
-    command =
-      cond do
-        String.ends_with?(command, botnameSuffix) ->
-          String.slice(command, 0, String.length(command) - String.length(botnameSuffix))
+  #   Logger.info("new 1 called")
 
-        true ->
-          command
+  #   command =
+  #     parse_command_potentially_with_botname_suffix(command, "@" <> context.bot_info.username)
+
+  #   %Message{
+  #     platform: :telegram,
+  #     id: msg.chat.id,
+  #     platform_account: %PlatformAccount{platform: :telegram, id: msg.from.id},
+  #     body: context.update.message.text |> better_trim(),
+  #     time: DateTime.from_unix!(msg.date),
+  #     chat: %Chat{
+  #       platform: :telegram,
+  #       id: msg.chat.id,
+  #       is_direct: msg.chat.type == "private"
+  #     },
+  #     # account:
+  #     is_from_sue: false,
+  #     is_ignorable: false,
+  #     # attachments:
+  #     has_attachments:
+  #       Map.get(msg, :reply_to_message, %{})[:photo] != nil or
+  #         Map.get(msg, :reply_to_message, %{})[:document] != nil,
+  #     command: command,
+  #     args: msg.text
+  #   }
+  # end
+
+  def new(:telegram, %{msg: msg, context: context} = update) do
+    Logger.info("NEW new called")
+
+    {command, args, body} =
+      case Map.get(update, :command) do
+        nil -> command_args_from_body(:telegram, Map.get(msg, :caption, ""))
+        c -> {c, msg.text, context.update.message.text}
       end
 
+    command =
+      parse_command_potentially_with_botname_suffix(command, "@" <> context.bot_info.username)
+
     %Message{
       platform: :telegram,
       id: msg.chat.id,
       platform_account: %PlatformAccount{platform: :telegram, id: msg.from.id},
-      body: context.update.message.text |> String.trim(),
+      body: body |> better_trim(),
       time: DateTime.from_unix!(msg.date),
       chat: %Chat{
         platform: :telegram,
         id: msg.chat.id,
         is_direct: msg.chat.type == "private"
       },
-      # account:
+
+      # we don't initialize handlers for non-command or sue messages
       is_from_sue: false,
       is_ignorable: false,
-      # attachments:
+
+      # either in the message sent, or the message referenced in a reply
       has_attachments:
-        Map.get(msg, :reply_to_message, %{})[:photo] != nil or
+        Map.get(msg, :photo) != nil or
+          Map.get(msg, :document) != nil or
+          Map.get(msg, :reply_to_message, %{})[:photo] != nil or
           Map.get(msg, :reply_to_message, %{})[:document] != nil,
       command: command,
-      args: msg.text
+      args: args
     }
-  end
-
-  def new(:telegram, %{msg: msg, context: _context}) do
-    # No command specified, so we have to parse it from the body.
-    body = Map.get(msg, :caption, "")
-
-    %Message{
-      platform: :telegram,
-      id: msg.chat.id,
-      platform_account: %PlatformAccount{platform: :telegram, id: msg.from.id},
-      body: body,
-      time: DateTime.from_unix!(msg.date),
-      chat: %Chat{
-        platform: :telegram,
-        id: msg.chat.id,
-        is_direct: msg.chat.type == "private"
-      },
-      is_from_sue: false,
-      is_ignorable: is_ignorable?(:telegram, false, body),
-      has_attachments:
-        msg[:photo] != nil or msg[:document] != nil or
-          Map.get(msg, :reply_to_message, %{})[:photo] != nil or
-          Map.get(msg, :reply_to_message, %{})[:document] != nil
-    }
-    |> augment_one()
+    |> construct_attachments(msg)
   end
 
   # TODO: Finish implementing this.
@@ -155,6 +168,30 @@ defmodule Sue.Models.Message do
     }
   end
 
+  def construct_attachments(%Message{has_attachments: false} = msg, _), do: msg
+
+  def construct_attachments(%Message{platform: :telegram} = msg, data) do
+    list_of_atts =
+      Map.get(data, :photo) ||
+        Map.get(data, :document) ||
+        Map.get(data, :reply_to_message, %{})[:photo] ||
+        Map.get(data, :reply_to_message, %{})[:document]
+
+    list_of_atts =
+      if is_map(list_of_atts) do
+        [list_of_atts]
+      else
+        list_of_atts
+      end
+
+    %Message{
+      msg
+      | attachments:
+          list_of_atts
+          |> Enum.map(fn a -> Attachment.new(a, :telegram) end)
+    }
+  end
+
   # First stage of adding new fields to our Message. Primarily concerned with
   #   parsing commands, args, stripping whitespace.
   @spec augment_one(Message.t()) :: Message.t()
@@ -162,12 +199,12 @@ defmodule Sue.Models.Message do
   defp augment_one(%Message{is_ignorable: true} = msg), do: msg
 
   defp augment_one(%Message{platform: :imessage} = msg) do
-    "!" <> newbody = msg.body |> String.trim()
+    "!" <> newbody = msg.body |> better_trim()
     parse_command(msg, newbody)
   end
 
   defp augment_one(%Message{platform: :telegram} = msg) do
-    "/" <> newbody = msg.body |> String.trim()
+    "/" <> newbody = msg.body |> better_trim()
     parse_command(msg, newbody)
   end
 
@@ -191,6 +228,46 @@ defmodule Sue.Models.Message do
     }
   end
 
+  # TODO: Replace all of this with regular expressions.
+  @spec command_args_from_body(Platform.t(), String.t()) :: {String.t(), String.t(), String.t()}
+  defp command_args_from_body(:telegram, body) do
+    "/" <> newbody = body |> better_trim()
+    [command | args] = String.split(newbody, " ", parts: 2)
+    {command, Enum.at(args, 0) || "", newbody}
+  end
+
+  # we'll use ! in debug as well
+  defp command_args_from_body(_, body) do
+    "!" <> newbody = body |> better_trim()
+    [command | args] = String.split(newbody, " ", parts: 2)
+    {command, Enum.at(args, 0) || "", newbody}
+  end
+
+  defp parse_command_potentially_with_botname_suffix(command, botname_suffix) do
+    cond do
+      String.ends_with?(command, botname_suffix) ->
+        String.slice(command, 0, String.length(command) - String.length(botname_suffix))
+
+      true ->
+        command
+    end
+  end
+
+  # character 65532 (OBJECT REPLACEMENT CHARACTER) is used in iMessage when you
+  #   also have an image, like a fancy carriage return. trim_leading doesn't
+  #   currently find this.
+  defp better_trim_leading(text) when is_bitstring(text) do
+    text
+    |> String.replace_leading(List.to_string([65532]), "")
+    |> String.trim_leading()
+  end
+
+  defp better_trim(text) do
+    text
+    |> better_trim_leading()
+    |> String.trim()
+  end
+
   # This binary classifier will grow in complexity over time.
   defp is_ignorable?(_platform, true, _body), do: true
 
@@ -201,7 +278,7 @@ defmodule Sue.Models.Message do
   end
 
   defp is_ignorable?(platform, _from_me, body) when platform in [:imessage, :debug] do
-    not Regex.match?(~r/^!(?! )./u, body |> String.trim_leading())
+    not Regex.match?(~r/^!(?! )./u, better_trim_leading(body))
   end
 
   # to_string override

@@ -23,8 +23,11 @@ config :sue_web, SueWeb.Endpoint,
 # Configures Elixir's Logger
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
-  level: :info,
+  level: :debug,
   metadata: [:request_id]
+
+Logger.put_module_level(Tesla.Middleware.Logger, :info)
+Logger.put_module_level(Mint, :info)
 
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason

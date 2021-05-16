@@ -42,7 +42,10 @@ defmodule Sue.MixProject do
       {:jason, "~> 1.2"},
       {:castore, "~> 0.1.0"},
       {:mint, "~> 1.1"},
-      {:sqlitex, "~> 1.7"}
+      {:sqlitex, "~> 1.7"},
+
+      # imagemagick
+      {:mogrify, "~> 0.8.0"}
     ]
   end
 

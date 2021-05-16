@@ -31,7 +31,8 @@ defmodule Sue.Commands.Defns do
   You: !myword
   Sue: this is my definition
   """
-  def c_define(%Message{args: ""}), do: %Response{body: "Please supply a word and meaning. See !help define"}
+  def c_define(%Message{args: ""}),
+    do: %Response{body: "Please supply a word and meaning. See !help define"}
 
   def c_define(msg) do
     case msg.args |> String.split(" ", parts: 2) do
