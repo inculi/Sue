@@ -1,3 +1,5 @@
+![](https://i.imgur.com/rEeXfKX.jpg)
+
 # Sue
 
 Greetings and welcome to Sue V3, a chatbot for iMessage and Telegram. I'm sure portions of questionable stability exist, so please report any issues.
