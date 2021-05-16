@@ -26,6 +26,9 @@ config :logger, :console,
   level: :debug,
   metadata: [:request_id]
 
+Logger.put_module_level(Tesla.Middleware.Logger, :info)
+Logger.put_module_level(Mint, :info)
+
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
@@ -36,7 +39,7 @@ config :mnesia,
   dir: String.to_charlist(mnesia_dir)
 
 config(:sue,
-  platforms: [:imessage],
+  platforms: [:imessage, :telegram],
   chat_db_path: Path.join(System.user_home(), "Library/Messages/chat.db")
 )
 

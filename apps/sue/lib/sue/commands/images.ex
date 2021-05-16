@@ -26,39 +26,36 @@ defmodule Sue.Commands.Images do
   """
   def c_qt(_msg), do: random_image_from_dir("qt/")
 
-  def c_meme(%Message{has_attachments: true, attachments: [att | _]}) do
-    # only process the first attachment.
-    if is_image?(att) do
-      path = resolve_filepath(att.filename)
-      %Attachment{filename: path}
-    else
-      %Response{body: "!meme only supports images right now, sorry :("}
-    end
-  end
-
-  def c_meme(%Message{has_attachments: false}) do
-    %Response{body: "Failed to detect attachment. Falling back to last image."}
-  end
-
+  @doc """
+  Create a motivational poster.
+  Usage: !motivate <image> <top text>, <bottom text>
+  (bottom text is optional)
+  """
   def c_motivate(%Message{has_attachments: false}) do
     %Response{body: "Please include an image with your message. See !help motivate"}
   end
 
   def c_motivate(%Message{has_attachments: true, attachments: [att | _]} = msg) do
     # only process the first attachment.
-    if is_image?(att) do
-      path = resolve_filepath(att.filename)
+    cond do
+      is_image?(att) and not Attachment.is_too_large?(att) ->
+        {:ok, att} = Attachment.resolve(att, :telegram)
+        path = resolve_filepath(att.filename)
 
-      {top_text, bot_text} =
-        case String.split(msg.args, ~r{,}, parts: 2, trim: true) |> Enum.map(&String.trim/1) do
-          [] -> {nil, nil}
-          [top, []] -> {top, ""}
-          [top, bot] -> {top, bot}
-        end
+        {top_text, bot_text} =
+          case String.split(msg.args, ~r{,}, parts: 2, trim: true) |> Enum.map(&String.trim/1) do
+            [] -> {nil, nil}
+            [top] -> {top, ""}
+            [top, bot] -> {top, bot}
+          end
 
-      motivate_helper(path, top_text, bot_text)
-    else
-      %Response{body: "!motivate only supports images right now, sorry :("}
+        motivate_helper(path, top_text, bot_text)
+
+      Attachment.is_too_large?(att) ->
+        %Response{body: "Media is too large. Please try again with a smaller file."}
+
+      true ->
+        %Response{body: "!motivate only supports images right now, sorry :("}
     end
   end
 
@@ -70,7 +67,6 @@ defmodule Sue.Commands.Images do
   end
 
   defp motivate_helper(path, top_text, bot_text) do
-    Logger.debug("Top: #{top_text}, Bot: #{bot_text}")
     outpath = Images.Motivate.run(path, top_text, bot_text)
     %Attachment{filename: outpath}
   end
