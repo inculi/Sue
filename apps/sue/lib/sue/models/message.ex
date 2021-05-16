@@ -81,41 +81,7 @@ defmodule Sue.Models.Message do
     |> augment_one()
   end
 
-  # def new(:telegram, %{msg: msg, command: command, context: context}) do
-  #   # When multiple bots are in the same chat, telegram sometimes suffixes
-  #   #   commands with bot names
-
-  #   Logger.info("new 1 called")
-
-  #   command =
-  #     parse_command_potentially_with_botname_suffix(command, "@" <> context.bot_info.username)
-
-  #   %Message{
-  #     platform: :telegram,
-  #     id: msg.chat.id,
-  #     platform_account: %PlatformAccount{platform: :telegram, id: msg.from.id},
-  #     body: context.update.message.text |> better_trim(),
-  #     time: DateTime.from_unix!(msg.date),
-  #     chat: %Chat{
-  #       platform: :telegram,
-  #       id: msg.chat.id,
-  #       is_direct: msg.chat.type == "private"
-  #     },
-  #     # account:
-  #     is_from_sue: false,
-  #     is_ignorable: false,
-  #     # attachments:
-  #     has_attachments:
-  #       Map.get(msg, :reply_to_message, %{})[:photo] != nil or
-  #         Map.get(msg, :reply_to_message, %{})[:document] != nil,
-  #     command: command,
-  #     args: msg.text
-  #   }
-  # end
-
   def new(:telegram, %{msg: msg, context: context} = update) do
-    Logger.info("NEW new called")
-
     {command, args, body} =
       case Map.get(update, :command) do
         nil -> command_args_from_body(:telegram, Map.get(msg, :caption, ""))
@@ -136,10 +102,8 @@ defmodule Sue.Models.Message do
         id: msg.chat.id,
         is_direct: msg.chat.type == "private"
       },
-
-      # we don't initialize handlers for non-command or sue messages
       is_from_sue: false,
-      is_ignorable: false,
+      is_ignorable: command == "",
 
       # either in the message sent, or the message referenced in a reply
       has_attachments:
@@ -203,11 +167,6 @@ defmodule Sue.Models.Message do
     parse_command(msg, newbody)
   end
 
-  defp augment_one(%Message{platform: :telegram} = msg) do
-    "/" <> newbody = msg.body |> better_trim()
-    parse_command(msg, newbody)
-  end
-
   # Second stage of adding new fields to our Message. Primarily concerned with
   #   resolving fields that map to elements in our database (Accounts, etc.)
   @spec augment_two(Message.t()) :: Message.t()
@@ -231,9 +190,13 @@ defmodule Sue.Models.Message do
   # TODO: Replace all of this with regular expressions.
   @spec command_args_from_body(Platform.t(), String.t()) :: {String.t(), String.t(), String.t()}
   defp command_args_from_body(:telegram, body) do
-    "/" <> newbody = body |> better_trim()
-    [command | args] = String.split(newbody, " ", parts: 2)
-    {command, Enum.at(args, 0) || "", newbody}
+    if has_command?(:telegram, body) do
+      "/" <> newbody = body |> better_trim()
+      [command | args] = String.split(newbody, " ", parts: 2)
+      {command, Enum.at(args, 0) || "", newbody}
+    else
+      {"", "", body |> better_trim()}
+    end
   end
 
   # we'll use ! in debug as well
@@ -273,12 +236,16 @@ defmodule Sue.Models.Message do
 
   defp is_ignorable?(_platform, _from_me, nil), do: true
 
-  defp is_ignorable?(:telegram, _from_me, body) do
-    not Regex.match?(~r/^\/(?! )./u, body |> String.trim_leading())
+  defp is_ignorable?(platform, _from_me, body) do
+    not has_command?(platform, body)
   end
 
-  defp is_ignorable?(platform, _from_me, body) when platform in [:imessage, :debug] do
-    not Regex.match?(~r/^!(?! )./u, better_trim_leading(body))
+  defp has_command?(:telegram, body) do
+    Regex.match?(~r/^\/(?! )./u, body |> String.trim_leading())
+  end
+
+  defp has_command?(_platform, body) do
+    Regex.match?(~r/^!(?! )./u, better_trim_leading(body))
   end
 
   # to_string override
