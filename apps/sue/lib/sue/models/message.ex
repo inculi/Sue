@@ -147,6 +147,7 @@ defmodule Sue.Models.Message do
       else
         list_of_atts
       end
+      |> Enum.sort_by(fn a -> a.file_size end, :desc)
 
     %Message{
       msg
