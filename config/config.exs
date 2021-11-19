@@ -26,8 +26,18 @@ config :logger, :console,
   level: :debug,
   metadata: [:request_id]
 
-Logger.put_module_level(Tesla.Middleware.Logger, :info)
-Logger.put_module_level(Mint, :info)
+config :tesla,
+  log_level: :warn,
+  adapter: Tesla.Adapter.Mint
+
+config :tesla, Tesla.Middleware.Logger,
+  log_level: :warn,
+  debug: false
+
+Logger.put_module_level(Tesla, :warn)
+Logger.put_module_level(Tesla.Middleware.Logger, :warn)
+Logger.put_module_level(ExGram.Adapter.Tesla, :warn)
+Logger.put_module_level(Tesla, :warn)
 
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
@@ -39,11 +49,9 @@ config :mnesia,
   dir: String.to_charlist(mnesia_dir)
 
 config(:sue,
-  platforms: [:imessage, :telegram],
+  platforms: [:telegram],
   chat_db_path: Path.join(System.user_home(), "Library/Messages/chat.db")
 )
-
-config :tesla, adapter: Tesla.Adapter.Mint
 
 import_config "config.secret.exs"
 
