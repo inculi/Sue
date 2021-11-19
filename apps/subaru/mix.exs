@@ -27,7 +27,8 @@ defmodule Subaru.MixProject do
   defp deps do
     [
       {:velocy, "~> 0.1"},
-      {:arangox, git: "https://github.com/ArangoDB-Community/arangox"}
+      {:arangox, git: "https://github.com/ArangoDB-Community/arangox"},
+      {:cachex, "~> 3.4"}
     ]
   end
 end

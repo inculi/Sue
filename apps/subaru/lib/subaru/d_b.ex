@@ -15,7 +15,17 @@ defmodule Subaru.DB do
     ]
 
     {:ok, conn} = Arangox.start_link(options)
-    {:ok, conn}
+    {:ok, conn, {:continue, :post_init}}
+  end
+
+  # ensure our collections and what-not are defined.
+  @impl true
+  def handle_continue(:post_init, conn) do
+    create_collection(conn, "sue_users", :doc)
+    create_collection(conn, "sue_chats", :doc)
+    create_collection(conn, "sue_inChat", :edge)
+
+    {:noreply, conn}
   end
 
   @impl true
@@ -65,26 +75,9 @@ defmodule Subaru.DB do
   end
 
   @impl true
-  def handle_call({:create_collection, name}, _from, conn) do
-    # check if it exists
-    response =
-      case Arangox.get(conn, "/_api/collection/#{name}") do
-        {:ok, %Arangox.Response{status: 200, body: %{"id" => id}}} ->
-          id
-
-        {:error, %Arangox.Error{status: 404}} ->
-          # DNE, create.
-          {:ok, response} =
-            Arangox.post(conn, "/_api/collection", %{
-              name: name,
-              # 2 = document, 3 = edge
-              type: 2
-            })
-
-          response.body["id"]
-      end
-
-    {:reply, response, conn}
+  def handle_call({:create_collection, name, type}, _from, conn) do
+    newid = create_collection(conn, name, type)
+    {:reply, newid, conn}
   end
 
   # PUBLIC API
@@ -110,8 +103,9 @@ defmodule Subaru.DB do
     GenServer.call(__MODULE__, :conn)
   end
 
-  def create_collection(name) do
-    GenServer.call(__MODULE__, {:create_collection, name})
+  @spec create_collection(String.t(), :doc | :edge) :: String.t()
+  def create_collection(name, type) do
+    GenServer.call(__MODULE__, {:create_collection, name, type})
   end
 
   # HELPER UTILS
@@ -126,5 +120,33 @@ defmodule Subaru.DB do
       end,
       Keyword.merge([properties: [waitForSync: true]], opts)
     )
+  end
+
+  @spec create_collection(pid(), String.t(), :doc | :edge) :: String.t()
+  defp create_collection(conn, name, type) do
+    Logger.info("[Subaru.DB] Creating collection #{name}")
+
+    typenum =
+      case type do
+        :doc -> 2
+        :edge -> 3
+      end
+
+    # check if it exists
+    case Arangox.get(conn, "/_api/collection/#{name}") do
+      {:ok, %Arangox.Response{status: 200, body: %{"id" => id}}} ->
+        id
+
+      {:error, %Arangox.Error{status: 404}} ->
+        # DNE, create.
+        {:ok, response} =
+          Arangox.post(conn, "/_api/collection", %{
+            name: name,
+            # 2 = document, 3 = edge
+            type: typenum
+          })
+
+        response.body["id"]
+    end
   end
 end
