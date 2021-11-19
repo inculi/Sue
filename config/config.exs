@@ -9,16 +9,25 @@
 # move said applications out of the umbrella.
 use Mix.Config
 
-config :sue_web,
-  generators: [context_app: :sue]
+config :desu_web,
+  generators: [context_app: false]
 
 # Configures the endpoint
-config :sue_web, SueWeb.Endpoint,
+config :desu_web, DesuWeb.Endpoint,
   url: [host: "localhost"],
-  secret_key_base: "qEhmB5qxvx4dxoOvnvi8dXFyy/SX0YnC8O6MkmUHVx9Er/KZzzjoRXD+ZgxJ/O9V",
-  render_errors: [view: SueWeb.ErrorView, accepts: ~w(html json), layout: false],
-  pubsub_server: Sue.PubSub,
-  live_view: [signing_salt: "dJ8+9K2d"]
+  render_errors: [view: DesuWeb.ErrorView, accepts: ~w(html json), layout: false],
+  pubsub_server: DesuWeb.PubSub,
+  live_view: [signing_salt: "bYkiLu0D"]
+
+# Configure esbuild (the version is required)
+config :esbuild,
+  version: "0.12.18",
+  default: [
+    args:
+      ~w(js/app.js --bundle --target=es2016 --outdir=../priv/static/assets --external:/fonts/* --external:/images/*),
+    cd: Path.expand("../apps/desu_web/assets", __DIR__),
+    env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)}
+  ]
 
 # Configures Elixir's Logger
 config :logger, :console,

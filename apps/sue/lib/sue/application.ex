@@ -11,8 +11,7 @@ defmodule Sue.Application do
 
     children = [
       Sue,
-      Sue.DB,
-      {Phoenix.PubSub, name: Sue.PubSub}
+      Sue.DB
     ]
 
     children_imessage =

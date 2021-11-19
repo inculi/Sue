@@ -1,16 +1,17 @@
-defmodule Sue.MixProject do
+defmodule DesuWeb.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :sue,
+      app: :desu_web,
       version: "0.1.0",
       build_path: "../../_build",
       config_path: "../../config/config.exs",
       deps_path: "../../deps",
       lockfile: "../../mix.lock",
-      elixir: "~> 1.7",
+      elixir: "~> 1.12",
       elixirc_paths: elixirc_paths(Mix.env()),
+      compilers: [:gettext] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps()
@@ -22,8 +23,8 @@ defmodule Sue.MixProject do
   # Type `mix help compile.app` for more information.
   def application do
     [
-      mod: {Sue.Application, []},
-      extra_applications: [:logger, :runtime_tools, :mnesia, :mint, :eex]
+      mod: {DesuWeb.Application, []},
+      extra_applications: [:logger, :runtime_tools]
     ]
   end
 
@@ -36,16 +37,18 @@ defmodule Sue.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:phoenix_pubsub, "~> 2.0"},
-      {:ex_gram, git: "https://github.com/rockneurotiko/ex_gram"},
-      {:tesla, "~> 1.4"},
+      {:phoenix, "~> 1.6.2"},
+      {:phoenix_html, "~> 3.0"},
+      {:phoenix_live_reload, "~> 1.2", only: :dev},
+      {:phoenix_live_view, "~> 0.16.0"},
+      {:floki, ">= 0.30.0", only: :test},
+      {:phoenix_live_dashboard, "~> 0.5"},
+      {:esbuild, "~> 0.2", runtime: Mix.env() == :dev},
+      {:telemetry_metrics, "~> 0.6"},
+      {:telemetry_poller, "~> 1.0"},
+      {:gettext, "~> 0.18"},
       {:jason, "~> 1.2"},
-      {:castore, "~> 0.1.0"},
-      {:mint, "~> 1.1"},
-      {:sqlitex, "~> 1.7"},
-
-      # imagemagick
-      {:mogrify, "~> 0.8.0"}
+      {:plug_cowboy, "~> 2.5"}
     ]
   end
 
@@ -54,7 +57,8 @@ defmodule Sue.MixProject do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
-      setup: ["deps.get"]
+      setup: ["deps.get"],
+      "assets.deploy": ["esbuild default --minify", "phx.digest"]
     ]
   end
 end
