@@ -1,10 +1,5 @@
 defmodule Sue.Mailbox.Telegram do
   @bot :sue
-  @dialyzer [
-    {:no_return, [init: 1, maybe_setup_commands: 3, maybe_fetch_bot: 2]},
-    {:no_unused,
-     [regexes: 0, middlewares: 0, maybe_fetch_bot: 2, handle_error_mf: 0, handle_mf: 0]}
-  ]
   @pretty_debug false
 
   require Logger

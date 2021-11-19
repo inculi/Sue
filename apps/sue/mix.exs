@@ -37,7 +37,7 @@ defmodule Sue.MixProject do
   defp deps do
     [
       {:phoenix_pubsub, "~> 2.0"},
-      {:ex_gram, git: "https://github.com/Manwholikespie/ex_gram.git"},
+      {:ex_gram, git: "https://github.com/rockneurotiko/ex_gram"},
       {:tesla, "~> 1.3.3"},
       {:jason, "~> 1.2"},
       {:castore, "~> 0.1.0"},
