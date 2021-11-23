@@ -1,4 +1,11 @@
 defmodule Subaru.Query do
+  """
+  This module is still under construction. I want to eventually have a stable
+    wrapper that is more elixiry, maybe even Mnesia inspired.
+  I'll put this on hold for now as I want to get more familiar with Arango first
+    so I can get an idea of what kind of queries I'll be commonly making.
+  """
+
   alias :queue, as: Queue
 
   @type literal() :: integer() | bitstring() | atom()
@@ -50,30 +57,13 @@ defmodule Subaru.Query do
     "#{var} #{op} #{val}"
   end
 
-  # defp reduce_expr({_, p, q}) when is_tuple(p) or is_tuple(q) do
-
-  # end
-
   defp reduce_expr({truthy, p, q}) do
-    # conditional
-    #   {bitstr, relational_op, literal}
-    # {truthy, conditional, conditional}
-    #   {:and, p, q}
-    #   {:or, p, q}
-
     p_red = reduce_expr(p)
     q_red = reduce_expr(q)
     op = truthy_to_str(truthy)
 
     "(#{p_red} #{op} #{q_red})"
   end
-
-  defp truthy_to_str(:and), do: "&&"
-  defp truthy_to_str(:or), do: "||"
-
-  # defp reduce_expr2({:and, p, q}) when not is_tuple(p) and not is_tuple(q) do
-  #   "#{p} && #{q}"
-  # end
 
   # UTILITIES
   @spec item_tail(:queue.queue()) :: {any(), :queue.queue()}
@@ -86,4 +76,7 @@ defmodule Subaru.Query do
         otherwise
     end
   end
+
+  defp truthy_to_str(:and), do: "&&"
+  defp truthy_to_str(:or), do: "||"
 end
