@@ -23,6 +23,11 @@ defmodule Sue.Utils do
     prefix <> suffix
   end
 
+  @spec unix_now() :: integer()
+  def unix_now() do
+    DateTime.utc_now() |> DateTime.to_unix()
+  end
+
   def random_string do
     Integer.to_string(rand_uniform(0x100000000), 36) |> String.downcase()
   end

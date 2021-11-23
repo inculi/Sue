@@ -1,5 +1,5 @@
 defmodule Subaru.Query do
-  """
+  @moduledoc """
   This module is still under construction. I want to eventually have a stable
     wrapper that is more elixiry, maybe even Mnesia inspired.
   I'll put this on hold for now as I want to get more familiar with Arango first

@@ -63,6 +63,28 @@ defmodule Subaru.DB do
   end
 
   @impl true
+  def handle_call({:insert_multi, items_and_collections}, _from, conn) do
+    {statements, bindvars} =
+      items_and_collections
+      |> Enum.with_index()
+      |> Enum.map(&add_multi_helper/1)
+      |> Enum.unzip()
+
+    statement = Enum.join(statements, "\n")
+    bindvars = Enum.reduce(bindvars, fn x, acc -> Map.merge(acc, x) end)
+
+    writecolls =
+      bindvars
+      |> Map.keys()
+      |> Enum.filter(fn k -> String.starts_with?(k, "@coll") end)
+      |> Enum.map(fn k -> bindvars[k] end)
+
+    {:ok, response} = exec(conn, statement, bindvars, write: writecolls)
+
+    {:reply, response, conn}
+  end
+
+  @impl true
   def handle_call({:list, coll}, _from, conn) do
     {:ok, [res]} = exec(conn, "FOR x in @@col RETURN x", %{"@col" => coll}, read: coll)
 
@@ -108,10 +130,43 @@ defmodule Subaru.DB do
     GenServer.call(__MODULE__, {:create_collection, name, type})
   end
 
+  @spec add_multi([{:doc | :edge, Map.t(), String.t()}, ...]) :: any()
+  def add_multi([]), do: {[], %{}}
+
+  def add_multi(items_and_collections) do
+    GenServer.call(__MODULE__, {:insert_multi, items_and_collections})
+  end
+
+  # HELPER METHODS
+  # ==============
+
+  defp add_multi_helper({{:doc, doc, coll}, idx}) do
+    dockey = "doc#{idx}"
+    collkey = "@coll#{idx}"
+    bindvars = %{dockey => doc, collkey => coll}
+    {"INSERT @#{dockey} INTO @#{collkey}", bindvars}
+  end
+
+  defp add_multi_helper({{:edge, %{_from: fromid, _to: toid}, coll}, idx}) do
+    fromkey = "fromid#{idx}"
+    tokey = "toid#{idx}"
+    collkey = "@coll#{idx}"
+    bindvars = %{fromkey => fromid, tokey => toid, collkey => coll}
+
+    {"INSERT {_from: @#{fromkey}, _to: @#{tokey}} INTO @#{collkey}", bindvars}
+  end
+
   # HELPER UTILS
   # ============
 
   defp exec(conn, query, bindvars, opts) do
+    Logger.debug("==========")
+    Logger.debug("Executing statement: ")
+    Logger.debug(query)
+    Logger.debug("with bindvars:")
+    Logger.debug(inspect(bindvars))
+    Logger.debug("==========")
+
     Arangox.transaction(
       conn,
       fn c ->
