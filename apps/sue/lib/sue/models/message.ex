@@ -26,19 +26,21 @@ defmodule Sue.Models.Message do
   ]
 
   @type t() :: %__MODULE__{
+          # the name of the chat platform (imessage, telegram)
           platform: Platform.t(),
+          # id used by platform app
           id: integer() | String.t(),
-          #
+          ###
           platform_account: PlatformAccount.t(),
           chat: Chat.t(),
           account: Account.t() | nil,
-          #
+          ###
           body: String.t(),
           command: String.t() | nil,
           args: String.t() | nil,
           attachments: [Attachment.t()] | nil,
           time: DateTime.t() | nil,
-          #
+          ###
           is_from_sue: boolean() | nil,
           is_ignorable: boolean() | nil,
           has_attachments: boolean() | nil

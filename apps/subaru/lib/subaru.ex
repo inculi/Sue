@@ -1,18 +1,7 @@
 defmodule Subaru do
-  @moduledoc """
-  Documentation for `Subaru`.
-  """
+  alias Subaru.DB
 
-  @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> Subaru.hello()
-      :world
-
-  """
-  def hello do
-    :world
+  def add_v(v) do
+    DB.insert(v.doc, v.collection)
   end
 end

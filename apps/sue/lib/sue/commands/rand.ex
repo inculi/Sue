@@ -42,7 +42,7 @@ defmodule Sue.Commands.Rand do
     res =
       cond do
         args == "" ->
-          :random.uniform() |> to_string()
+          :rand.uniform() |> to_string()
 
         String.match?(args, ~r/^[0-9]+ [0-9]+$/u) ->
           args
