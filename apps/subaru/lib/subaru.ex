@@ -1,21 +1,55 @@
 defmodule Subaru do
-  alias Subaru.{DB, Vertex}
+  alias Subaru.Query
 
-  def insert_v!(v) do
-    DB.insert(
-      Vertex.doc(v),
-      Vertex.collection(v)
-    )
+  # Database Result
+  @type dbres() :: Arangox.Response.t()
+
+  @type dbid() :: bitstring()
+
+  @spec upsert(map(), map(), map(), bitstring()) :: dbid()
+  def upsert(d_search, d_insert, d_update, collection) do
+    Query.new()
+    |> Query.upsert(d_search, d_insert, d_update, collection)
+    |> Query.exec()
+    |> result_id()
   end
 
-  def get_defns() do
-    "
-FOR defn_i IN sue_defnAuthor
-  FOR defn_j IN sue_defnChat
-    FILTER defn_i.to == defn_j.to
-    RETURN defn_i.to
-    "
-    |> String.trim()
-    |> DB.debug_exec(%{}, read: ["sue_defnAuthor", "sue_defnChat"])
+  @spec insert(map(), bitstring()) :: dbid()
+  def insert(doc, collection) do
+    Query.new()
+    |> Query.insert(doc, collection)
+    |> Query.exec()
+    |> result_id()
   end
+
+  @spec insert_edge(bitstring(), bitstring(), bitstring()) :: dbid()
+  def insert_edge(from_id, to_id, edge_collection) do
+    Query.new()
+    |> Query.insert(%{_from: from_id, _to: to_id}, edge_collection)
+    |> Query.exec()
+    |> result_id()
+  end
+
+  @spec find_one(bitstring(), Query.boolean_expression()) :: map()
+  def find_one(collection, expr) do
+    Query.new()
+    |> Query.for(:x, collection)
+    |> Query.filter(expr)
+    |> Query.limit(1)
+    |> Query.return("x")
+    |> Query.exec()
+    |> result_one()
+  end
+
+  @spec result(dbres()) :: [map()]
+  def result(%Arangox.Response{body: %{"result" => res}}), do: res
+
+  @spec result_one(dbres()) :: map()
+  def result_one(res) do
+    [r] = result(res)
+    r
+  end
+
+  @spec result_id(dbres()) :: dbid()
+  def result_id(res), do: result_one(res)["_id"]
 end

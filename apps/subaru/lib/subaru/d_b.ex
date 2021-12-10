@@ -127,6 +127,7 @@ defmodule Subaru.DB do
   # PUBLIC API
   # ==========
 
+  @spec exec(bitstring(), map(), keyword()) :: Arangox.Response.t()
   def exec(statement, bindvars, opts) do
     GenServer.call(__MODULE__, {:exec, statement, bindvars, opts})
   end

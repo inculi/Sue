@@ -1,27 +1,43 @@
 defmodule Sue.New.Account do
-  defstruct [:name, :handle, :id]
+  defstruct [:name, :handle, :platform_id, :id]
 
   @collection "sue_users"
 
   @type t() :: %__MODULE__{
           name: bitstring(),
           handle: bitstring(),
-          id: any()
+          platform_id: {bitstring(), integer() | any()},
+          id: nil | bitstring()
         }
 
   alias __MODULE__
 
-  def resolve(%Account{id: nil, name: name, handle: handle})
-      when is_bitstring(name) and is_bitstring(handle) do
-    expr =
-      {:and, {:==, "x.name", Sue.Utils.quoted(name)}, {:==, "x.handle", Sue.Utils.quoted(handle)}}
+  @spec resolve(t) :: t
+  def resolve(a) do
+    {platform, id} = a.platform_id
+    doc_search = %{platform: platform, id: id}
+    doc_insert = Subaru.Vertex.doc(a)
 
-    Sue.New.DB.find_one(@collection, expr)
+    account_id = Subaru.upsert(doc_search, doc_insert, %{}, @collection)
+
+    %Account{a | id: account_id}
+  end
+
+  @spec from_doc(Map.t()) :: t
+  def from_doc(doc) do
+    %Account{
+      name: doc.name,
+      handle: doc.handle,
+      platform_id: {doc.platform, doc.id},
+      id: doc._id
+    }
   end
 
   defimpl Subaru.Vertex, for: __MODULE__ do
     def collection(_a), do: "sue_users"
 
-    def doc(a), do: %{name: a.name, handle: a.handle}
+    def doc(%Account{platform_id: {platform, id}} = a) do
+      %{name: a.name, handle: a.handle, platform: platform, id: id}
+    end
   end
 end
