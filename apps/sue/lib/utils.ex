@@ -1,4 +1,8 @@
 defmodule Sue.Utils do
+  def quoted(s) when is_bitstring(s) do
+    "\"#{s}\""
+  end
+
   @spec tokenize(String.t()) :: [String.t()]
   def tokenize(args) do
     cond do
@@ -40,5 +44,11 @@ defmodule Sue.Utils do
     defp rand_uniform(num) do
       :random.uniform(num)
     end
+  end
+
+  def struct_to_map(s) do
+    s
+    |> Map.from_struct()
+    |> Map.drop([:id])
   end
 end

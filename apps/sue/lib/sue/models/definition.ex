@@ -89,5 +89,6 @@ defmodule Sue.Models.Definition do
   defp search(_, _, _, 0, _), do: nil
 
   @spec sort_results([Definition.t()]) :: [Definition.t()]
+  defp sort_results([]), do: []
   defp sort_results(ds), do: ds |> DB.get_all() |> Enum.sort_by(fn d -> d.date end, :desc)
 end

@@ -23,7 +23,7 @@ defmodule Sue.MixProject do
   def application do
     [
       mod: {Sue.Application, []},
-      extra_applications: [:logger, :runtime_tools, :mnesia, :mint, :eex, :subaru]
+      extra_applications: [:logger, :runtime_tools, :mnesia, :mint, :eex]
     ]
   end
 
@@ -36,6 +36,7 @@ defmodule Sue.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:subaru, in_umbrella: true},
       {:phoenix_pubsub, "~> 2.0"},
       {:ex_gram, git: "https://github.com/rockneurotiko/ex_gram"},
       {:tesla, "~> 1.4"},

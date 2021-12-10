@@ -1,7 +1,7 @@
-defmodule Subaru.Vertex do
-  @moduledoc """
-  For future use. See Subaru.Query moduledoc.
-  """
+defprotocol Subaru.Vertex do
+  @spec collection(t) :: String.t()
+  def collection(v)
 
-  defstruct [:collection, :doc]
+  @spec doc(t) :: Map.t()
+  def doc(v)
 end

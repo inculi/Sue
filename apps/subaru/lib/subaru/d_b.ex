@@ -85,9 +85,25 @@ defmodule Subaru.DB do
   end
 
   @impl true
+  def handle_call({:upsert, searchdoc, insertdoc, updatedoc, collection}, _from, conn) do
+    bindvars = %{
+      "sdoc" => searchdoc,
+      "idoc" => insertdoc,
+      "udoc" => updatedoc,
+      "@col" => collection
+    }
+
+    {:ok, response} =
+      exec(conn, "UPSERT @sdoc INSERT @idoc UPDATE @udoc IN @@col RETURN NEW._id", bindvars,
+        write: collection
+      )
+
+    {:reply, response, conn}
+  end
+
+  @impl true
   def handle_call({:list, coll}, _from, conn) do
     {:ok, [res]} = exec(conn, "FOR x in @@col RETURN x", %{"@col" => coll}, read: coll)
-
     {:reply, res.body["result"], conn}
   end
 
@@ -102,25 +118,43 @@ defmodule Subaru.DB do
     {:reply, newid, conn}
   end
 
+  @impl true
+  def handle_call({:exec, statement, bindvars, opts}, _from, conn) do
+    {:ok, [%Arangox.Response{} = res]} = exec(conn, statement, bindvars, opts)
+    {:reply, res, conn}
+  end
+
   # PUBLIC API
   # ==========
+
+  def exec(statement, bindvars, opts) do
+    GenServer.call(__MODULE__, {:exec, statement, bindvars, opts})
+  end
 
   def ping() do
     GenServer.call(__MODULE__, :ping)
   end
 
+  @spec insert(Map.t(), String.t()) :: any
   def insert(doc, collection) do
     GenServer.call(__MODULE__, {:insert, doc, collection})
+  end
+
+  @spec upsert(Map.t(), Map.t(), Map.t(), Sting.t()) :: any
+  def upsert(searchdoc, insertdoc, updatedoc, collection) do
+    GenServer.call(__MODULE__, {:upsert, searchdoc, insertdoc, updatedoc, collection})
   end
 
   def insert_edge(fromid, toid, collection) do
     GenServer.call(__MODULE__, {:insert_edge, fromid, toid, collection})
   end
 
+  @spec list(String.t()) :: any
   def list(collection) do
     GenServer.call(__MODULE__, {:list, collection})
   end
 
+  @spec conn :: pid()
   def conn() do
     GenServer.call(__MODULE__, :conn)
   end
@@ -135,6 +169,10 @@ defmodule Subaru.DB do
 
   def add_multi(items_and_collections) do
     GenServer.call(__MODULE__, {:insert_multi, items_and_collections})
+  end
+
+  def debug_exec(query, bindvars, opts) do
+    exec(conn(), query, bindvars, opts)
   end
 
   # HELPER METHODS
@@ -160,13 +198,6 @@ defmodule Subaru.DB do
   # ============
 
   defp exec(conn, query, bindvars, opts) do
-    Logger.debug("==========")
-    Logger.debug("Executing statement: ")
-    Logger.debug(query)
-    Logger.debug("with bindvars:")
-    Logger.debug(inspect(bindvars))
-    Logger.debug("==========")
-
     Arangox.transaction(
       conn,
       fn c ->

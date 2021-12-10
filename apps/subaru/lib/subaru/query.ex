@@ -46,7 +46,7 @@ defmodule Subaru.Query do
   end
 
   defp exec({:filter, expr}, q, acc) do
-    statement = reduce_expr(expr)
+    statement = "FILTER " <> reduce_expr(expr)
     {item, queue} = item_tail(q)
     exec(item, queue, [statement | acc])
   end

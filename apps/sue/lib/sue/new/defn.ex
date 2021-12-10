@@ -25,4 +25,9 @@ defmodule Sue.New.Defn do
       date_modified: now
     }
   end
+
+  defimpl Subaru.Vertex, for: __MODULE__ do
+    def collection(_d), do: "sue_defns"
+    def doc(d), do: Sue.Utils.struct_to_map(d)
+  end
 end
