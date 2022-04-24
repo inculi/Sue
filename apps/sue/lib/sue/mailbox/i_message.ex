@@ -11,6 +11,7 @@ defmodule Sue.Mailbox.IMessage do
   @update_interval 1_000
 
   def start_link(args) do
+    Logger.info("Starting IMessage genserver...")
     GenServer.start_link(__MODULE__, args, name: __MODULE__)
   end
 
@@ -147,15 +148,23 @@ defmodule Sue.Mailbox.IMessage do
     msgs
   end
 
+  @doc """
+  If you delete a bugged chat.db, your message ID counter will reset to 0, but
+    Sue will still think that you're at the old, higher ID. This clears the
+    cache so that it will just pick up from the next message.
+
+  TODO: A better approach for this is to keep track of the last message ID we
+    replied to, and then make some checks on startup to see if this message is
+    even still present in the DB.
+  """
+  def clear_max_rowid() do
+    DB.del!(:state, "imsg_max_rowid")
+  end
+
   @spec query(String.t()) :: [Keyword.t()]
   defp query(query) do
     {:ok, results} = Sqlitex.Server.query(Sue.IMessageChatDB, query)
     results
-  end
-
-  def q(query) do
-    # TODO: HACK: For debug purposes only.
-    Sqlitex.Server.query(Sue.IMessageChatDB, query)
   end
 
   defp get_current_max_rowid() do
@@ -180,7 +189,7 @@ defmodule Sue.Mailbox.IMessage do
     query(q)
   end
 
-  def query_attachments_since(rowid) do
+  defp query_attachments_since(rowid) do
     Logger.debug("Querying attachments since rowid #{rowid}...?")
 
     q = """
