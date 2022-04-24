@@ -7,6 +7,7 @@ defmodule Sue.Application do
   @platforms Application.get_env(:sue, :platforms, [])
 
   def start(_type, _args) do
+    Logger.debug("Sue.Application starting...")
     import Supervisor.Spec
 
     children = [

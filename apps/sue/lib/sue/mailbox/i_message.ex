@@ -127,7 +127,7 @@ defmodule Sue.Mailbox.IMessage do
 
     Logger.debug("Attachments: #{attachments |> inspect()}")
 
-    blah =
+    newmsgs =
       msgs
       |> Enum.map(fn m ->
         if m.has_attachments do
@@ -137,8 +137,8 @@ defmodule Sue.Mailbox.IMessage do
         end
       end)
 
-    Logger.debug("msgs: #{blah |> inspect()}")
-    blah
+    Logger.debug("msgs: #{newmsgs |> inspect()}")
+    newmsgs
   end
 
   defp set_new_max_rowid(msgs) do

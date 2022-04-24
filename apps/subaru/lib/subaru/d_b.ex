@@ -19,6 +19,7 @@ defmodule Subaru.DB do
   end
 
   # ensure our collections and what-not are defined.
+  # TODO: Add logic for importing list of collections from Sue on Sue startup.
   @impl true
   def handle_continue(:post_init, conn) do
     create_collection(conn, "sue_users", :doc)

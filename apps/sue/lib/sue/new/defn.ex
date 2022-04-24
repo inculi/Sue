@@ -12,7 +12,7 @@ defmodule Sue.New.Defn do
 
   alias __MODULE__
 
-  # only support text for time being
+  # TODO: Add support for more defn types (currently just :text)
   @spec new(bitstring(), bitstring(), atom()) :: Defn.t()
   def new(var, val, :text = type) do
     now = Sue.Utils.unix_now()
