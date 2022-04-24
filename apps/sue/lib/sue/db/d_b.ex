@@ -54,6 +54,14 @@ defmodule Sue.DB do
     end
   end
 
+  def del(table, key), do: t_del(table, key) |> exec()
+
+  def del!(table, key) do
+    with {:ok, :ok} <- del(table, key) do
+      :ok
+    end
+  end
+
   def get!(v), do: get!(Schema.Vertex.label(v), Schema.Vertex.id(v))
 
   @spec t_get(Schema.Vertex.t()) :: fun()
@@ -68,6 +76,9 @@ defmodule Sue.DB do
       end
     end
   end
+
+  @spec t_del(atom(), any()) :: fun()
+  def t_del(table, key), do: fn -> Mnesia.delete({table, key}) end
 
   # TODO: optimize
   @spec get_all([{atom(), any()}]) :: [any()]

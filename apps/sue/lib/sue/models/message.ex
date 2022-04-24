@@ -57,7 +57,6 @@ defmodule Sue.Models.Message do
       utc_date: utc_date
     ] = kw
 
-    Logger.debug("from_me: #{from_me}")
     from_me = from_me == 1
 
     %Message{
