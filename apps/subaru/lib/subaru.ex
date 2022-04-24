@@ -14,8 +14,13 @@ defmodule Subaru do
     |> result_id()
   end
 
+  @spec insert(Subaru.Vertex.t()) :: dbid()
+  def insert(v) when is_struct(v) do
+    insert(Subaru.Vertex.doc(v), Subaru.Vertex.collection(v))
+  end
+
   @spec insert(map(), bitstring()) :: dbid()
-  def insert(doc, collection) do
+  def insert(doc, collection) when is_map(doc) do
     Query.new()
     |> Query.insert(doc, collection)
     |> Query.exec()
@@ -41,15 +46,22 @@ defmodule Subaru do
     |> result_one()
   end
 
-  @spec result(dbres()) :: [map()]
+  @spec result(dbres()) :: [map() | dbid()]
   def result(%Arangox.Response{body: %{"result" => res}}), do: res
 
-  @spec result_one(dbres()) :: map()
+  @spec result_one(dbres()) :: map() | dbid()
   def result_one(res) do
     [r] = result(res)
     r
   end
 
   @spec result_id(dbres()) :: dbid()
-  def result_id(res), do: result_one(res)["_id"]
+  def result_id(res) do
+    result_one(res)
+  end
+
+  @spec result_extract_id(dbres()) :: dbid()
+  def result_extract_id(res) do
+    result_one(res)["_id"]
+  end
 end

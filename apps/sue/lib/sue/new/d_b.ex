@@ -1,25 +1,13 @@
 defmodule Sue.New.DB do
   alias Sue.New.{Defn, Account, Chat}
 
-  alias Subaru.Query
+  @spec add_defn(Defn.t(), Subaru.dbid(), Subaru.dbid()) :: Subaru.dbid()
+  def add_defn(defn, account_id, chat_id) do
+    defn_id = Subaru.insert(defn)
+    Subaru.insert_edge(account_id, defn_id, "sue_defnAuthor")
+    Subaru.insert_edge(chat_id, defn_id, "sue_defnChat")
 
-  @spec add_defn(Defn.t(), Account.t(), Chat.t()) :: any
-  def add_defn(defn, account, chat) do
-    defn_doc = Subaru.Vertex.doc(defn)
-    defn_coll = Subaru.Vertex.collection(defn)
-
-    # q_defn =
-    #   Query.new()
-    #   |> Query.upsert(defn_doc, defn_doc, %{}, defn_coll)
-
-    # Query.new()
-    # |> Query.upsert(%{})
-
-    # Query.new()
-    # # |> Query.let(:accid, q_acc)
-    # # |> Query.let(:chatid, q_chat)
-    # |> Query.let(:defnid, q_defn)
-    # |> Query.run()
+    defn_id
   end
 
   def mock() do
@@ -31,5 +19,13 @@ defmodule Sue.New.DB do
         handle: "tomboysweat",
         platform_id: {"telegram", 123}
       })
+
+    c =
+      Chat.resolve(%Chat{
+        platform_id: {"telegram", 456},
+        is_direct: false
+      })
+
+    add_defn(d, a.id, c.id)
   end
 end

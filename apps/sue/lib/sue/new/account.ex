@@ -1,4 +1,5 @@
 defmodule Sue.New.Account do
+  @enforce_keys [:name, :handle, :platform_id]
   defstruct [:name, :handle, :platform_id, :id]
 
   @collection "sue_users"
@@ -6,7 +7,7 @@ defmodule Sue.New.Account do
   @type t() :: %__MODULE__{
           name: bitstring(),
           handle: bitstring(),
-          platform_id: {bitstring(), integer() | any()},
+          platform_id: {bitstring(), integer() | bitstring()},
           id: nil | bitstring()
         }
 

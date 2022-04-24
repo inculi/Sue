@@ -1,8 +1,7 @@
 defmodule Subaru.Query do
   @moduledoc """
-  I want the official Query module to be fully-formed and fully-functional, of course.
-  Until this can happen, I want to have at least some sort of helper functions for
-    building these queries.
+  The end goal is to have a stable wrapper for our DB that feels as good to use
+    as elixir does, maybe even Mnesia inspired.
   """
   defstruct [:q, :bindvars, :statement, :context, :depth, :writes, :reads]
 
