@@ -35,6 +35,15 @@ defmodule Subaru do
     |> result_id()
   end
 
+  @spec remove_all(bitstring()) :: :ok
+  def remove_all(collection) do
+    Query.new()
+    |> Query.for(:x, collection)
+    |> Query.remove(:x, collection)
+    |> Query.exec()
+    |> result_ok()
+  end
+
   @spec find_one(bitstring(), Query.boolean_expression()) :: map()
   def find_one(collection, expr) do
     Query.new()
@@ -53,6 +62,12 @@ defmodule Subaru do
   def result_one(res) do
     [r] = result(res)
     r
+  end
+
+  def result_ok(res) do
+    with [] <- result(res) do
+      :ok
+    end
   end
 
   @spec result_id(dbres()) :: dbid()

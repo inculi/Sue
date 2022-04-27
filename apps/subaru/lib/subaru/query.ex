@@ -1,4 +1,6 @@
 defmodule Subaru.Query do
+  require Logger
+
   @moduledoc """
   The end goal is to have a stable wrapper for our DB that feels as good to use
     as elixir does, maybe even Mnesia inspired.
@@ -61,6 +63,11 @@ defmodule Subaru.Query do
   @spec upsert(t, any(), any(), any(), String.t()) :: t
   def upsert(q, searchdoc, insertdoc, updatedoc, collection) do
     item = {:upsert, searchdoc, insertdoc, updatedoc, collection}
+    push(q, item)
+  end
+
+  def remove(q, variableName, collection) do
+    item = {:remove, variableName, collection}
     push(q, item)
   end
 
@@ -180,6 +187,17 @@ defmodule Subaru.Query do
     |> add_bindvar(bv_sdoc, searchdoc)
     |> add_bindvar(bv_idoc, insertdoc)
     |> add_bindvar(bv_udoc, updatedoc)
+    |> add_bindvar(coll_bindvar, collection)
+    |> add_write_coll(collection)
+    |> gen()
+  end
+
+  defp gen({:remove, variableName, collection}, query) do
+    coll_bindvar = "@" <> generate_bindvar(collection)
+    statement = "REMOVE #{variableName} IN #{coll_bindvar}"
+
+    query
+    |> add_statement(statement)
     |> add_bindvar(coll_bindvar, collection)
     |> add_write_coll(collection)
     |> gen()

@@ -9,23 +9,24 @@ defmodule Subaru.DB do
 
   @impl true
   def init(_args) do
+    databaseName =
+      case Mix.env() do
+        :test -> "test"
+        _ -> "_system"
+      end
+
     options = [
       username: Application.fetch_env!(:arangox, :username),
-      password: Application.fetch_env!(:arangox, :password)
+      password: Application.fetch_env!(:arangox, :password),
+      database: databaseName
     ]
 
     {:ok, conn} = Arangox.start_link(options)
     {:ok, conn, {:continue, :post_init}}
   end
 
-  # ensure our collections and what-not are defined.
-  # TODO: Add logic for importing list of collections from Sue on Sue startup.
   @impl true
   def handle_continue(:post_init, conn) do
-    create_collection(conn, "sue_users", :doc)
-    create_collection(conn, "sue_chats", :doc)
-    create_collection(conn, "sue_inChat", :edge)
-
     {:noreply, conn}
   end
 
@@ -119,6 +120,11 @@ defmodule Subaru.DB do
     {:reply, newid, conn}
   end
 
+  def handle_call({:remove_collection, name}, _from, conn) do
+    out = remove_collection(conn, name)
+    {:reply, out, conn}
+  end
+
   @impl true
   def handle_call({:exec, statement, bindvars, opts}, _from, conn) do
     {:ok, [%Arangox.Response{} = res]} = exec(conn, statement, bindvars, opts)
@@ -164,6 +170,10 @@ defmodule Subaru.DB do
   @spec create_collection(String.t(), :doc | :edge) :: String.t()
   def create_collection(name, type) do
     GenServer.call(__MODULE__, {:create_collection, name, type})
+  end
+
+  def remove_collection(name) do
+    GenServer.call(__MODULE__, {:remove_collection, name})
   end
 
   @spec add_multi([{:doc | :edge, Map.t(), String.t()}, ...]) :: any()
@@ -237,4 +247,18 @@ defmodule Subaru.DB do
         response.body["id"]
     end
   end
+
+  defp remove_collection(conn, name) do
+    Logger.info("[Subaru.DB] Removing collection #{name}")
+
+    case Arangox.delete(conn, "/_api/collection/#{name}") do
+      {:ok, %Arangox.Response{status: 200} = res} ->
+        {:ok, res.body["id"]}
+
+      {:error, %Arangox.Error{status: 404} = res} ->
+        {:error, :dne}
+    end
+  end
+
+  def response_id(response), do: response.body["id"]
 end
