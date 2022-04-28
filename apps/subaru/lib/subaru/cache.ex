@@ -1,7 +1,7 @@
 defmodule Subaru.Cache do
   use GenServer
 
-  @table_userchats :user_chat_edges_cache
+  # @table_userchats :user_chat_edges_cache
 
   def start_link(args) do
     GenServer.start_link(__MODULE__, args, name: __MODULE__)

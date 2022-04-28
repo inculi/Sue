@@ -297,7 +297,11 @@ defmodule Subaru.Query do
   end
 
   @spec reduce_expr(boolean_expression()) :: bitstring()
-  defp reduce_expr({op, var, val}) when is_bitstring(var) do
+  defp reduce_expr({op, var, val}) when is_bitstring(var) and is_bitstring(val) do
+    "#{var} #{op} #{quoted(val)}"
+  end
+
+  defp reduce_expr({op, var, val}) when is_number(val) do
     "#{var} #{op} #{val}"
   end
 

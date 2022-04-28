@@ -9,15 +9,12 @@ defmodule Subaru.DB do
 
   @impl true
   def init(_args) do
-    databaseName =
-      case Mix.env() do
-        :test -> "test"
-        _ -> "_system"
-      end
+    databaseName = "sue_#{Mix.env()}"
 
     options = [
       username: Application.fetch_env!(:arangox, :username),
       password: Application.fetch_env!(:arangox, :password),
+      endpoints: Application.fetch_env!(:arangox, :endpoints),
       database: databaseName
     ]
 
@@ -116,8 +113,8 @@ defmodule Subaru.DB do
 
   @impl true
   def handle_call({:create_collection, name, type}, _from, conn) do
-    newid = create_collection(conn, name, type)
-    {:reply, newid, conn}
+    res = create_collection(conn, name, type)
+    {:reply, res, conn}
   end
 
   def handle_call({:remove_collection, name}, _from, conn) do
@@ -127,7 +124,7 @@ defmodule Subaru.DB do
 
   @impl true
   def handle_call({:exec, statement, bindvars, opts}, _from, conn) do
-    {:ok, [%Arangox.Response{} = res]} = exec(conn, statement, bindvars, opts)
+    res = exec(conn, statement, bindvars, opts)
     {:reply, res, conn}
   end
 
@@ -143,12 +140,12 @@ defmodule Subaru.DB do
     GenServer.call(__MODULE__, :ping)
   end
 
-  @spec insert(Map.t(), String.t()) :: any
+  @spec insert(Map.t(), bitstring()) :: any
   def insert(doc, collection) do
     GenServer.call(__MODULE__, {:insert, doc, collection})
   end
 
-  @spec upsert(Map.t(), Map.t(), Map.t(), Sting.t()) :: any
+  @spec upsert(Map.t(), Map.t(), Map.t(), bitstring()) :: any
   def upsert(searchdoc, insertdoc, updatedoc, collection) do
     GenServer.call(__MODULE__, {:upsert, searchdoc, insertdoc, updatedoc, collection})
   end
@@ -157,7 +154,7 @@ defmodule Subaru.DB do
     GenServer.call(__MODULE__, {:insert_edge, fromid, toid, collection})
   end
 
-  @spec list(String.t()) :: any
+  @spec list(bitstring()) :: any
   def list(collection) do
     GenServer.call(__MODULE__, {:list, collection})
   end
@@ -167,16 +164,17 @@ defmodule Subaru.DB do
     GenServer.call(__MODULE__, :conn)
   end
 
-  @spec create_collection(String.t(), :doc | :edge) :: String.t()
+  @spec create_collection(bitstring(), :doc | :edge) :: {:ok, bitstring()}
   def create_collection(name, type) do
     GenServer.call(__MODULE__, {:create_collection, name, type})
   end
 
+  @spec remove_collection(bitstring()) :: {:ok, bitstring()} | {:error, :dne}
   def remove_collection(name) do
     GenServer.call(__MODULE__, {:remove_collection, name})
   end
 
-  @spec add_multi([{:doc | :edge, Map.t(), String.t()}, ...]) :: any()
+  @spec add_multi([{:doc | :edge, Map.t(), bitstring()}, ...]) :: any()
   def add_multi([]), do: {[], %{}}
 
   def add_multi(items_and_collections) do
@@ -209,6 +207,7 @@ defmodule Subaru.DB do
   # HELPER UTILS
   # ============
 
+  @spec exec(pid(), bitstring(), map(), keyword()) :: {:ok, any()} | {:error, any()}
   defp exec(conn, query, bindvars, opts) do
     Arangox.transaction(
       conn,
@@ -220,7 +219,7 @@ defmodule Subaru.DB do
     )
   end
 
-  @spec create_collection(pid(), String.t(), :doc | :edge) :: String.t()
+  @spec create_collection(pid(), bitstring(), :doc | :edge) :: {:ok, bitstring()}
   defp create_collection(conn, name, type) do
     Logger.info("[Subaru.DB] Creating collection #{name}")
 
@@ -233,7 +232,7 @@ defmodule Subaru.DB do
     # check if it exists
     case Arangox.get(conn, "/_api/collection/#{name}") do
       {:ok, %Arangox.Response{status: 200, body: %{"id" => id}}} ->
-        id
+        {:ok, id}
 
       {:error, %Arangox.Error{status: 404}} ->
         # DNE, create.
@@ -244,10 +243,11 @@ defmodule Subaru.DB do
             type: typenum
           })
 
-        response.body["id"]
+        {:ok, response.body["id"]}
     end
   end
 
+  @spec remove_collection(pid(), bitstring()) :: {:ok, bitstring()} | {:error, :dne}
   defp remove_collection(conn, name) do
     Logger.info("[Subaru.DB] Removing collection #{name}")
 
@@ -255,10 +255,8 @@ defmodule Subaru.DB do
       {:ok, %Arangox.Response{status: 200} = res} ->
         {:ok, res.body["id"]}
 
-      {:error, %Arangox.Error{status: 404} = res} ->
+      {:error, %Arangox.Error{status: 404} = _res} ->
         {:error, :dne}
     end
   end
-
-  def response_id(response), do: response.body["id"]
 end

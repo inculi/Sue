@@ -4,8 +4,6 @@ defmodule Sue.Application do
   use Application
   require Logger
 
-  @platforms Application.get_env(:sue, :platforms, [])
-
   def start(_type, _args) do
     Logger.debug("Sue.Application starting...")
     import Supervisor.Spec
@@ -15,8 +13,10 @@ defmodule Sue.Application do
       Sue.DB
     ]
 
+    platforms = Application.get_env(:sue, :platforms, [])
+
     children_imessage =
-      if Sue.Utils.contains?(@platforms, :imessage) do
+      if Sue.Utils.contains?(platforms, :imessage) do
         # Method used to avoid strange Dialyzer error...
         [
           Sue.Mailbox.IMessage,
@@ -30,7 +30,7 @@ defmodule Sue.Application do
       end
 
     children_telegram =
-      if Sue.Utils.contains?(@platforms, :telegram) do
+      if Sue.Utils.contains?(platforms, :telegram) do
         [
           ExGram,
           {Sue.Mailbox.Telegram, [method: :polling, token: Application.get_env(:ex_gram, :token)]}

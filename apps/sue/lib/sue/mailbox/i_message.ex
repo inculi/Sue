@@ -183,9 +183,7 @@ defmodule Sue.Mailbox.IMessage do
 
   defp query_messages_since(rowid) do
     q = """
-    SELECT handle.id, handle.person_centric_id, message.cache_has_attachments, message.text, message.ROWID, message.cache_roomnames, message.is_from_me, message.date/1000000000 + strftime("%s", "2001-01-01") AS utc_date FROM message INNER JOIN handle ON message.handle_id = handle.ROWID WHERE message.ROWID > #{
-      rowid
-    };
+    SELECT handle.id, handle.person_centric_id, message.cache_has_attachments, message.text, message.ROWID, message.cache_roomnames, message.is_from_me, message.date/1000000000 + strftime("%s", "2001-01-01") AS utc_date FROM message INNER JOIN handle ON message.handle_id = handle.ROWID WHERE message.ROWID > #{rowid};
     """
 
     query(q)
@@ -195,9 +193,7 @@ defmodule Sue.Mailbox.IMessage do
     Logger.debug("Querying attachments since rowid #{rowid}...?")
 
     q = """
-    SELECT attachment.ROWID AS a_id, message_attachment_join.message_id AS m_id, attachment.filename, attachment.mime_type, attachment.total_bytes FROM attachment INNER JOIN message_attachment_join ON attachment.ROWID == message_attachment_join.attachment_id WHERE message_attachment_join.message_id >= #{
-      rowid
-    };
+    SELECT attachment.ROWID AS a_id, message_attachment_join.message_id AS m_id, attachment.filename, attachment.mime_type, attachment.total_bytes FROM attachment INNER JOIN message_attachment_join ON attachment.ROWID == message_attachment_join.attachment_id WHERE message_attachment_join.message_id >= #{rowid};
     """
 
     query(q)

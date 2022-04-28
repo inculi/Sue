@@ -7,7 +7,7 @@
 # all use the same configuration file. If you want different
 # configurations or dependencies per app, it is best to
 # move said applications out of the umbrella.
-use Mix.Config
+import Config
 
 config :desu_web,
   generators: [context_app: false]
@@ -51,7 +51,7 @@ Logger.put_module_level(Tesla, :warn)
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
-mnesia_dir = "mnesia/#{Mix.env()}/#{node()}"
+mnesia_dir = "mnesia/#{config_env()}/#{node()}"
 if not File.exists?(mnesia_dir), do: File.mkdir_p!(mnesia_dir)
 
 config :mnesia,
@@ -66,4 +66,4 @@ import_config "config.secret.exs"
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
-import_config "#{Mix.env()}.exs"
+import_config "#{config_env()}.exs"

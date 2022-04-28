@@ -1,7 +1,7 @@
 defmodule DBTest do
   use ExUnit.Case
 
-  alias Sue.New.{Account, Chat}
+  # alias Sue.New.{Account, Chat}
 
   test "confirm subaru genserver is accessible" do
     assert Subaru.DB.ping() == :pong
