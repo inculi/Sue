@@ -3,6 +3,7 @@ defmodule Subaru do
 
   # Database Result
   # Arangox.Response.t()
+  @type dbid() :: bitstring()
   @type dbres() :: {:ok, list()} | {:error, any()}
   @type res_id() :: {:ok, bitstring()} | {:error, any()}
 

@@ -44,4 +44,29 @@ defmodule SubaruTest do
 
     {:ok, _} = Subaru.DB.remove_collection("mycollection")
   end
+
+  test "edges" do
+    {:ok, _} = Subaru.DB.create_collection("vtuber_talents", :doc)
+    {:ok, _} = Subaru.DB.create_collection("vtuber_agencies", :doc)
+    {:ok, _} = Subaru.DB.create_collection("vtuber_talent_agency_contracts", :edge)
+
+    # create vtuber talents
+    {:ok, gura} = Subaru.insert(%{name: "Gura", subscribers: 3_940_000}, "vtuber_talents")
+    {:ok, ame} = Subaru.insert(%{name: "Ame", subscribers: 1_650_000}, "vtuber_talents")
+    {:ok, roa} = Subaru.insert(%{name: "Roa", subscribers: 353_000}, "vtuber_talents")
+
+    # create vtuber agencies
+    {:ok, hololive} = Subaru.insert(%{name: "Hololive", country: "JP"}, "vtuber_agencies")
+    {:ok, nijisanji} = Subaru.insert(%{name: "Nijisanji", country: "JP"}, "vtuber_agencies")
+
+    # link talents to agencies
+    Subaru.insert_edge(gura, hololive, "vtuber_talent_agency_contracts")
+    Subaru.insert_edge(ame, hololive, "vtuber_talent_agency_contracts")
+    Subaru.insert_edge(roa, nijisanji, "vtuber_talent_agency_contracts")
+
+    # cleanup
+    {:ok, _} = Subaru.DB.remove_collection("vtuber_talents")
+    {:ok, _} = Subaru.DB.remove_collection("vtuber_agencies")
+    {:ok, _} = Subaru.DB.remove_collection("vtuber_talent_agency_contracts")
+  end
 end
