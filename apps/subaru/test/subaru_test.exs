@@ -64,6 +64,11 @@ defmodule SubaruTest do
     Subaru.insert_edge(ame, hololive, "vtuber_talent_agency_contracts")
     Subaru.insert_edge(roa, nijisanji, "vtuber_talent_agency_contracts")
 
+    # confirm we can find what we added
+    {:ok, verts} = Subaru.traverse("vtuber_talent_agency_contracts", :any, hololive)
+    assert Enum.any?(verts, fn x -> x["_id"] == ame end)
+    assert Enum.any?(verts, fn x -> x["_id"] == gura end)
+
     # cleanup
     {:ok, _} = Subaru.DB.remove_collection("vtuber_talents")
     {:ok, _} = Subaru.DB.remove_collection("vtuber_agencies")

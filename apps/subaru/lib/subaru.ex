@@ -1,4 +1,5 @@
 defmodule Subaru do
+  require Logger
   alias Subaru.Query
 
   # Database Result
@@ -74,12 +75,22 @@ defmodule Subaru do
     res
   end
 
+  # GRAPH TRAVERSAL
+  # ===============
+  @spec traverse(bitstring(), :outbound | :inbound | :any, dbid(), integer() | nil, integer() | nil) :: dbid()
+  def traverse(ecoll, direction, startvert, min \\ nil, max \\ nil) do
+    Query.new()
+    |> Query.traverse(ecoll, direction, startvert, min, max)
+    |> Query.exec()
+    |> result()
+  end
+
   # RESULT OUTPUT HELPERS
   # =====================
 
   # @spec result(dbres()) :: [map() | dbid()]
   defp result(res) do
-    IO.puts(res |> inspect())
+    Logger.debug(res |> inspect())
 
     case res do
       {:ok, [%Arangox.Response{body: %{"result" => result}}]} -> {:ok, result}

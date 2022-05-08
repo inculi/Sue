@@ -71,6 +71,11 @@ defmodule Subaru.Query do
     push(q, item)
   end
 
+  def traverse(q, ecoll, direction, startvert, min, max) do
+    item = {:traverse, ecoll, direction, startvert, min, max}
+    push(q, item)
+  end
+
   @spec filter(t, boolean_expression()) :: t
   def filter(q, expr) do
     item = {:filter, expr}
@@ -119,9 +124,9 @@ defmodule Subaru.Query do
       |> Enum.map(&String.length/1)
       |> Enum.max()
 
-    IO.puts(String.duplicate("*", maxlinelen))
-    IO.puts(statement)
-    IO.puts(String.duplicate("*", maxlinelen))
+
+    logborder = String.duplicate("*", maxlinelen)
+    Logger.debug("EXECUTING QUERY:\n#{logborder}\n#{statement}\n#{logborder}")
 
     {statement, bindvars, opts}
   end
@@ -211,6 +216,33 @@ defmodule Subaru.Query do
     |> add_statement(statement)
     |> add_bindvar(coll_bindvar, collection)
     |> add_read_coll(collection)
+    |> gen()
+  end
+
+  defp gen({:traverse, ecoll, direction, startvert, min, max}, query) do
+    # ecoll_bindvars = Enum.map(ecolls, fn ec -> "@" <> generate_bindvar(ec) end)
+    # ecoll_bindvar = "@" <> generate_bindvar(ecoll)
+    startvert_bindvar_id = generate_bindvar(startvert)
+
+    stm_min_max =
+      if !is_nil(min) and !is_nil(max) do
+        " #{min}..#{max}"
+      else
+        ""
+      end
+
+    statement = """
+    FOR v IN#{stm_min_max} #{edgedir_to_str(direction)}
+        #{startvert_bindvar_id}
+        #{ecoll}
+        RETURN v
+    """
+
+    query
+    |> add_statement(statement)
+    # |> add_bindvar(ecoll_bindvar, ecoll)
+    |> add_bindvar(startvert_bindvar_id, startvert)
+    |> add_read_coll(ecoll)
     |> gen()
   end
 
@@ -313,47 +345,6 @@ defmodule Subaru.Query do
     "(#{p_red} #{op} #{q_red})"
   end
 
-  def mock() do
-    # robert =
-    #   Query.new()
-    #   |> Query.insert(%{name: "Robert"}, "users")
-
-    # chat =
-    #   Query.new()
-    #   |> Query.insert(%{name: "ADS"}, "chats")
-
-    # Query.new()
-    # |> Query.let(:robert, robert)
-    # |> Query.let(:chat, chat)
-    # |> Query.run()
-
-    # Query.new()
-    # |> Query.for(:u, "users")
-    # |> Query.filter({:==, "u.name", ~s("Robert")})
-    # |> Query.return("u._id")
-    # |> Query.run()
-
-    # sch =
-    #   Query.new()
-    #   |> Query.for(:x, "users")
-    #   |> Query.filter({:>=, "x.age", 21})
-    #   |> Query.return("x")
-    #   |> Query.first()
-
-    # Query.new()
-    # |> Query.let(:sch, sch)
-    # |> Query.run()
-
-    expr = {:and, {:==, "x.name", quoted("Robert")}, {:==, "x.handle", quoted("tbs")}}
-
-    Query.new()
-    |> Query.for(:x, "users")
-    |> Query.filter(expr)
-    |> Query.return("x")
-    |> Query.first()
-    |> Query.run()
-  end
-
   @spec push(Query.t(), any()) :: Query.t()
   defp push(query, item) do
     %Query{query | q: Queue.in(item, query.q)}
@@ -369,6 +360,7 @@ defmodule Subaru.Query do
     %Query{query | statement: query.statement ++ statements}
   end
 
+  @spec add_bindvar(t, bitstring(), any()) :: t
   defp add_bindvar(query, "@" <> key, value) do
     %Query{query | bindvars: Map.put(query.bindvars, key, value)}
   end
@@ -384,6 +376,11 @@ defmodule Subaru.Query do
 
   defp add_read_coll(query, coll) do
     %Query{query | reads: MapSet.put(query.reads, coll)}
+  end
+
+  @spec add_read_colls(t(), [bitstring()]) :: t()
+  defp add_read_colls(query, colls) do
+    %Query{query | reads: MapSet.union(query.reads, MapSet.new(colls))}
   end
 
   defp merge_rw_colls(query, reads, writes) do
@@ -417,6 +414,7 @@ defmodule Subaru.Query do
     [a | query.context]
   end
 
+  # primarily used for generating unique ids for hashable objects.
   defp generate_bindvar(var) do
     id = :erlang.phash2(var, 10_000)
     "@var#{id}"
@@ -424,6 +422,10 @@ defmodule Subaru.Query do
 
   defp truthy_to_str(:and), do: "&&"
   defp truthy_to_str(:or), do: "||"
+
+  defp edgedir_to_str(:outbound), do: "OUTBOUND"
+  defp edgedir_to_str(:inbound), do: "INBOUND"
+  defp edgedir_to_str(:any), do: "ANY"
 
   defp quoted(s) when is_bitstring(s) do
     "\"#{s}\""
