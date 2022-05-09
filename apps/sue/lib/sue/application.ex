@@ -10,7 +10,8 @@ defmodule Sue.Application do
 
     children = [
       Sue,
-      Sue.DB
+      Sue.DB,
+      Sue.New.DB
     ]
 
     platforms = Application.get_env(:sue, :platforms, [])

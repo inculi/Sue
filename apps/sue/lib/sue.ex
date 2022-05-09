@@ -122,6 +122,8 @@ defmodule Sue do
     end)
   end
 
+  # Functions starting with c_ are actually callable Sue commands, and are thus
+  #   the only ones we care to initialize.
   defp make_func_doc_tuple(module, "c_" <> fname, %{"en" => doc}) do
     {module, fname, doc}
   end

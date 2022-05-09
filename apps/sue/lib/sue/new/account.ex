@@ -1,4 +1,6 @@
 defmodule Sue.New.Account do
+  @behaviour Subaru.Vertex
+
   @enforce_keys [:name, :handle, :platform_id]
   defstruct [:name, :handle, :platform_id, :id]
 
@@ -17,9 +19,9 @@ defmodule Sue.New.Account do
   def resolve(a) do
     {platform, id} = a.platform_id
     doc_search = %{platform: platform, id: id}
-    doc_insert = Subaru.Vertex.doc(a)
+    doc_insert = doc(a)
 
-    account_id = Subaru.upsert(doc_search, doc_insert, %{}, @collection)
+    {:ok, account_id} = Subaru.upsert(doc_search, doc_insert, %{}, @collection)
 
     %Account{a | id: account_id}
   end
@@ -34,11 +36,11 @@ defmodule Sue.New.Account do
     }
   end
 
-  defimpl Subaru.Vertex, for: __MODULE__ do
-    def collection(_a), do: "sue_users"
+  @impl Subaru.Vertex
+  def collection(), do: @collection
 
-    def doc(%Account{platform_id: {platform, id}} = a) do
-      %{name: a.name, handle: a.handle, platform: platform, id: id}
-    end
+  @impl Subaru.Vertex
+  def doc(%Account{platform_id: {platform, id}} = a) do
+    %{name: a.name, handle: a.handle, platform: platform, id: id}
   end
 end

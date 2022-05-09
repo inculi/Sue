@@ -16,16 +16,6 @@ defmodule Subaru do
     |> result_id()
   end
 
-  @spec insert(Subaru.Vertex.t()) :: res_id()
-  def insert(v) when is_struct(v) do
-    insert(Subaru.Vertex.doc(v), Subaru.Vertex.collection(v))
-  end
-
-  def insert!(v) do
-    {:ok, res} = insert(v)
-    res
-  end
-
   @spec insert(map(), bitstring()) :: res_id()
   def insert(doc, collection) when is_map(doc) do
     Query.new()
@@ -43,6 +33,15 @@ defmodule Subaru do
   def insert_edge(from_id, to_id, edge_collection) do
     Query.new()
     |> Query.insert(%{_from: from_id, _to: to_id}, edge_collection)
+    |> Query.exec()
+    |> result_id()
+  end
+
+  def upsert_edge(from_id, to_id, edge_collection) do
+    doc = %{_from: from_id, _to: to_id}
+
+    Query.new()
+    |> Query.upsert(doc, doc, %{}, edge_collection)
     |> Query.exec()
     |> result_id()
   end
@@ -75,9 +74,27 @@ defmodule Subaru do
     res
   end
 
+  def exists?(collection, expr) do
+    case find_one!(collection, expr) do
+      :dne -> false
+      _ -> true
+    end
+  end
+
+  def exists_edge?(edge_collection, from_id, to_id) do
+    expr = {:and, {:==, "x._from", from_id}, {:==, "x._to", to_id}}
+    exists?(edge_collection, expr)
+  end
+
   # GRAPH TRAVERSAL
   # ===============
-  @spec traverse(bitstring(), :outbound | :inbound | :any, dbid(), integer() | nil, integer() | nil) :: dbid()
+  @spec traverse(
+          bitstring(),
+          :outbound | :inbound | :any,
+          dbid(),
+          integer() | nil,
+          integer() | nil
+        ) :: [map() | dbid()]
   def traverse(ecoll, direction, startvert, min \\ nil, max \\ nil) do
     Query.new()
     |> Query.traverse(ecoll, direction, startvert, min, max)
@@ -88,7 +105,7 @@ defmodule Subaru do
   # RESULT OUTPUT HELPERS
   # =====================
 
-  # @spec result(dbres()) :: [map() | dbid()]
+  @spec result(dbres()) :: [map() | dbid()]
   defp result(res) do
     Logger.debug(res |> inspect())
 

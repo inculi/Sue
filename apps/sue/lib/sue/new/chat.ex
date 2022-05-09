@@ -2,6 +2,8 @@ defmodule Sue.New.Chat do
   @enforce_keys [:platform_id, :is_direct]
   defstruct [:platform_id, :is_direct, :id]
 
+  @behaviour Subaru.Vertex
+
   @type t() :: %__MODULE__{
           platform_id: {bitstring(), bitstring() | integer()},
           # is a 1:1 convo with Sue
@@ -17,9 +19,9 @@ defmodule Sue.New.Chat do
   def resolve(c) do
     {platform, id} = c.platform_id
     doc_search = %{platform: platform, id: id}
-    doc_insert = Subaru.Vertex.doc(c)
+    doc_insert = doc(c)
 
-    chat_id = Subaru.upsert(doc_search, doc_insert, %{}, @collection)
+    {:ok, chat_id} = Subaru.upsert(doc_search, doc_insert, %{}, @collection)
 
     %Chat{c | id: chat_id}
   end
@@ -32,11 +34,11 @@ defmodule Sue.New.Chat do
     }
   end
 
-  defimpl Subaru.Vertex, for: __MODULE__ do
-    def collection(_a), do: "sue_chats"
+  @impl Subaru.Vertex
+  def collection(), do: @collection
 
-    def doc(%Chat{platform_id: {platform, id}} = c) do
-      %{platform: platform, is_direct: c.is_direct, id: id}
-    end
+  @impl Subaru.Vertex
+  def doc(%Chat{platform_id: {platform, id}} = c) do
+    %{platform: platform, is_direct: c.is_direct, id: id}
   end
 end

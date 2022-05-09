@@ -1,4 +1,6 @@
 defmodule Sue.New.Defn do
+  @behaviour Subaru.Vertex
+
   defstruct [:var, :val, :type, :date_created, :date_modified, :id]
 
   @type t() :: %__MODULE__{
@@ -9,6 +11,8 @@ defmodule Sue.New.Defn do
           date_modified: integer(),
           id: any()
         }
+
+  @collection "sue_defns"
 
   alias __MODULE__
 
@@ -26,8 +30,9 @@ defmodule Sue.New.Defn do
     }
   end
 
-  defimpl Subaru.Vertex, for: __MODULE__ do
-    def collection(_d), do: "sue_defns"
-    def doc(d), do: Sue.Utils.struct_to_map(d)
-  end
+  @impl Subaru.Vertex
+  def collection(), do: @collection
+
+  @impl Subaru.Vertex
+  def doc(d), do: Sue.Utils.struct_to_map(d)
 end

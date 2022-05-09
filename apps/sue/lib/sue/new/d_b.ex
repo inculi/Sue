@@ -1,31 +1,55 @@
 defmodule Sue.New.DB do
-  alias Sue.New.{Defn, Account, Chat}
+  use GenServer
 
-  @spec add_defn(Defn.t(), Subaru.dbid(), Subaru.dbid()) :: Subaru.dbid()
-  def add_defn(defn, account_id, chat_id) do
-    defn_id = Subaru.insert(defn)
-    Subaru.insert_edge(account_id, defn_id, "sue_defnAuthor")
-    Subaru.insert_edge(chat_id, defn_id, "sue_defnChat")
+  require Logger
 
-    defn_id
+  alias Sue.New.Schema
+  alias Sue.New.Defn
+
+  def start_link(args) do
+    GenServer.start_link(__MODULE__, args, name: __MODULE__)
   end
 
-  def mock() do
-    d = Defn.new("megumin", "acute", :text)
+  @impl true
+  def init(_args) do
+    init_schema()
 
-    a =
-      Account.resolve(%Account{
-        name: "Robert Dominguez",
-        handle: "tomboysweat",
-        platform_id: {"telegram", 123}
-      })
+    {:ok, []}
+  end
 
-    c =
-      Chat.resolve(%Chat{
-        platform_id: {"telegram", 456},
-        is_direct: false
-      })
+  # initialize the collections that need to be in our db for sue.
+  defp init_schema() do
+    for vcolname <- Schema.vertex_collections() do
+      Subaru.DB.create_collection(vcolname, :doc)
+    end
 
-    add_defn(d, a.id, c.id)
+    for ecolname <- Schema.edge_collections() do
+      Subaru.DB.create_collection(ecolname, :edge)
+    end
+  end
+
+  @doc """
+  Upsert a definition.
+  """
+  @spec add_defn(Defn.t(), Subaru.dbid(), Subaru.dbid()) :: Subaru.dbid()
+  def add_defn(defn, account_id, chat_id) do
+    defndoc = Defn.doc(defn)
+    defncol = Defn.collection()
+
+    d_search = %{var: defn.var, val: defn.val, type: defn.type}
+
+    {:ok, defn_id} = Subaru.upsert(d_search, defndoc, %{}, defncol)
+    {:ok, _} = Subaru.upsert_edge(account_id, defn_id, "sue_defn_by_user")
+    {:ok, _} = Subaru.upsert_edge(chat_id, defn_id, "sue_defn_by_chat")
+
+    {:ok, defn_id}
+  end
+
+  def get_defns_by_user(account_id) do
+    Subaru.traverse("sue_defn_by_user", :outbound, account_id, 1, 1)
+  end
+
+  def add_user_chat_edge(user_id, chat_id) do
+    Subaru.upsert_edge(user_id, chat_id, "sue_user_in_chat")
   end
 end

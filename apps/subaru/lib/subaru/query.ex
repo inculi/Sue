@@ -240,7 +240,6 @@ defmodule Subaru.Query do
 
     query
     |> add_statement(statement)
-    # |> add_bindvar(ecoll_bindvar, ecoll)
     |> add_bindvar(startvert_bindvar_id, startvert)
     |> add_read_coll(ecoll)
     |> gen()
