@@ -29,9 +29,20 @@ defmodule Sue.New.DB do
   end
 
   @doc """
+  Mark users as being present in a chat.
+  """
+  def add_user_chat_edge(user_id, chat_id) do
+    Subaru.upsert_edge(user_id, chat_id, "sue_user_in_chat")
+  end
+
+  # =================
+  # || DEFINITIONS ||
+  # =================
+
+  @doc """
   Upsert a definition.
   """
-  @spec add_defn(Defn.t(), Subaru.dbid(), Subaru.dbid()) :: Subaru.dbid()
+  @spec add_defn(Defn.t(), Subaru.dbid(), Subaru.dbid()) :: {:ok, Subaru.dbid()}
   def add_defn(defn, account_id, chat_id) do
     defndoc = Defn.doc(defn)
     defncol = Defn.collection()
@@ -45,11 +56,66 @@ defmodule Sue.New.DB do
     {:ok, defn_id}
   end
 
+  @doc """
+  Search definitions by user.
+  """
+  @spec get_defns_by_user(Subaru.dbid()) :: [Defn.t()]
   def get_defns_by_user(account_id) do
-    Subaru.traverse("sue_defn_by_user", :outbound, account_id, 1, 1)
+    # only search a depth of one to get adjacent definitions.
+    Subaru.traverse!("sue_defn_by_user", :outbound, account_id, 1, 1)
+    |> Enum.map(&Defn.from_doc/1)
   end
 
-  def add_user_chat_edge(user_id, chat_id) do
-    Subaru.upsert_edge(user_id, chat_id, "sue_user_in_chat")
+  @doc """
+  Search definitions by chat.
+  """
+  @spec get_defns_by_chat(Subaru.dbid()) :: [Defn.t()]
+  def get_defns_by_chat(chat_id) do
+    # only search a depth of one to get adjacent definitions.
+    Subaru.traverse!("sue_defn_by_chat", :outbound, chat_id, 1, 1)
+    |> Enum.map(&Defn.from_doc/1)
+  end
+
+  @doc """
+  Important: There are multiple possible algorithms we can use to resolve which
+    definition a user is looking for when they call for it. Most of the time,
+    these definitions represent inside jokes for a user group. Thus, it is
+    useful for defns to be group (chat) writable.
+
+  For now, the logic is this:
+    If a user is chatting 1-1 with Sue: return the user's personal value.
+    If a user is chatting in a group: return the last modified v for that k
+      owned by any user in the chat group.
+  """
+  @spec search_defn(Subaru.dbid(), Subaru.dbid(), binary()) :: {:ok, Defn.t()} | {:error, :dne}
+  def search_defn(account_id, chat_id, varname) do
+    pass1 = get_defns_by_user(account_id)
+    pass2 = get_defns_by_chat(chat_id)
+
+    hits =
+      (pass1 ++ pass2)
+      |> defn_filter_by_var(varname)
+      |> Enum.uniq_by(fn d -> d.id end)
+      |> Enum.sort_by(fn d -> d.date_modified end, :desc)
+
+    case hits do
+      [] -> {:error, :dne}
+      [best | _others] -> {:ok, best}
+    end
+  end
+
+  defp defn_filter_by_var(defn_list, varname) when is_binary(varname) do
+    defn_list
+    |> Enum.filter(fn d -> d.var == varname end)
+  end
+
+  def debug_clear_collections() do
+    for vc <- Schema.vertex_collections() do
+      Subaru.remove_all(vc)
+    end
+
+    for ec <- Schema.edge_collections() do
+      Subaru.remove_all(ec)
+    end
   end
 end

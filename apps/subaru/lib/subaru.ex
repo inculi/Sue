@@ -6,7 +6,7 @@ defmodule Subaru do
   # Arangox.Response.t()
   @type dbid() :: bitstring()
   @type dbres() :: {:ok, list()} | {:error, any()}
-  @type res_id() :: {:ok, bitstring()} | {:error, any()}
+  @type res_id() :: {:ok, dbid()} | {:error, any()}
 
   @spec upsert(map(), map(), map(), bitstring()) :: res_id()
   def upsert(d_search, d_insert, d_update, collection) do
@@ -37,6 +37,7 @@ defmodule Subaru do
     |> result_id()
   end
 
+  @spec upsert_edge(dbid(), dbid(), bitstring()) :: res_id()
   def upsert_edge(from_id, to_id, edge_collection) do
     doc = %{_from: from_id, _to: to_id}
 
@@ -102,6 +103,11 @@ defmodule Subaru do
     |> result()
   end
 
+  def traverse!(ecoll, direction, startvert, min \\ nil, max \\ nil) do
+    {:ok, res} = traverse(ecoll, direction, startvert, min, max)
+    res
+  end
+
   # RESULT OUTPUT HELPERS
   # =====================
 
@@ -125,7 +131,14 @@ defmodule Subaru do
     end
   end
 
+  # defp result_list(res) do
+  #   case result(res) do
+  #     {:ok, l} when is_list(l) -> l
+  #     {:error, error} -> {:error, error}
+  #   end
+  # end
+
   # similar to result_one, only we guarantee the :ok val will be an ID bitstring
-  @spec result_id(dbres()) :: {:ok, bitstring()} | {:error, any()}
+  @spec result_id(dbres()) :: res_id()
   defp result_id(res), do: result_one(res)
 end

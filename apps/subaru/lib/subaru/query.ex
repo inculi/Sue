@@ -124,7 +124,6 @@ defmodule Subaru.Query do
       |> Enum.map(&String.length/1)
       |> Enum.max()
 
-
     logborder = String.duplicate("*", maxlinelen)
     Logger.debug("EXECUTING QUERY:\n#{logborder}\n#{statement}\n#{logborder}")
 
@@ -290,7 +289,6 @@ defmodule Subaru.Query do
     |> gen()
   end
 
-  # TODO: Temp. Needs indentation stuff a la query.depth, etc.
   @spec gen_statement(t) :: String.t()
   defp gen_statement(query) do
     helper_gen_statement(query, query.statement, "")

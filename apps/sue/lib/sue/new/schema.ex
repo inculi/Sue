@@ -11,6 +11,8 @@ defmodule Sue.New.Schema do
     ["sue_user_in_chat", "sue_defn_by_user", "sue_defn_by_chat"]
   end
 
+  # TODO: It would be really nice if there was a way to auto-register these
+  #   when creating them to begin with.
   defp defined_vertices() do
     [
       Account.collection(),

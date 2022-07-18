@@ -1,21 +1,3 @@
 # Desu
 
-**TODO: Add description**
-
-## Installation
-
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `desu` to your list of dependencies in `mix.exs`:
-
-```elixir
-def deps do
-  [
-    {:desu, "~> 0.1.0"}
-  ]
-end
-```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/desu](https://hexdocs.pm/desu).
-
+Desu is a new social network that aims to be more of a fun tool than an opiate. It is built for self-hosting and respects user privacy. More specifically, desu allows users to create custom *types* of posts: quotes, recipes, events, and more.

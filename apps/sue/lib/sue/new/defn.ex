@@ -30,6 +30,17 @@ defmodule Sue.New.Defn do
     }
   end
 
+  def from_doc(doc) do
+    %Defn{
+      var: doc["var"],
+      val: doc["val"],
+      type: doc["type"],
+      date_created: doc["date_created"],
+      date_modified: doc["date_modified"],
+      id: doc["_id"]
+    }
+  end
+
   @impl Subaru.Vertex
   def collection(), do: @collection
 

@@ -5,15 +5,19 @@ defmodule DBTest do
   alias Sue.New.{Account, Chat, Defn}
   alias Sue.New.Schema
 
+  # TODO: Figure out if there's a way to limit the scope of a DB change to each
+  #   test, or at least maybe automatically call clear_collections at the
+  #   beginning and end of each test.
+
   test "defns" do
-    clear_collections()
+    DB.debug_clear_collections()
 
     d = Defn.new("megumin", "acute", :text)
 
     a =
       Account.resolve(%Account{
         name: "Robert",
-        handle: "tomboysweat",
+        handle: "mwlp",
         platform_id: {"telegram", 100}
       })
 
@@ -26,20 +30,19 @@ defmodule DBTest do
     # upsert should prevent this from duplicating.
     {:ok, defn_id1} = DB.add_defn(d, a.id, c.id)
     {:ok, defn_id2} = DB.add_defn(d, a.id, c.id)
-
-    {:ok, [defn]} = DB.get_defns_by_user(a.id)
+    [defn] = DB.get_defns_by_user(a.id)
 
     assert defn_id1 == defn_id2
-    assert defn_id1 == defn["_id"]
+    assert defn_id1 == defn.id
   end
 
   test "users" do
-    clear_collections()
+    DB.debug_clear_collections()
 
     a1 =
       Account.resolve(%Account{
         name: "Robert",
-        handle: "tomboysweat",
+        handle: "mwlp",
         platform_id: {"telegram", 100}
       })
 
@@ -76,15 +79,5 @@ defmodule DBTest do
     # William and James are in Chat 2
     {:ok, _} = DB.add_user_chat_edge(a2.id, c2.id)
     {:ok, _} = DB.add_user_chat_edge(a3.id, c2.id)
-  end
-
-  defp clear_collections() do
-    for vc <- Schema.vertex_collections() do
-      Subaru.remove_all(vc)
-    end
-
-    for ec <- Schema.edge_collections() do
-      Subaru.remove_all(ec)
-    end
   end
 end
