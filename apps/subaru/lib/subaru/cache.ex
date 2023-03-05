@@ -17,6 +17,10 @@ defmodule Subaru.Cache do
     Cachex.put!(table, key, val)
   end
 
+  def add_many!(table, pairs) do
+    Cachex.put_many!(table, pairs)
+  end
+
   def exists?(table, key) do
     {:ok, res} = Cachex.exists?(table, key)
     res
