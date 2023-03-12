@@ -74,4 +74,18 @@ defmodule SubaruTest do
     {:ok, _} = Subaru.DB.remove_collection("vtuber_agencies")
     {:ok, _} = Subaru.DB.remove_collection("vtuber_talent_agency_contracts")
   end
+
+  test "exists" do
+    {:ok, _} = Subaru.DB.create_collection("chats", :doc)
+    {:ok, nash} = Subaru.insert(%{name: "Nash Ramblers"}, "chats")
+
+    # Confirm exists
+    expr = {:==, "x.name", "Nash Ramblers"}
+    assert Subaru.exists?("chats", expr) == true
+
+    # Confirm does not exist.
+    expr2 = {:==, "x.name", "piranha"}
+    assert Subaru.exists?("chats", expr2) == false
+    {:ok, _} = Subaru.DB.remove_collection("chats")
+  end
 end

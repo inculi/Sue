@@ -6,7 +6,6 @@ defmodule Sue.Application do
 
   def start(_type, _args) do
     Logger.debug("Sue.Application starting...")
-    import Supervisor.Spec
 
     children = [
       Sue,
@@ -21,10 +20,10 @@ defmodule Sue.Application do
         # Method used to avoid strange Dialyzer error...
         [
           Sue.Mailbox.IMessage,
-          worker(Sqlitex.Server, [
-            Application.get_env(:sue, :chat_db_path),
-            [name: Sue.IMessageChatDB]
-          ])
+          %{
+            id: Sue.IMessageChatDB,
+            start: {Sqlitex.Server, :start_link, [Application.get_env(:sue, :chat_db_path)]}
+          }
         ]
       else
         []

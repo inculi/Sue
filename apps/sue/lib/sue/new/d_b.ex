@@ -94,7 +94,7 @@ defmodule Sue.New.DB do
 
     hits =
       (pass1 ++ pass2)
-      |> defn_filter_by_var(varname)
+      |> Enum.filter(fn d -> d.var == varname end)
       |> Enum.uniq_by(fn d -> d.id end)
       |> Enum.sort_by(fn d -> d.date_modified end, :desc)
 
@@ -102,11 +102,6 @@ defmodule Sue.New.DB do
       [] -> {:error, :dne}
       [best | _others] -> {:ok, best}
     end
-  end
-
-  defp defn_filter_by_var(defn_list, varname) when is_binary(varname) do
-    defn_list
-    |> Enum.filter(fn d -> d.var == varname end)
   end
 
   def debug_clear_collections() do

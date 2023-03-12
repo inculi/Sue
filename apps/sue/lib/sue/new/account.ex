@@ -22,7 +22,6 @@ defmodule Sue.New.Account do
     doc_insert = doc(a)
 
     {:ok, account_id} = Subaru.upsert(doc_search, doc_insert, %{}, @collection)
-
     %Account{a | id: account_id}
   end
 

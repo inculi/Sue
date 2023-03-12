@@ -22,8 +22,8 @@ defmodule Sue.New.Chat do
     doc_insert = doc(c)
 
     {:ok, chat_id} = Subaru.upsert(doc_search, doc_insert, %{}, @collection)
-
-    %Chat{c | id: chat_id}
+    struct(c, id: chat_id)
+    # %Chat{c | id: chat_id}
   end
 
   def from_doc(d) do

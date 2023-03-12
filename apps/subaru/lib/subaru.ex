@@ -5,7 +5,6 @@ defmodule Subaru do
   # Database Result
   # Arangox.Response.t()
   @type dbid() :: bitstring()
-  @type dbres() :: {:ok, list()} | {:error, any()}
   @type res_id() :: {:ok, dbid()} | {:error, any()}
 
   @spec upsert(map(), map(), map(), bitstring()) :: res_id()
@@ -47,7 +46,7 @@ defmodule Subaru do
     |> result_id()
   end
 
-  @spec remove_all(bitstring()) :: :ok
+  @spec remove_all(bitstring()) :: Subaru.DB.res()
   def remove_all(collection) do
     Query.new()
     |> Query.for(:x, collection)
@@ -59,7 +58,7 @@ defmodule Subaru do
   @doc """
   Finds and returns document according to filter.
   """
-  @spec find_one(bitstring(), Query.boolean_expression()) :: map()
+  @spec find_one(bitstring(), Query.boolean_expression()) :: Subaru.DB.res()
   def find_one(collection, expr) do
     Query.new()
     |> Query.for(:x, collection)
@@ -95,7 +94,7 @@ defmodule Subaru do
           dbid(),
           integer() | nil,
           integer() | nil
-        ) :: [map() | dbid()]
+        ) :: {:ok, [map() | dbid()]} | {:error, any()}
   def traverse(ecoll, direction, startvert, min \\ nil, max \\ nil) do
     Query.new()
     |> Query.traverse(ecoll, direction, startvert, min, max)
@@ -111,18 +110,19 @@ defmodule Subaru do
   # RESULT OUTPUT HELPERS
   # =====================
 
-  @spec result(dbres()) :: [map() | dbid()]
-  defp result(res) do
-    Logger.debug(res |> inspect())
+  defp result({:ok, [%Arangox.Response{body: %{"result" => result}}]}) do
+    # Logger.debug(result |> inspect())
+    {:ok, result}
+  end
 
-    case res do
-      {:ok, [%Arangox.Response{body: %{"result" => result}}]} -> {:ok, result}
-    end
+  defp result({:error, e}) do
+    # Logger.debug(e |> inspect())
+    {:error, e}
   end
 
   # we *expect* there to be at least one result, return the core data not
   #   encapsulated in a list. if it doesn't exist, return :dne
-  @spec result_one(dbres()) :: {:ok, any()} | {:error, any()}
+  @spec result_one(Subaru.DB.res()) :: {:ok, any()} | {:error, any()}
   defp result_one(res) do
     case result(res) do
       {:ok, [doc]} -> {:ok, doc}
@@ -131,14 +131,7 @@ defmodule Subaru do
     end
   end
 
-  # defp result_list(res) do
-  #   case result(res) do
-  #     {:ok, l} when is_list(l) -> l
-  #     {:error, error} -> {:error, error}
-  #   end
-  # end
-
   # similar to result_one, only we guarantee the :ok val will be an ID bitstring
-  @spec result_id(dbres()) :: res_id()
+  @spec result_id(Subaru.DB.res()) :: res_id()
   defp result_id(res), do: result_one(res)
 end

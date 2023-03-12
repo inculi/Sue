@@ -3,6 +3,8 @@ defmodule Subaru.DB do
 
   require Logger
 
+  @type res() :: {:ok, [Arangox.Response.t()] | :dne} | {:error, any()}
+
   def start_link(args) do
     GenServer.start_link(__MODULE__, args, name: __MODULE__)
   end
@@ -131,7 +133,7 @@ defmodule Subaru.DB do
   # PUBLIC API
   # ==========
 
-  @spec exec(bitstring(), map(), keyword()) :: Arangox.Response.t()
+  @spec exec(bitstring(), map(), keyword()) :: res()
   def exec(statement, bindvars, opts) do
     GenServer.call(__MODULE__, {:exec, statement, bindvars, opts})
   end
@@ -207,7 +209,7 @@ defmodule Subaru.DB do
   # HELPER UTILS
   # ============
 
-  @spec exec(pid(), bitstring(), map(), keyword()) :: {:ok, any()} | {:error, any()}
+  @spec exec(pid(), bitstring(), map(), keyword()) :: res()
   defp exec(conn, query, bindvars, opts) do
     Arangox.transaction(
       conn,

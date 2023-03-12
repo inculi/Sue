@@ -201,13 +201,6 @@ defmodule Sue.Models.Message do
     end
   end
 
-  # we'll use ! in debug as well
-  defp command_args_from_body(_, body) do
-    "!" <> newbody = body |> better_trim()
-    [command | args] = String.split(newbody, " ", parts: 2)
-    {command, Enum.at(args, 0) || "", newbody}
-  end
-
   defp parse_command_potentially_with_botname_suffix(command, botname_suffix) do
     cond do
       String.ends_with?(command, botname_suffix) ->

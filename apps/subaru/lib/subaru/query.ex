@@ -101,7 +101,7 @@ defmodule Subaru.Query do
     push(q, item)
   end
 
-  @spec exec(t) :: Arangox.Response.t()
+  @spec exec(t) :: DB.res()
   def exec(query) do
     {statement, bindvars, opts} = run(query)
     Subaru.DB.exec(statement, bindvars, opts)
@@ -118,14 +118,14 @@ defmodule Subaru.Query do
     opts = [write: MapSet.to_list(q.writes), read: MapSet.to_list(q.reads)]
 
     # For debug purposes
-    maxlinelen =
-      statement
-      |> String.split("\n")
-      |> Enum.map(&String.length/1)
-      |> Enum.max()
+    # maxlinelen =
+    #   statement
+    #   |> String.split("\n")
+    #   |> Enum.map(&String.length/1)
+    #   |> Enum.max()
 
-    logborder = String.duplicate("*", maxlinelen)
-    Logger.debug("EXECUTING QUERY:\n#{logborder}\n#{statement}\n#{logborder}")
+    # logborder = String.duplicate("*", maxlinelen)
+    # Logger.debug("EXECUTING QUERY:\n#{logborder}\n#{statement}\n#{logborder}")
 
     {statement, bindvars, opts}
   end
