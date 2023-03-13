@@ -77,7 +77,7 @@ defmodule SubaruTest do
 
   test "exists" do
     {:ok, _} = Subaru.DB.create_collection("chats", :doc)
-    {:ok, nash} = Subaru.insert(%{name: "Nash Ramblers"}, "chats")
+    {:ok, _nash} = Subaru.insert(%{name: "Nash Ramblers"}, "chats")
 
     # Confirm exists
     expr = {:==, "x.name", "Nash Ramblers"}

@@ -13,13 +13,17 @@ defmodule Subaru.Cache do
     {:ok, state}
   end
 
-  def add!(table, key, val) do
-    Cachex.put!(table, key, val)
-  end
+  def put(table, key, val), do: Cachex.put(table, key, val)
+  def put!(table, key, val), do: Cachex.put!(table, key, val)
 
-  def add_many!(table, pairs) do
-    Cachex.put_many!(table, pairs)
-  end
+  def put_many(table, pairs), do: Cachex.put_many(table, pairs)
+  def put_many!(table, pairs), do: Cachex.put_many!(table, pairs)
+
+  def get(table, key), do: Cachex.get(table, key)
+  def get!(table, key), do: Cachex.get!(table, key)
+
+  def del(table, key), do: Cachex.del(table, key)
+  def del!(table, key), do: Cachex.del!(table, key)
 
   def exists?(table, key) do
     {:ok, res} = Cachex.exists?(table, key)

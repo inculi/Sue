@@ -138,7 +138,8 @@ defmodule Sue.DB do
 
   defp create_table(name, opts) when is_atom(name) do
     res = Mnesia.create_table(name, opts)
-    # Logger.info("create_table(#{name}) -> #{inspect(res)}")
+    Logger.info(opts |> inspect())
+    Logger.info("create_table(#{name}) -> #{inspect(res)}")
     res
   end
 end

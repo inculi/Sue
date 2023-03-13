@@ -10,14 +10,12 @@ defmodule Subaru.DB do
   end
 
   @impl true
-  def init(_args) do
-    databaseName = "sue_#{Mix.env()}"
-
+  def init([database_name]) when is_bitstring(database_name) do
     options = [
       username: Application.fetch_env!(:arangox, :username),
       password: Application.fetch_env!(:arangox, :password),
       endpoints: Application.fetch_env!(:arangox, :endpoints),
-      database: databaseName
+      database: database_name
     ]
 
     {:ok, conn} = Arangox.start_link(options)

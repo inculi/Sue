@@ -3,7 +3,6 @@ defmodule Sue.Mailbox.IMessage do
 
   require Logger
 
-  alias Sue.DB
   alias Sue.Models.{Message, Response, Chat, Attachment}
 
   @applescript_dir Path.join(:code.priv_dir(:sue), "applescript/")
@@ -144,7 +143,8 @@ defmodule Sue.Mailbox.IMessage do
 
   defp set_new_max_rowid(msgs) do
     rowid = Enum.max_by(msgs, fn m -> m.id end).id
-    DB.set(:state, "imsg_max_rowid", rowid)
+    Subaru.Cache.put(:suestate_cache, "imsg_max_rowid", rowid)
+    # DB.set(:state, "imsg_max_rowid", rowid)
     msgs
   end
 
@@ -158,7 +158,8 @@ defmodule Sue.Mailbox.IMessage do
     even still present in the DB.
   """
   def clear_max_rowid() do
-    DB.del!(:state, "imsg_max_rowid")
+    Subaru.Cache.del!(:suestate_cache, "imsg_max_rowid")
+    # DB.del!(:state, "imsg_max_rowid")
   end
 
   @spec query(String.t()) :: [Keyword.t()]
@@ -169,11 +170,12 @@ defmodule Sue.Mailbox.IMessage do
 
   defp get_current_max_rowid() do
     # Check to see if we have one stored.
-    case DB.get!(:state, "imsg_max_rowid") do
+
+    case Subaru.Cache.get!(:suestate_cache, "imsg_max_rowid") do
       nil ->
         # Haven't seen it before, use the max of ROWID.
         [[ROWID: rowid]] = query("SELECT MAX(message.ROWID) AS ROWID FROM message;")
-        DB.set(:state, "imsg_max_rowid", rowid)
+        Subaru.Cache.put(:suestate_cache, "imsg_max_rowid", rowid)
         rowid
 
       res ->

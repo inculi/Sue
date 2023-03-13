@@ -57,10 +57,12 @@ if not File.exists?(mnesia_dir), do: File.mkdir_p!(mnesia_dir)
 config :mnesia,
   dir: String.to_charlist(mnesia_dir)
 
-config(:sue,
-  platforms: [:debug],
+config :sue,
+  platforms: [:imessage, :telegram, :debug],
   chat_db_path: Path.join(System.user_home(), "Library/Messages/chat.db")
-)
+
+config :subaru,
+  dbname: "subaru_#{config_env()}"
 
 import_config "config.secret.exs"
 

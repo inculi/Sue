@@ -5,9 +5,11 @@ defmodule Subaru.Application do
 
   use Application
 
+  @database_name Application.compile_env!(:subaru, :dbname)
+
   @impl true
   def start(_type, _args) do
-    children = [Subaru.DB] ++ cachex_children()
+    children = [{Subaru.DB, [@database_name]}] ++ cachex_children()
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
@@ -15,18 +17,20 @@ defmodule Subaru.Application do
     Supervisor.start_link(children, opts)
   end
 
+  # TODO: Make it so that it generates a cache according to an inputted schema,
+  #   similar to database_name works.
   defp cachex_children() do
     [
       # cache extant {userid, chatid} occurrences. maximum 500 entries.
-      build_cachex("user_chat_edges", limit: 500)
+      build_cachex("user_chat_edges", limit: 500),
+      build_cachex("suestate")
     ]
   end
 
   defp build_cachex(type, opts \\ []) do
     %{
       id: String.to_atom("cachex_" <> type),
-      start: {Cachex, :start_link, [String.to_atom(type <> "_cache"), opts]},
-      type: :worker
+      start: {Cachex, :start_link, [String.to_atom(type <> "_cache"), opts]}
     }
   end
 end
