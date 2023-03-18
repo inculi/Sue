@@ -10,14 +10,16 @@ defmodule Sue.Commands.Defns do
   Module.register_attribute(__MODULE__, :is_persisted, persist: true)
   @is_persisted "is persisted"
 
-  alias Sue.Models.{Response, Message, Definition}
+  alias Sue.Models.{Response, Message}
+  alias Sue.New.{DB, Defn}
 
   def calldefn(msg) do
     # meaning = get_defn!(msg) || "Command not found. Add it with !define."
+    varname = msg.command
 
-    case Definition.get(msg.command |> String.downcase(), :text, msg.chat, msg.account) do
-      nil -> %Response{body: "Command not found. Add it with !define."}
-      defn -> %Response{body: defn.val}
+    case DB.search_defn(msg.account.id, msg.chat.id, varname) do
+      {:ok, %Defn{val: val}} -> %Response{body: val}
+      {:error, :dne} -> %Response{body: "Command not found. Add it with !define."}
     end
   end
 
@@ -39,9 +41,13 @@ defmodule Sue.Commands.Defns do
         %Response{body: "Please supply a meaning for the word. See !help define"}
 
       [word, val] ->
-        {:ok, _} = Definition.set(word |> String.downcase(), val, :text, msg.chat, msg.account)
+        var = word |> String.downcase()
 
-        %Response{body: "#{word} updated."}
+        {:ok, _} =
+          Defn.new(var, val, :text)
+          |> DB.add_defn(msg.account.id, msg.chat.id)
+
+        %Response{body: "#{var} updated."}
     end
   end
 end

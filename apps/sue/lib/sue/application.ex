@@ -11,7 +11,6 @@ defmodule Sue.Application do
   def start(_type, _args) do
     children = [
       Sue,
-      Sue.DB,
       Sue.New.DB
     ]
 
