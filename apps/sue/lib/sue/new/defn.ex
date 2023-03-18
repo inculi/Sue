@@ -18,7 +18,7 @@ defmodule Sue.New.Defn do
 
   # TODO: Add support for more defn types (currently just :text)
   @spec new(bitstring(), bitstring(), atom()) :: Defn.t()
-  def new(var, val, :text = type) do
+  def new(var, val, :text = type) when is_bitstring(var) and is_bitstring(val) do
     now = Sue.Utils.unix_now()
 
     %Defn{

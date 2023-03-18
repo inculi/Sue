@@ -19,7 +19,7 @@ defmodule Sue.Mailbox.Telegram do
     Logger.debug("=== end :command handle ===")
 
     # Logger.info("msg: #{inspect(msg)}\n\ncontext: #{inspect(context)}")
-    msg = Message.new(:telegram, %{msg: msg, command: command, context: context})
+    msg = Message.from_telegram(%{msg: msg, command: command, context: context})
     Sue.process_messages([msg])
     context
   end
@@ -30,7 +30,7 @@ defmodule Sue.Mailbox.Telegram do
     Logger.debug("context: #{context |> inspect(pretty: @pretty_debug)}")
     Logger.debug("=== end :message handle ===")
     # Logger.info("msg: #{inspect(msg)}\n\ncontext: #{inspect(context)}")
-    msg = Message.new(:telegram, %{msg: msg, context: context})
+    msg = Message.from_telegram(%{msg: msg, context: context})
     Sue.process_messages([msg])
     context
   end
@@ -67,14 +67,16 @@ defmodule Sue.Mailbox.Telegram do
   end
 
   def send_response_text(msg, rsp) do
-    ExGram.send_message(msg.chat.id, rsp.body)
+    {_platform, id} = msg.chat.platform_id
+    ExGram.send_message(id, rsp.body)
     :ok
   end
 
   def send_response_attachments(_msg, []), do: :ok
 
   def send_response_attachments(msg, [att | atts]) do
-    ExGram.send_photo(msg.chat.id, {:file, att.filename})
+    {_platform, id} = msg.chat.platform_id
+    ExGram.send_photo(id, {:file, att.filename})
     send_response_attachments(msg, atts)
   end
 end

@@ -5,7 +5,7 @@ defmodule Sue.New.Chat do
   @behaviour Subaru.Vertex
 
   @type t() :: %__MODULE__{
-          platform_id: {bitstring(), bitstring() | integer()},
+          platform_id: {atom(), bitstring() | integer()},
           # is a 1:1 convo with Sue
           is_direct: boolean(),
           id: nil | bitstring()
@@ -22,8 +22,7 @@ defmodule Sue.New.Chat do
     doc_insert = doc(c)
 
     {:ok, chat_id} = Subaru.upsert(doc_search, doc_insert, %{}, @collection)
-    struct(c, id: chat_id)
-    # %Chat{c | id: chat_id}
+    %Chat{c | id: chat_id}
   end
 
   def from_doc(d) do

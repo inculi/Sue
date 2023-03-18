@@ -4,7 +4,6 @@ defmodule Sue.Commands.Defns do
     stored for their command key.
   """
 
-  # TODO: Scoped definitions.
   # TODO: re-implement #variable injection
   # TODO: User-defined lambdas
 

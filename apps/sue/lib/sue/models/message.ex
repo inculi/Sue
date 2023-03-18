@@ -2,15 +2,15 @@ defmodule Sue.Models.Message do
   require Logger
 
   alias __MODULE__
-  alias Sue.Models.{Platform, Account, PlatformAccount, Chat, Attachment}
+  alias Sue.Models.{Platform, Attachment}
 
-  @enforce_keys [:platform, :id, :platform_account, :chat, :body, :is_ignorable]
+  alias Sue.New.{Account, Chat}
+
+  @enforce_keys [:platform, :id, :chat, :account, :body, :is_ignorable]
   defstruct [
-    #
     :platform,
     :id,
     #
-    :platform_account,
     :chat,
     :account,
     #
@@ -28,10 +28,8 @@ defmodule Sue.Models.Message do
   @type t() :: %__MODULE__{
           # the name of the chat platform (imessage, telegram)
           platform: Platform.t(),
-          # id used by platform app
-          id: integer() | String.t(),
+          id: bitstring() | integer(),
           ###
-          platform_account: PlatformAccount.t(),
           chat: Chat.t(),
           account: Account.t() | nil,
           ###
@@ -46,8 +44,8 @@ defmodule Sue.Models.Message do
           has_attachments: boolean() | nil
         }
 
-  @spec new(Platform.t(), Keyword.t() | Map.t()) :: Message.t()
-  def new(:imessage, kw) do
+  @spec from_imessage(Keyword.t()) :: t()
+  def from_imessage(kw) do
     [
       id: handle_id,
       person_centric_id: _handle_person_centric_id,
@@ -61,16 +59,21 @@ defmodule Sue.Models.Message do
 
     from_me = from_me == 1
 
+    chat =
+      %Chat{
+        platform_id: {:imessage, chat_id || "direct;#{handle_id}"},
+        is_direct: chat_id == nil
+      }
+      |> Chat.resolve()
+
+    account = %Account{platform_id: {:imessage, handle_id}} |> Account.resolve()
+
     %Message{
       platform: :imessage,
       id: message_id,
       #
-      platform_account: %PlatformAccount{platform: :imessage, id: handle_id},
-      chat: %Chat{
-        platform: :imessage,
-        id: chat_id || "direct;#{handle_id}",
-        is_direct: chat_id == nil
-      },
+      chat: chat,
+      account: account,
       #
       body: body,
       time: DateTime.from_unix!(utc_date),
@@ -82,7 +85,8 @@ defmodule Sue.Models.Message do
     |> augment_one()
   end
 
-  def new(:telegram, %{msg: msg, context: context} = update) do
+  @spec from_telegram(Map.t()) :: t()
+  def from_telegram(%{msg: msg, context: context} = update) do
     {command, args, body} =
       case Map.get(update, :command) do
         nil -> command_args_from_body(:telegram, Map.get(msg, :caption, ""))
@@ -92,17 +96,25 @@ defmodule Sue.Models.Message do
     command =
       parse_command_potentially_with_botname_suffix(command, "@" <> context.bot_info.username)
 
+    chat =
+      %Chat{
+        platform_id: {:telegram, msg.chat.id},
+        is_direct: msg.chat.type == "private"
+      }
+      |> Chat.resolve()
+
+    account = %Account{platform_id: {:telegram, msg.from.id}} |> Account.resolve()
+
     %Message{
       platform: :telegram,
       id: msg.chat.id,
-      platform_account: %PlatformAccount{platform: :telegram, id: msg.from.id},
+      #
+      chat: chat,
+      account: account,
+      #
       body: body |> better_trim(),
       time: DateTime.from_unix!(msg.date),
-      chat: %Chat{
-        platform: :telegram,
-        id: msg.chat.id,
-        is_direct: msg.chat.type == "private"
-      },
+      #
       is_from_sue: false,
       is_ignorable: command == "",
 
@@ -119,18 +131,28 @@ defmodule Sue.Models.Message do
   end
 
   # TODO: Finish implementing this.
-  def new(:debug, text) do
+  def from_debug(text) do
+    chat =
+      %Chat{platform_id: {:debug, 0}, is_direct: true}
+      |> Chat.resolve()
+
+    account = %Account{platform_id: {:debug, 1}} |> Account.resolve()
+
     %Message{
       platform: :debug,
-      id: 0,
-      platform_account: %PlatformAccount{platform: :debug, id: 0},
+      id: Sue.Utils.random_string(),
+      #
+      chat: chat,
+      account: account,
+      #
       body: text,
       time: DateTime.utc_now(),
-      chat: %Chat{platform: :debug, id: 0, is_direct: true},
+      #
       is_from_sue: false,
       is_ignorable: is_ignorable?(:debug, false, text),
       has_attachments: false
     }
+    |> augment_one()
   end
 
   def construct_attachments(%Message{has_attachments: false} = msg, _), do: msg
@@ -161,20 +183,11 @@ defmodule Sue.Models.Message do
   # First stage of adding new fields to our Message. Primarily concerned with
   #   parsing commands, args, stripping whitespace.
   @spec augment_one(Message.t()) :: Message.t()
-
   defp augment_one(%Message{is_ignorable: true} = msg), do: msg
 
-  defp augment_one(%Message{platform: :imessage} = msg) do
+  defp augment_one(msg) do
     "!" <> newbody = msg.body |> better_trim()
     parse_command(msg, newbody)
-  end
-
-  # Second stage of adding new fields to our Message. Primarily concerned with
-  #   resolving fields that map to elements in our database (Accounts, etc.)
-  @spec augment_two(Message.t()) :: Message.t()
-  def augment_two(%Message{} = msg) do
-    account = Account.resolve(msg.platform_account)
-    %Message{msg | account: account}
   end
 
   @spec parse_command(Message.t(), String.t()) :: Message.t()
@@ -246,11 +259,11 @@ defmodule Sue.Models.Message do
   # to_string override
   defimpl String.Chars, for: Message do
     def to_string(%Message{
-          platform: protocol,
-          platform_account: %PlatformAccount{id: bid},
-          chat: %Chat{id: cid}
+          platform: platform,
+          chat: %Chat{id: cid},
+          account: %Account{id: aid}
         }) do
-      "#Message<#{protocol},#{bid},#{cid}>"
+      "#Message<#{platform},#{cid},#{aid}>"
     end
   end
 end

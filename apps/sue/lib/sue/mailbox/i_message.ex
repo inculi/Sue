@@ -3,11 +3,12 @@ defmodule Sue.Mailbox.IMessage do
 
   require Logger
 
-  alias Sue.Models.{Message, Response, Chat, Attachment}
+  alias Sue.Models.{Message, Response, Attachment}
+  alias Sue.New.Chat
 
   @applescript_dir Path.join(:code.priv_dir(:sue), "applescript/")
-
   @update_interval 1_000
+  @cache_table :suestate_cache
 
   def start_link(args) do
     Logger.info("Starting IMessage genserver...")
@@ -51,10 +52,12 @@ defmodule Sue.Mailbox.IMessage do
 
   # === OUTBOX ===
   defp send_response_text(%Message{chat: %Chat{is_direct: true}} = msg, rsp) do
+    {_platform, account_id} = msg.account.platform_id
+
     args = [
       Path.join(@applescript_dir, "SendTextSingleBuddy.scpt"),
       rsp.body,
-      msg.platform_account.id
+      account_id
     ]
 
     System.cmd("osascript", args)
@@ -62,10 +65,12 @@ defmodule Sue.Mailbox.IMessage do
   end
 
   defp send_response_text(%Message{chat: %Chat{is_direct: false}} = msg, rsp) do
+    {_platform, chat_id} = msg.chat.platform_id
+
     args = [
       Path.join(@applescript_dir, "SendText.scpt"),
       rsp.body,
-      "iMessage;+;" <> msg.chat.id
+      "iMessage;+;" <> chat_id
     ]
 
     System.cmd("osascript", args)
@@ -75,10 +80,12 @@ defmodule Sue.Mailbox.IMessage do
   defp send_response_attachments(_msg, []), do: :ok
 
   defp send_response_attachments(%Message{chat: %Chat{is_direct: true}} = msg, [att | atts]) do
+    {_platform, account_id} = msg.account.platform_id
+
     args = [
       Path.join(@applescript_dir, "SendImageSingleBuddy.scpt"),
       att.filename,
-      msg.platform_account.id
+      account_id
     ]
 
     System.cmd("osascript", args)
@@ -86,10 +93,12 @@ defmodule Sue.Mailbox.IMessage do
   end
 
   defp send_response_attachments(%Message{chat: %Chat{is_direct: false}} = msg, [att | atts]) do
+    {_platform, chat_id} = msg.chat.platform_id
+
     args = [
       Path.join(@applescript_dir, "SendImage.scpt"),
       att.filename,
-      "iMessage;+;" <> msg.chat.id
+      "iMessage;+;" <> chat_id
     ]
 
     System.cmd("osascript", args)
@@ -102,7 +111,7 @@ defmodule Sue.Mailbox.IMessage do
   defp process_messages(msgs) do
     msgs
     |> Enum.sort_by(fn m -> Keyword.get(m, :utc_date) end)
-    |> Enum.map(fn m -> Message.new(:imessage, m) end)
+    |> Enum.map(fn m -> Message.from_imessage(m) end)
     |> add_attachments()
     |> set_new_max_rowid()
     |> Sue.process_messages()
@@ -143,7 +152,7 @@ defmodule Sue.Mailbox.IMessage do
 
   defp set_new_max_rowid(msgs) do
     rowid = Enum.max_by(msgs, fn m -> m.id end).id
-    Subaru.Cache.put(:suestate_cache, "imsg_max_rowid", rowid)
+    Subaru.Cache.put(@cache_table, "imsg_max_rowid", rowid)
     # DB.set(:state, "imsg_max_rowid", rowid)
     msgs
   end
@@ -158,7 +167,7 @@ defmodule Sue.Mailbox.IMessage do
     even still present in the DB.
   """
   def clear_max_rowid() do
-    Subaru.Cache.del!(:suestate_cache, "imsg_max_rowid")
+    Subaru.Cache.del!(@cache_table, "imsg_max_rowid")
     # DB.del!(:state, "imsg_max_rowid")
   end
 
@@ -171,11 +180,11 @@ defmodule Sue.Mailbox.IMessage do
   defp get_current_max_rowid() do
     # Check to see if we have one stored.
 
-    case Subaru.Cache.get!(:suestate_cache, "imsg_max_rowid") do
+    case Subaru.Cache.get!(@cache_table, "imsg_max_rowid") do
       nil ->
         # Haven't seen it before, use the max of ROWID.
         [[ROWID: rowid]] = query("SELECT MAX(message.ROWID) AS ROWID FROM message;")
-        Subaru.Cache.put(:suestate_cache, "imsg_max_rowid", rowid)
+        Subaru.Cache.put(@cache_table, "imsg_max_rowid", rowid)
         rowid
 
       res ->

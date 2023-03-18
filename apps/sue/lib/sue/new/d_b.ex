@@ -89,6 +89,7 @@ defmodule Sue.New.DB do
   """
   @spec search_defn(Subaru.dbid(), Subaru.dbid(), binary()) :: {:ok, Defn.t()} | {:error, :dne}
   def search_defn(account_id, chat_id, varname) do
+    # TODO: add an option to these methods that allows for specifying K
     pass1 = get_defns_by_user(account_id)
     pass2 = get_defns_by_chat(chat_id)
 

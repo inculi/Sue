@@ -1,7 +1,7 @@
 defmodule Sue.New.Account do
   @behaviour Subaru.Vertex
 
-  @enforce_keys [:name, :handle, :platform_id]
+  @enforce_keys [:platform_id]
   defstruct [:name, :handle, :platform_id, :id]
 
   @collection "sue_users"
@@ -9,7 +9,7 @@ defmodule Sue.New.Account do
   @type t() :: %__MODULE__{
           name: bitstring(),
           handle: bitstring(),
-          platform_id: {bitstring(), integer() | bitstring()},
+          platform_id: {atom(), integer() | bitstring()},
           id: nil | bitstring()
         }
 
@@ -30,10 +30,14 @@ defmodule Sue.New.Account do
     %Account{
       name: doc.name,
       handle: doc.handle,
-      platform_id: {doc.platform, doc.id},
+      platform_id: {string_to_atom(doc.platform), doc.id},
       id: doc._id
     }
   end
+
+  @spec string_to_atom(atom | bitstring()) :: atom
+  def string_to_atom(s) when is_bitstring(s), do: String.to_atom(s)
+  def string_to_atom(a) when is_atom(a), do: a
 
   @impl Subaru.Vertex
   def collection(), do: @collection

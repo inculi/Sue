@@ -18,12 +18,12 @@ defmodule DBTest do
       Account.resolve(%Account{
         name: "Robert",
         handle: "mwlp",
-        platform_id: {"telegram", 100}
+        platform_id: {:telegram, 100}
       })
 
     c =
       Chat.resolve(%Chat{
-        platform_id: {"telegram", 200},
+        platform_id: {:telegram, 200},
         is_direct: false
       })
 
@@ -32,8 +32,11 @@ defmodule DBTest do
     {:ok, defn_id2} = DB.add_defn(d, a.id, c.id)
     [defn] = DB.get_defns_by_user(a.id)
 
+    {:ok, defn_searched} = DB.search_defn(a.id, c.id, "megumin")
+
     assert defn_id1 == defn_id2
     assert defn_id1 == defn.id
+    assert defn.id == defn_searched.id
   end
 
   test "users" do
@@ -43,32 +46,32 @@ defmodule DBTest do
       Account.resolve(%Account{
         name: "Robert",
         handle: "mwlp",
-        platform_id: {"telegram", 100}
+        platform_id: {:telegram, 100}
       })
 
     a2 =
       Account.resolve(%Account{
         name: "William",
         handle: "epicpug",
-        platform_id: {"telegram", 101}
+        platform_id: {:telegram, 101}
       })
 
     a3 =
       Account.resolve(%Account{
         name: "James",
         handle: "jaykm",
-        platform_id: {"telegram", 102}
+        platform_id: {:telegram, 102}
       })
 
     c1 =
       Chat.resolve(%Chat{
-        platform_id: {"telegram", 200},
+        platform_id: {:telegram, 200},
         is_direct: false
       })
 
     c2 =
       Chat.resolve(%Chat{
-        platform_id: {"telegram", 201},
+        platform_id: {:telegram, 201},
         is_direct: false
       })
 
