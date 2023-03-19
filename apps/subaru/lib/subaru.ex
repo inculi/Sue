@@ -7,12 +7,28 @@ defmodule Subaru do
   @type dbid() :: bitstring()
   @type res_id() :: {:ok, dbid()} | {:error, any()}
 
+  @doc """
+  Upserts and returns the ID to the document.
+  """
   @spec upsert(map(), map(), map(), bitstring()) :: res_id()
   def upsert(d_search, d_insert, d_update, collection) do
     Query.new()
     |> Query.upsert(d_search, d_insert, d_update, collection)
+    |> Query.return("NEW._id")
     |> Query.exec()
     |> result_id()
+  end
+
+  @doc """
+  Upserts and returns the new document.
+  """
+  @spec upsert_return(map(), map(), map(), bitstring()) :: any()
+  def upsert_return(d_search, d_insert, d_update, collection) do
+    Query.new()
+    |> Query.upsert(d_search, d_insert, d_update, collection)
+    |> Query.return("NEW")
+    |> Query.exec()
+    |> result_one()
   end
 
   @spec insert(map(), bitstring()) :: res_id()

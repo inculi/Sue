@@ -51,4 +51,8 @@ defmodule Sue.Utils do
     |> Map.from_struct()
     |> Map.drop([:id])
   end
+
+  @spec string_to_atom(atom | bitstring()) :: atom
+  def string_to_atom(s) when is_bitstring(s), do: String.to_atom(s)
+  def string_to_atom(a) when is_atom(a), do: a
 end

@@ -1,6 +1,7 @@
 defmodule Sue.New.Defn do
   @behaviour Subaru.Vertex
 
+  @enforce_keys [:var, :val, :type]
   defstruct [:var, :val, :type, :date_created, :date_modified, :id]
 
   @type t() :: %__MODULE__{
@@ -30,11 +31,12 @@ defmodule Sue.New.Defn do
     }
   end
 
+  @spec from_doc(map()) :: t()
   def from_doc(doc) do
     %Defn{
       var: doc["var"],
       val: doc["val"],
-      type: doc["type"],
+      type: Sue.Utils.string_to_atom(doc["type"]),
       date_created: doc["date_created"],
       date_modified: doc["date_modified"],
       id: doc["_id"]

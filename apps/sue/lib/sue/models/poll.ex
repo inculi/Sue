@@ -1,58 +1,48 @@
 defmodule Sue.Models.Poll do
-  @enforce_keys [:chat, :topic, :options, :votes, :interface]
-  defstruct [:chat, :topic, :options, :votes, interface: :standard]
+  @behaviour Subaru.Vertex
+
+  @enforce_keys [:chat_id, :topic, :options, :votes, :interface]
+  defstruct [:chat_id, :topic, :options, :votes, interface: :standard]
 
   @type interface() :: :standard | :platform
   @type t() :: %__MODULE__{
-          chat: Sue.Models.Chat.t(),
+          chat_id: Subaru.dbid(),
           topic: String.t(),
           options: [String.t()],
-          # k:PlatformAccount, v:ChoiceIndex
+          # k:AccountID, v:ChoiceIndex
           votes: Map.t(),
           interface: interface()
         }
 
-  alias __MODULE__
-  alias Sue.DB
-  alias Sue.DB.Schema.Vertex
+  @collection "sue_polls"
 
-  @doc """
-  Add new poll to db.
-  """
-  @spec new(Chat.t(), String.t(), [String.t()], interface()) :: Poll.t()
+  alias __MODULE__
+
+  @spec new(Chat.t(), bitstring(), [bitstring(), ...], interface()) :: t()
   def new(chat, topic, options, interface) do
-    newpoll = %Poll{
-      chat: chat,
+    %Poll{
+      chat_id: chat.id,
       topic: topic,
       options: options,
       votes: %{},
       interface: interface
     }
-
-    {:ok, :ok} = DB.Graph.add_vertex(newpoll)
-
-    newpoll
   end
 
-  @doc """
-  Retrieve poll from db.
-  """
-  def get(chat), do: DB.get(Vertex.label(Poll), chat)
+  @spec from_doc(map()) :: t()
+  def from_doc(doc) do
+    %Poll{
+      chat_id: doc["chat_id"],
+      topic: doc["topic"],
+      options: doc["options"],
+      votes: doc["votes"],
+      interface: Sue.Utils.string_to_atom(doc["interface"])
+    }
+  end
 
-  @doc """
-  Update poll with new voter.
-  """
-  @spec add_vote(Chat.t(), PlatformAccount.t(), integer()) :: DB.result()
-  def add_vote(chat, platform_account, choice_idx) do
-    fn ->
-      with {:ok, poll} <- DB.t_get(DB.Schema.Vertex.label(__MODULE__), chat).() do
-        new_poll = %Poll{poll | votes: Map.put(poll.votes, platform_account, choice_idx)}
-        DB.Graph.t_add_vertex(new_poll).()
-        {:ok, new_poll}
-      else
-        _ -> {:error, :dne}
-      end
-    end
-    |> DB.exec()
+  def collection(), do: @collection
+
+  def doc(p) do
+    Sue.Utils.struct_to_map(p)
   end
 end

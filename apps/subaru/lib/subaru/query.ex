@@ -118,14 +118,14 @@ defmodule Subaru.Query do
     opts = [write: MapSet.to_list(q.writes), read: MapSet.to_list(q.reads)]
 
     # For debug purposes
-    # maxlinelen =
-    #   statement
-    #   |> String.split("\n")
-    #   |> Enum.map(&String.length/1)
-    #   |> Enum.max()
+    maxlinelen =
+      statement
+      |> String.split("\n")
+      |> Enum.map(&String.length/1)
+      |> Enum.max()
 
-    # logborder = String.duplicate("*", maxlinelen)
-    # Logger.debug("EXECUTING QUERY:\n#{logborder}\n#{statement}\n#{logborder}")
+    logborder = String.duplicate("*", maxlinelen)
+    Logger.debug("EXECUTING QUERY:\n#{logborder}\n#{statement}\n#{logborder}")
 
     {statement, bindvars, opts}
   end
@@ -183,8 +183,7 @@ defmodule Subaru.Query do
     bv_udoc = generate_bindvar(updatedoc)
     coll_bindvar = "@" <> generate_bindvar(collection)
 
-    statement =
-      "UPSERT #{bv_sdoc} INSERT #{bv_idoc} UPDATE #{bv_udoc} IN #{coll_bindvar} RETURN NEW._id"
+    statement = "UPSERT #{bv_sdoc} INSERT #{bv_idoc} UPDATE #{bv_udoc} IN #{coll_bindvar}"
 
     query
     |> add_statement(statement)

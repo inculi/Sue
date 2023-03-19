@@ -3,6 +3,7 @@ defmodule DBTest do
 
   alias Sue.New.DB
   alias Sue.New.{Account, Chat, Defn}
+  alias Sue.Models.Poll
   alias Sue.New.Schema
 
   # TODO: Figure out if there's a way to limit the scope of a DB change to each
@@ -10,22 +11,13 @@ defmodule DBTest do
   #   beginning and end of each test.
 
   test "defns" do
-    DB.debug_clear_collections()
+    Schema.debug_clear_collections()
 
     d = Defn.new("megumin", "acute", :text)
 
-    a =
-      Account.resolve(%Account{
-        name: "Robert",
-        handle: "mwlp",
-        platform_id: {:telegram, 100}
-      })
+    a = mock_account()
 
-    c =
-      Chat.resolve(%Chat{
-        platform_id: {:telegram, 200},
-        is_direct: false
-      })
+    c = mock_chat()
 
     # upsert should prevent this from duplicating.
     {:ok, defn_id1} = DB.add_defn(d, a.id, c.id)
@@ -40,7 +32,7 @@ defmodule DBTest do
   end
 
   test "users" do
-    DB.debug_clear_collections()
+    Schema.debug_clear_collections()
 
     a1 =
       Account.resolve(%Account{
@@ -82,5 +74,33 @@ defmodule DBTest do
     # William and James are in Chat 2
     {:ok, _} = DB.add_user_chat_edge(a2.id, c2.id)
     {:ok, _} = DB.add_user_chat_edge(a3.id, c2.id)
+  end
+
+  test "polls" do
+    Schema.debug_clear_collections()
+
+    a = mock_account()
+    c = mock_chat()
+    p = Poll.new(c, "Best movie?", ["TRON Legacy", "Wild Tales", "Whiplash"], :standard)
+
+    {:ok, poll_id} = DB.add_poll(p, c.id)
+    {:ok, new_poll} = DB.add_poll_vote(c, a, 0)
+
+    assert true
+  end
+
+  defp mock_account() do
+    Account.resolve(%Account{
+      name: "Robert",
+      handle: "mwlp",
+      platform_id: {:debug, 100}
+    })
+  end
+
+  defp mock_chat() do
+    Chat.resolve(%Chat{
+      platform_id: {:debug, 200},
+      is_direct: false
+    })
   end
 end

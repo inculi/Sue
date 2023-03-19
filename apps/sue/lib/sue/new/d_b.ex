@@ -3,8 +3,8 @@ defmodule Sue.New.DB do
 
   require Logger
 
-  alias Sue.New.Schema
-  alias Sue.New.Defn
+  alias Sue.Models.Poll
+  alias Sue.New.{Chat, Defn, Schema}
 
   def start_link(args) do
     GenServer.start_link(__MODULE__, args, name: __MODULE__)
@@ -31,6 +31,7 @@ defmodule Sue.New.DB do
   @doc """
   Mark users as being present in a chat.
   """
+  @spec add_user_chat_edge(Subaru.dbid(), Subaru.dbid()) :: Subaru.res_id()
   def add_user_chat_edge(user_id, chat_id) do
     Subaru.upsert_edge(user_id, chat_id, "sue_user_in_chat")
   end
@@ -105,13 +106,33 @@ defmodule Sue.New.DB do
     end
   end
 
-  def debug_clear_collections() do
-    for vc <- Schema.vertex_collections() do
-      Subaru.remove_all(vc)
-    end
+  # ===========
+  # || POLLS ||
+  # ===========
+  @spec add_poll(Poll.t(), Subaru.dbid()) :: {:ok, Subaru.dbid()}
+  def add_poll(%Poll{chat_id: chat_id} = poll, chat_id) do
+    polldoc = Poll.doc(poll)
+    pollcol = Poll.collection()
 
-    for ec <- Schema.edge_collections() do
-      Subaru.remove_all(ec)
-    end
+    d_search = %{chat_id: chat_id}
+    {:ok, poll_id} = Subaru.upsert(d_search, polldoc, %{}, pollcol)
+    {:ok, _} = Subaru.upsert_edge(chat_id, poll_id, "sue_poll_by_chat")
+
+    {:ok, poll_id}
+  end
+
+  @spec add_poll_vote(Chat.t(), Account.t(), integer()) :: {:ok, Poll.t()}
+  def add_poll_vote(chat, account, choice_idx) do
+    d_search = %{chat_id: chat.id}
+
+    {:ok, newpoll} =
+      Subaru.upsert_return(
+        d_search,
+        %{},
+        %{votes: %{account.id => choice_idx}},
+        Poll.collection()
+      )
+
+    {:ok, Poll.from_doc(newpoll)}
   end
 end

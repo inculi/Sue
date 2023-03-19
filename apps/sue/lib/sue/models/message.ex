@@ -4,7 +4,7 @@ defmodule Sue.Models.Message do
   alias __MODULE__
   alias Sue.Models.{Platform, Attachment}
 
-  alias Sue.New.{Account, Chat}
+  alias Sue.New.{Account, Chat, DB}
 
   @enforce_keys [:platform, :id, :chat, :account, :body, :is_ignorable]
   defstruct [
@@ -83,6 +83,7 @@ defmodule Sue.Models.Message do
       has_attachments: has_attachments == 1
     }
     |> augment_one()
+    |> add_account_and_chat_to_graph()
   end
 
   @spec from_telegram(Map.t()) :: t()
@@ -128,6 +129,7 @@ defmodule Sue.Models.Message do
       args: args
     }
     |> construct_attachments(msg)
+    |> add_account_and_chat_to_graph()
   end
 
   # TODO: Finish implementing this.
@@ -153,6 +155,7 @@ defmodule Sue.Models.Message do
       has_attachments: false
     }
     |> augment_one()
+    |> add_account_and_chat_to_graph()
   end
 
   def construct_attachments(%Message{has_attachments: false} = msg, _), do: msg
@@ -188,6 +191,12 @@ defmodule Sue.Models.Message do
   defp augment_one(msg) do
     "!" <> newbody = msg.body |> better_trim()
     parse_command(msg, newbody)
+  end
+
+  @spec add_account_and_chat_to_graph(t()) :: t()
+  def add_account_and_chat_to_graph(%Message{account: a, chat: c} = msg) do
+    {:ok, _dbid} = DB.add_user_chat_edge(a.id, c.id)
+    msg
   end
 
   @spec parse_command(Message.t(), String.t()) :: Message.t()
