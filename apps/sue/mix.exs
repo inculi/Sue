@@ -47,7 +47,8 @@ defmodule Sue.MixProject do
       {:sqlitex, "~> 1.7"},
 
       # imagemagick
-      {:mogrify, "~> 0.8.0"}
+      {:mogrify, "~> 0.8.0"},
+      {:openai, "~> 0.3.1"}
     ]
   end
 

@@ -11,7 +11,8 @@ defmodule Sue.Application do
   def start(_type, _args) do
     children = [
       Sue,
-      Sue.DB
+      Sue.DB,
+      Sue.AI
     ]
 
     children_imessage =
