@@ -23,7 +23,7 @@ defmodule Sue.MixProject do
   def application do
     [
       mod: {Sue.Application, []},
-      extra_applications: [:logger, :runtime_tools, :mnesia, :mint, :eex]
+      extra_applications: [:logger, :runtime_tools, :mint, :eex]
     ]
   end
 

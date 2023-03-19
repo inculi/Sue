@@ -108,7 +108,7 @@ defmodule Sue do
         end)
       else
         e ->
-          Logger.error("Couldn't initialize module: #{e |> inspect()}")
+          Logger.error("Couldn't initialize module #{module}: #{e |> inspect()}")
           []
       end
     end

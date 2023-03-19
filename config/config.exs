@@ -51,12 +51,6 @@ Logger.put_module_level(Tesla, :warn)
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
-mnesia_dir = "mnesia/#{config_env()}/#{node()}"
-if not File.exists?(mnesia_dir), do: File.mkdir_p!(mnesia_dir)
-
-config :mnesia,
-  dir: String.to_charlist(mnesia_dir)
-
 config :sue,
   platforms: [:debug, :telegram, :imessage],
   chat_db_path: Path.join(System.user_home(), "Library/Messages/chat.db")

@@ -10,7 +10,8 @@ defmodule Sue.Umbrella.MixProject do
       aliases: aliases(),
       releases: [
         ayame: [
-          applications: [sue: :permanent, subaru: :permanent]
+          applications: [sue: :permanent, subaru: :permanent],
+          strip_beams: [keep: ["Docs"]]
         ]
       ]
     ]
