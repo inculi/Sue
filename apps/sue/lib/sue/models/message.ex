@@ -273,4 +273,8 @@ defmodule Sue.Models.Message do
       "#Message<#{platform},#{cid},#{aid}>"
     end
   end
+
+  def helper_is_direct?({:telegram, plid}, {_, plid}), do: true
+  def helper_is_direct?(_, {:imessage, "direct;" <> _}), do: true
+  def helper_is_direct?(_, _), do: false
 end

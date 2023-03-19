@@ -4,7 +4,7 @@ defmodule Sue.DB do
   require Logger
 
   alias Sue.DB.Schema
-  alias Sue.Models.{Chat, Defn, Poll}
+  alias Sue.Models.{Chat, Defn, Poll, Account, Message}
 
   def start_link(args) do
     GenServer.start_link(__MODULE__, args, name: __MODULE__)
@@ -142,5 +142,63 @@ defmodule Sue.DB do
       )
 
     {:ok, Poll.from_doc(newpoll)}
+  end
+
+  def import_mnesia_dump(edge_bin_file, defn_bin_file) do
+    {:ok, edge_bindata} = :file.read_file(edge_bin_file)
+    edges = :erlang.binary_to_term(edge_bindata)
+
+    {:ok, defn_bindata} = :file.read_file(defn_bin_file)
+    defns = :erlang.binary_to_term(defn_bindata)
+
+    # ({@edge_table, src_type, dst_type, src_id, dst_id, metadata})
+    groups = edges |> Enum.group_by(fn t -> Tuple.to_list(t) |> Enum.at(2) end)
+
+    # defn_ref -> defn
+    defn_map =
+      Enum.reduce(defns, %{}, fn {_, k, v}, acc ->
+        Map.put(acc, k, %{var: v.var, val: v.val, date: v.date})
+      end)
+
+    # [:account, :chat]
+    defn_by_account_or_chat =
+      groups[:defn] |> Enum.group_by(fn t -> Tuple.to_list(t) |> Enum.at(1) end)
+
+    # defn_id -> account_id
+    defn_to_account_map =
+      Enum.reduce(defn_by_account_or_chat[:account], %{}, fn {_, _, _, srcid, dstid, _}, acc ->
+        Map.put(acc, dstid, srcid)
+      end)
+
+    # defn_id -> {platform, chatid}
+    defn_to_chat_map =
+      Enum.reduce(defn_by_account_or_chat[:chat], %{}, fn {_, _, _, srcid, dstid, _}, acc ->
+        Map.put(acc, dstid, srcid)
+      end)
+
+    # account_ref -> {platform, id}
+    platform_account_edge_map =
+      Enum.reduce(groups[:platform_account], %{}, fn {_, _, _, srcid, dstid, _}, acc ->
+        Map.put(acc, srcid, dstid)
+      end)
+
+    defn_to_pa_map =
+      Enum.reduce(defn_to_account_map, %{}, fn {k, v}, acc ->
+        Map.put(acc, k, platform_account_edge_map[v])
+      end)
+
+    for {k, v} <- defn_map do
+      account_pi = defn_to_pa_map[k]
+      chat_pi = defn_to_chat_map[k]
+
+      account = %Account{platform_id: account_pi} |> Account.resolve()
+
+      chat =
+        %Chat{platform_id: chat_pi, is_direct: Message.helper_is_direct?(account_pi, chat_pi)}
+        |> Chat.resolve()
+
+      {:ok, _} = Defn.new(v.var, v.val, :text) |> add_defn(account.id, chat.id)
+      add_user_chat_edge(account.id, chat.id)
+    end
   end
 end
