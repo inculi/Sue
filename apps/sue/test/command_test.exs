@@ -2,7 +2,7 @@ defmodule CommandTest do
   use ExUnit.Case
 
   alias Sue.Models.Message
-  alias Sue.New.Schema
+  alias Sue.DB.Schema
 
   test "ping" do
     m = Message.from_debug("!ping")
@@ -50,7 +50,5 @@ defmodule CommandTest do
     m = Message.from_debug("!vote b")
     r = Sue.debug_blocking_process_message(m)
     assert String.contains?(r.body, "(1) b.")
-
-    assert true
   end
 end

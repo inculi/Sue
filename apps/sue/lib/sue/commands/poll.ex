@@ -3,7 +3,7 @@ defmodule Sue.Commands.Poll do
   @is_persisted "is persisted"
 
   alias Sue.Models.{Message, Response, Poll}
-  alias Sue.New.DB
+  alias Sue.DB
 
   @doc """
   Create a poll for people to !vote on.

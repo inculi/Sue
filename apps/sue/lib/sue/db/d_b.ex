@@ -1,10 +1,10 @@
-defmodule Sue.New.DB do
+defmodule Sue.DB do
   use GenServer
 
   require Logger
 
-  alias Sue.Models.Poll
-  alias Sue.New.{Chat, Defn, Schema}
+  alias Sue.DB.Schema
+  alias Sue.Models.{Chat, Defn, Poll}
 
   def start_link(args) do
     GenServer.start_link(__MODULE__, args, name: __MODULE__)

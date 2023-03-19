@@ -1,6 +1,6 @@
-defmodule Sue.New.Schema do
+defmodule Sue.DB.Schema do
   alias Sue.Models.Poll
-  alias Sue.New.{Account, Chat, Defn}
+  alias Sue.Models.{Account, Chat, Defn}
 
   @spec vertex_collections() :: [bitstring()]
   def vertex_collections() do

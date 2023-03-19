@@ -3,8 +3,7 @@ defmodule Sue.Mailbox.IMessage do
 
   require Logger
 
-  alias Sue.Models.{Message, Response, Attachment}
-  alias Sue.New.Chat
+  alias Sue.Models.{Attachment, Chat, Message, Response}
 
   @applescript_dir Path.join(:code.priv_dir(:sue), "applescript/")
   @update_interval 1_000

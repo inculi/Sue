@@ -1,8 +1,8 @@
-defmodule Sue.New.Account do
+defmodule Sue.Models.Account do
   @behaviour Subaru.Vertex
 
   @enforce_keys [:platform_id]
-  defstruct [:name, :handle, :platform_id, :id]
+  defstruct [:platform_id, :id, name: "", handle: ""]
 
   @collection "sue_users"
 

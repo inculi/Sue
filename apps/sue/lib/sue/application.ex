@@ -11,7 +11,7 @@ defmodule Sue.Application do
   def start(_type, _args) do
     children = [
       Sue,
-      Sue.New.DB
+      Sue.DB
     ]
 
     Logger.info(@chat_db_path |> inspect())

@@ -1,4 +1,4 @@
-defmodule Sue.New.Defn do
+defmodule Sue.Models.Defn do
   @behaviour Subaru.Vertex
 
   @enforce_keys [:var, :val, :type]

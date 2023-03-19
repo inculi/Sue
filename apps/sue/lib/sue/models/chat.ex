@@ -1,4 +1,4 @@
-defmodule Sue.New.Chat do
+defmodule Sue.Models.Chat do
   @enforce_keys [:platform_id, :is_direct]
   defstruct [:platform_id, :is_direct, :id]
 

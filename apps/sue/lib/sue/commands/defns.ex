@@ -10,8 +10,8 @@ defmodule Sue.Commands.Defns do
   Module.register_attribute(__MODULE__, :is_persisted, persist: true)
   @is_persisted "is persisted"
 
-  alias Sue.Models.{Response, Message}
-  alias Sue.New.{DB, Defn}
+  alias Sue.Models.{Defn, Message, Response}
+  alias Sue.DB
 
   def calldefn(msg) do
     # meaning = get_defn!(msg) || "Command not found. Add it with !define."

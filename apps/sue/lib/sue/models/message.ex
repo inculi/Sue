@@ -2,9 +2,8 @@ defmodule Sue.Models.Message do
   require Logger
 
   alias __MODULE__
-  alias Sue.Models.{Platform, Attachment}
-
-  alias Sue.New.{Account, Chat, DB}
+  alias Sue.Models.{Account, Attachment, Chat, Platform}
+  alias Sue.DB
 
   @enforce_keys [:platform, :id, :chat, :account, :body, :is_ignorable]
   defstruct [
@@ -132,7 +131,6 @@ defmodule Sue.Models.Message do
     |> add_account_and_chat_to_graph()
   end
 
-  # TODO: Finish implementing this.
   def from_debug(text) do
     chat =
       %Chat{platform_id: {:debug, 0}, is_direct: true}

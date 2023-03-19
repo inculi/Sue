@@ -1,10 +1,9 @@
 defmodule DBTest do
   use ExUnit.Case
 
-  alias Sue.New.DB
-  alias Sue.New.{Account, Chat, Defn}
-  alias Sue.Models.Poll
-  alias Sue.New.Schema
+  alias Sue.DB
+  alias Sue.DB.Schema
+  alias Sue.Models.{Account, Chat, Defn, Poll}
 
   # TODO: Figure out if there's a way to limit the scope of a DB change to each
   #   test, or at least maybe automatically call clear_collections at the
