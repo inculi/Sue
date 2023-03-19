@@ -10,7 +10,7 @@ defmodule Sue.New.Defn do
           type: :text | :num | :bin | :func,
           date_created: integer(),
           date_modified: integer(),
-          id: any()
+          id: Subaru.dbid() | nil
         }
 
   @collection "sue_defns"

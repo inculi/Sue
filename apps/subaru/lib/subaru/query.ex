@@ -125,7 +125,7 @@ defmodule Subaru.Query do
       |> Enum.max()
 
     logborder = String.duplicate("*", maxlinelen)
-    Logger.debug("EXECUTING QUERY:\n#{logborder}\n#{statement}\n#{logborder}")
+    # Logger.debug("EXECUTING QUERY:\n#{logborder}\n#{statement}\n#{logborder}")
 
     {statement, bindvars, opts}
   end

@@ -2,7 +2,7 @@ defmodule Sue.Models.Poll do
   @behaviour Subaru.Vertex
 
   @enforce_keys [:chat_id, :topic, :options, :votes, :interface]
-  defstruct [:chat_id, :topic, :options, :votes, interface: :standard]
+  defstruct [:chat_id, :topic, :options, :votes, :id, interface: :standard]
 
   @type interface() :: :standard | :platform
   @type t() :: %__MODULE__{
@@ -10,8 +10,9 @@ defmodule Sue.Models.Poll do
           topic: String.t(),
           options: [String.t()],
           # k:AccountID, v:ChoiceIndex
-          votes: Map.t(),
-          interface: interface()
+          votes: map(),
+          interface: interface(),
+          id: Subaru.dbid() | nil
         }
 
   @collection "sue_polls"
@@ -36,7 +37,8 @@ defmodule Sue.Models.Poll do
       topic: doc["topic"],
       options: doc["options"],
       votes: doc["votes"],
-      interface: Sue.Utils.string_to_atom(doc["interface"])
+      interface: Sue.Utils.string_to_atom(doc["interface"]),
+      id: doc["_id"]
     }
   end
 

@@ -24,7 +24,7 @@ defmodule DBTest do
     {:ok, defn_id2} = DB.add_defn(d, a.id, c.id)
     [defn] = DB.get_defns_by_user(a.id)
 
-    {:ok, defn_searched} = DB.search_defn(a.id, c.id, "megumin")
+    {:ok, defn_searched} = DB.find_defn(a.id, c.id, "megumin")
 
     assert defn_id1 == defn_id2
     assert defn_id1 == defn.id

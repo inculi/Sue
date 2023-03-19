@@ -31,4 +31,26 @@ defmodule CommandTest do
     response3 = Sue.debug_blocking_process_message(m3)
     assert response3.body == "acute"
   end
+
+  test "poll" do
+    Schema.debug_clear_collections()
+
+    m = Message.from_debug("!vote a")
+    r = Sue.debug_blocking_process_message(m)
+    assert String.contains?(r.body, "not exist")
+
+    m = Message.from_debug("!poll topic, option1, option2")
+    r = Sue.debug_blocking_process_message(m)
+    assert String.contains?(r.body, "option1")
+
+    m = Message.from_debug("!vote a")
+    r = Sue.debug_blocking_process_message(m)
+    assert String.contains?(r.body, "(1) a.")
+
+    m = Message.from_debug("!vote b")
+    r = Sue.debug_blocking_process_message(m)
+    assert String.contains?(r.body, "(1) b.")
+
+    assert true
+  end
 end

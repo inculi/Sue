@@ -71,10 +71,23 @@ defmodule Subaru do
     |> result()
   end
 
+  def all(collection) do
+    Query.new()
+    |> Query.for(:x, collection)
+    |> Query.return("x")
+    |> Query.exec()
+    |> result()
+  end
+
+  def all!(collection) do
+    {:ok, res} = all(collection)
+    res
+  end
+
   @doc """
   Finds and returns document according to filter.
   """
-  @spec find_one(bitstring(), Query.boolean_expression()) :: Subaru.DB.res()
+  @spec find_one(bitstring(), Query.boolean_expression()) :: {:ok, any()} | {:error, :dne}
   def find_one(collection, expr) do
     Query.new()
     |> Query.for(:x, collection)

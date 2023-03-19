@@ -88,8 +88,8 @@ defmodule Sue.New.DB do
     If a user is chatting in a group: return the last modified v for that k
       owned by any user in the chat group.
   """
-  @spec search_defn(Subaru.dbid(), Subaru.dbid(), binary()) :: {:ok, Defn.t()} | {:error, :dne}
-  def search_defn(account_id, chat_id, varname) do
+  @spec find_defn(Subaru.dbid(), Subaru.dbid(), binary()) :: {:ok, Defn.t()} | {:error, :dne}
+  def find_defn(account_id, chat_id, varname) do
     # TODO: add an option to these methods that allows for specifying K
     pass1 = get_defns_by_user(account_id)
     pass2 = get_defns_by_chat(chat_id)
@@ -109,16 +109,24 @@ defmodule Sue.New.DB do
   # ===========
   # || POLLS ||
   # ===========
-  @spec add_poll(Poll.t(), Subaru.dbid()) :: {:ok, Subaru.dbid()}
+  @spec add_poll(Poll.t(), Subaru.dbid()) :: {:ok, Poll.t()}
   def add_poll(%Poll{chat_id: chat_id} = poll, chat_id) do
     polldoc = Poll.doc(poll)
     pollcol = Poll.collection()
 
     d_search = %{chat_id: chat_id}
-    {:ok, poll_id} = Subaru.upsert(d_search, polldoc, %{}, pollcol)
-    {:ok, _} = Subaru.upsert_edge(chat_id, poll_id, "sue_poll_by_chat")
+    {:ok, newpoll} = Subaru.upsert_return(d_search, polldoc, %{}, pollcol)
+    {:ok, _} = Subaru.upsert_edge(chat_id, newpoll["_id"], "sue_poll_by_chat")
 
-    {:ok, poll_id}
+    {:ok, Poll.from_doc(newpoll)}
+  end
+
+  @spec find_poll(Chat.t()) :: {:ok, Poll.t()} | {:ok, :dne}
+  def find_poll(chat) do
+    case Subaru.find_one(Poll.collection(), {:==, "x.chat_id", chat.id}) do
+      {:ok, doc} when is_map(doc) -> {:ok, Poll.from_doc(doc)}
+      {:ok, :dne} -> {:ok, :dne}
+    end
   end
 
   @spec add_poll_vote(Chat.t(), Account.t(), integer()) :: {:ok, Poll.t()}
