@@ -14,8 +14,6 @@ defmodule Sue.Application do
       Sue.DB
     ]
 
-    Logger.info(@chat_db_path |> inspect())
-
     children_imessage =
       if Sue.Utils.contains?(@platforms, :imessage) do
         # Method used to avoid strange Dialyzer error...
