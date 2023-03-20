@@ -2,7 +2,9 @@
 
 # Sue
 
-Greetings and welcome to Sue V3.1, a chatbot for iMessage and Telegram written in Elixir.
+Greetings and welcome to Sue V3.1, a chatbot for iMessage and Telegram written in Elixir. *Now with ArangoDB and ChatGPT!*
+
+*Note: If you ran an earlier version of Sue and want to import your data, see "Upgrading from Sue V3.0" below.*
 
 ## Introduction
 
@@ -20,6 +22,7 @@ The following commands are currently supported:
 !fortune
 !gpt
 !motivate
+!phrases
 !ping
 !poll
 !qt
@@ -34,9 +37,21 @@ Telegram uses the slash (/) prefix instead. Sue will not respond to you unless y
 
 Firstly, I aplogize. I used to use Elixir's built-in database, Mnesia, which was great because you didn't have to install anything. Sadly, I had to write many features myself and it has a 2GB storage limit, so I recently switched to [ArangoDB](https://www.arangodb.com/).
 
+1. If you want to use iMessage, you need a mac with iMessage. You may be asked to enable disk access and Message control for this program (or, rather, Terminal/iTerm). I've been primarily testing this on Catalina, but it *should* work on Monterrey and some older versions.
+2. If you want to use Telegram, you should make a Telegram API key. Look up how, it's pretty straightforward. Similarly if you want to use ChatGPT, make an OpenAI account and generate an API key.
+3. If you wish to disable the Telegram or iMessage half of this program, modify the platform list under `config/config.exs` to what you wish to keep.
+4. If you want to be able to use commands that write text atop images (currently only !motivate does this), you will need to install imagemagick with pango. If you already have imagemagick installed, you can run `$ convert -list format | grep -i pango` to see if you can at least read it. If you don't see `r--`, you can't read it and need to do the following: If you're on Mac, you're probably using homebrew, in which case you'll need to edit the install file (they removed pango because it depends on cairo which has many dependencies). After running `$ brew edit imagemagick`, you should be in an editor. Add a `depends_on "pango"` near its friends. Remove the `--without-pango`, adding a `--with-pango` near its friends. Save and quit. `$ brew reinstall imagemagick --build-from-source` (or `install` if you hadn't installed to begin with). Run that `-list format` command now and you should see it.
+5. [Download and install ArangoDB](https://www.arangodb.com/download-major/). Make a user account and remember the password. You'll later enter it in the config described below. Create three databases:
 
-1. If you want to use iMessage, you need a mac with iMessage. You may be asked to enable disk access and Message control for this program (or, rather, Terminal/iTerm). I've been primarily testing this on Catalina, but it *should* work on older versions as well. I had some issues getting erlang's sqlite wrapper to compile on Sierra, but I think that was just my spaghetti system environment.
-2. If you want to use Telegram, you should make a Telegram API key. Look up how, it's pretty straightforward. Make a `config/config.secret.exs` file, here is an example:
+- subaru_test
+- subaru_dev
+- subaru_prod
+
+Make sure the user you created has access to the databases. You can edit user permissions by being in the `_system` database, clicking the `Users` sidebar, selecting a user, then navigating to the `Permissions` tab.
+
+6. `$ git clone https://github.com/inculi/Sue`
+7. `$ cd Sue`
+8. Make a `config/config.secret.exs` file, here is an example:
 
 ```elixir
 import Config
@@ -57,15 +72,9 @@ config :openai,
   http_options: [recv_timeout: 40_000]
 
 ```
-3. If you wish to disable the Telegram or iMessage half of this program, modify the platform list under `config/config.exs` to what you wish to keep.
-4. If you want to be able to use commands that write text atop images (currently only !motivate does this), you will need to install imagemagick with pango. If you already have imagemagick installed, you can run `$ convert -list format | grep -i pango` to see if you can at least read it. If you don't see `r--`, you can't read it and need to do the following: If you're on Mac, you're probably using homebrew, in which case you'll need to edit the install file (they removed pango because it depends on cairo which has many dependencies). After running `$ brew edit imagemagick`, you should be in an editor. Add a `depends_on "pango"` near its friends. Remove the `--without-pango`, adding a `--with-pango` near its friends. Save and quit. `$ brew reinstall imagemagick --build-from-source` (or `install` if you hadn't installed to begin with). Run that `-list format` command now and you should see it.
-5. `$ git clone https://github.com/inculi/Sue`
-6. `$ cd Sue`
-7. `$ mix deps.get`
-8. `$ MIX_ENV=prod mix release`
-9. `$ Sue.post_init()`
-
-Now it should be running in Elixir's interactive shell. If you don't know much about Elixir, welcome to the party. As Griffin, P. & Megumin (2019) often wrote, "The joke here is that the author is inviting you to join him in the set of programmers not especially well-versed in the language, while also hinting at the joyous future that awaits all students of Elixir."
+9. `$ mix deps.get`
+10. To create a prod build, run `$ MIX_ENV=prod mix release` It should then tell you the path to the newly created executable.
+11. To run in interactive dev mode, you can run `$ iex -S mix`.  If you want to Telegram to autocomplete your commands, run `Sue.post_init()` from within this interactive prompt. Sorry this part is a little scuffed.
 
 ## How do I add a command?
 
@@ -110,7 +119,36 @@ Once you have modified your module, import it and place it in the `@modules` lis
 
 ## Known Issues
 
-- Image functions do not work in Telegram. I think there's a new Telegram client for Elixir that I'll probably switch to.
+- Image functions stopped working in Telegram. I think there's a new Telegram client for Elixir that I'll probably switch to.
+
+## Upgrading from Sue V3.0
+
+Before you update to the new version, go to your current `mnesia/` directory and drill down to the final level where your .DAT files and what-not are stored. Move this last level directory to your project root directory and call it `mydir/` or something. Then create a new file called `export.exs` with this code:
+
+```elixir
+# export.exs
+alias :mnesia, as: Mnesia
+
+:ok = Mnesia.start([dir: String.to_charlist("mydir")])
+:ok = Mnesia.wait_for_tables(Mnesia.system_info(:local_tables), 5_000)
+
+record = {:edges, :_, :_, :_, :_, :_}
+{:atomic, edges} = fn -> Mnesia.match_object(record) end |> Mnesia.transaction()
+:file.write_file("edges.bin", :erlang.term_to_binary(edges))
+
+{:atomic, defns} = fn -> Mnesia.match_object({:defn, :_, :_}) end |> Mnesia.transaction()
+:file.write_file("defns.bin", :erlang.term_to_binary(defns))
+```
+
+Run it: `$ elixir export.exs`
+
+This will generate two files (`edges.bin` and `defns.bin`). Update to the latest version of Sue, keeping these two new files and nothing else. Once you're in the new version of Sue, enter an interactive shell and perform the following:
+
+```elixir
+iex(1)> Sue.DB.import_mnesia_dump("path/to/edges.bin", "path/to/defns.bin")
+```
+
+There you go! I'm hoping this DB switch will be the last. Arango is pretty solid and should support all the future ideas I have for Sue + Desu + Kiku. Mnesia was neat, though.
 
 ## Special Thanks
 
