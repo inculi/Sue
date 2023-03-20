@@ -4,9 +4,10 @@ defmodule Sue.Mailbox.IMessage do
   require Logger
 
   alias Sue.Models.{Attachment, Chat, Message, Response}
+  alias Sue.Mailbox.IMessageSqlite
 
   @applescript_dir Path.join(:code.priv_dir(:sue), "applescript/")
-  @update_interval 5_000
+  @update_interval 1_000
   @cache_table :suestate_cache
 
   def start_link(args) do
@@ -15,29 +16,16 @@ defmodule Sue.Mailbox.IMessage do
   end
 
   @impl true
-  def init([chat_db_path]) do
+  def init(_args) do
     # https://blog.appsignal.com/2019/05/14/elixir-alchemy-background-processing.html
-
-    {:ok, conn} = Exqlite.Sqlite3.open(chat_db_path)
     Process.send_after(self(), :get_updates, @update_interval)
-
-    state = %{conn: conn, last_updated: nil}
-    {:ok, state}
+    {:ok, nil}
   end
 
-  @impl true
-  def handle_info(:get_updates, state) do
+  def handle_info(:get_updates, _last_run_at) do
     get_updates()
     Process.send_after(self(), :get_updates, @update_interval)
-    {:noreply, %{state | last_updated: :calendar.local_time()}}
-  end
-
-  @impl true
-  def handle_call({:query, query}, _from, %{conn: conn} = state) do
-    {:ok, statement} = Exqlite.Sqlite3.prepare(conn, query)
-    {:ok, rows} = Exqlite.Sqlite3.fetch_all(conn, statement)
-
-    {:reply, rows, state}
+    {:noreply, :calendar.local_time()}
   end
 
   # === INBOX ===
@@ -184,18 +172,13 @@ defmodule Sue.Mailbox.IMessage do
     # DB.del!(:state, "imsg_max_rowid")
   end
 
-  @spec query(String.t()) :: [Keyword.t()]
-  defp query(query) do
-    GenServer.call(__MODULE__, {:query, query})
-  end
-
   defp get_current_max_rowid() do
     # Check to see if we have one stored.
 
     case Subaru.Cache.get!(@cache_table, "imsg_max_rowid") do
       nil ->
         # Haven't seen it before, use the max of ROWID.
-        [[rowid]] = query("SELECT MAX(message.ROWID) AS ROWID FROM message;")
+        [[rowid]] = IMessageSqlite.query("SELECT MAX(message.ROWID) AS ROWID FROM message;")
         Subaru.Cache.put(@cache_table, "imsg_max_rowid", rowid)
         rowid
 
@@ -209,7 +192,10 @@ defmodule Sue.Mailbox.IMessage do
     SELECT handle.id, handle.person_centric_id, message.cache_has_attachments, message.text, message.ROWID, message.cache_roomnames, message.is_from_me, message.date/1000000000 + 978307200 AS utc_date FROM message INNER JOIN handle ON message.handle_id = handle.ROWID WHERE message.ROWID > #{rowid};
     """
 
-    query(q)
+    case IMessageSqlite.query(q) do
+      [] -> []
+      messages -> Enum.map(messages, fn m -> message_row_to_keyword_list(m) end)
+    end
   end
 
   defp query_attachments_since(rowid) do
@@ -219,6 +205,35 @@ defmodule Sue.Mailbox.IMessage do
     SELECT attachment.ROWID AS a_id, message_attachment_join.message_id AS m_id, attachment.filename, attachment.mime_type, attachment.total_bytes FROM attachment INNER JOIN message_attachment_join ON attachment.ROWID == message_attachment_join.attachment_id WHERE message_attachment_join.message_id >= #{rowid};
     """
 
-    query(q)
+    case IMessageSqlite.query(q) do
+      [] -> []
+      attachments -> Enum.map(attachments, fn a -> attachment_row_to_keyword_list(a) end)
+    end
+  end
+
+  defp message_row_to_keyword_list([
+         id,
+         person_centric_id,
+         cache_has_attachments,
+         text,
+         rowid,
+         cache_roomnames,
+         is_from_me,
+         utc_date
+       ]) do
+    [
+      id: id,
+      person_centric_id: person_centric_id,
+      cache_has_attachments: cache_has_attachments,
+      text: text,
+      ROWID: rowid,
+      cache_roomnames: cache_roomnames,
+      is_from_me: is_from_me,
+      utc_date: utc_date
+    ]
+  end
+
+  defp attachment_row_to_keyword_list([a_id, m_id, filename, mime_type, total_bytes]) do
+    [a_id: a_id, m_id: m_id, filename: filename, mime_type: mime_type, total_bytes: total_bytes]
   end
 end
