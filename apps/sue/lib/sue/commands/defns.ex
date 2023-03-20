@@ -51,4 +51,38 @@ defmodule Sue.Commands.Defns do
         %Response{body: "#{var} updated."}
     end
   end
+
+  @doc """
+  Output the variables !define'd by the calling user or in the current chat.
+  Usage: !phrases
+  """
+  def c_phrases(msg) do
+    defn_user = DB.get_defns_by_user(msg.account.id)
+
+    defn_user_ids =
+      defn_user
+      |> Enum.map(fn d -> d.id end)
+      |> MapSet.new()
+
+    defn_user_list =
+      case defn_user
+           |> Enum.map(fn d -> "- #{d.var}" end)
+           |> Enum.join("\n") do
+        "" -> ""
+        otherwise -> "defns by user:\n" <> otherwise
+      end
+
+    defn_chat_list =
+      case DB.get_defns_by_chat(msg.chat.id)
+           |> Enum.filter(fn d -> not MapSet.member?(defn_user_ids, d.id) end)
+           |> Enum.map(fn d -> "- #{d.var}" end)
+           |> Enum.join("\n") do
+        "" -> ""
+        otherwise -> "defns by chat:\n" <> otherwise
+      end
+
+    %Response{
+      body: (defn_user_list <> "\n\n" <> defn_chat_list) |> String.trim()
+    }
+  end
 end

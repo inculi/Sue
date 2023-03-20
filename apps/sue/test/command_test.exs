@@ -30,6 +30,10 @@ defmodule CommandTest do
     m3 = Message.from_debug("!megumin")
     response3 = Sue.debug_blocking_process_message(m3)
     assert response3.body == "acute"
+
+    m4 = Message.from_debug("!phrases")
+    response4 = Sue.debug_blocking_process_message(m4)
+    assert String.contains?(response4.body, "megumin")
   end
 
   test "poll" do
