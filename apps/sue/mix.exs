@@ -38,6 +38,7 @@ defmodule Sue.MixProject do
     [
       {:subaru, in_umbrella: true},
       {:phoenix_pubsub, "~> 2.0"},
+      # elixir
       {:ex_gram, git: "https://github.com/rockneurotiko/ex_gram"},
       # {:tesla, "~> 1.4"},
       {:tesla, git: "https://github.com/teamon/tesla", override: true},
@@ -45,10 +46,11 @@ defmodule Sue.MixProject do
       {:castore, "~> 0.1.0"},
       {:mint, "~> 1.1"},
       {:sqlitex, "~> 1.7"},
+      {:openai, "~> 0.3.1"},
+      # discord
 
       # imagemagick
-      {:mogrify, "~> 0.8.0"},
-      {:openai, "~> 0.3.1"}
+      {:mogrify, "~> 0.8.0"}
     ]
   end
 

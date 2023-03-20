@@ -94,6 +94,3 @@ defmodule Sue.Models.Attachment do
     att.fsize > @max_attachment_size_bytes
   end
 end
-
-# AgACAgEAAxkBAAID_17ZaI3Bgu7rzpQedYhwcM-7D670AAJQqDEbOhXQRtfk4eHJcZhuFv3wSBcAAwEAAwIAA3gAA3gzAAIaBA
-# AgACAgEAAxkBAAID_17ZaI3Bgu7rzpQedYhwcM-7D670AAJQqDEbOhXQRtfk4eHJcZhuFv3wSBcAAwEAAwIAA20AA3czAAIaBA
