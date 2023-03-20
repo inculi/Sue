@@ -30,6 +30,41 @@ defmodule DBTest do
     assert defn.id == defn_searched.id
   end
 
+  test "defn ownership" do
+    Schema.debug_clear_collections()
+
+    a1 = Account.resolve(%Account{platform_id: {:debug, 100}})
+    a2 = Account.resolve(%Account{platform_id: {:debug, 200}})
+
+    # this is a direct chat that a1 has with Sue
+    c_a1 = Chat.resolve(%Chat{platform_id: {:debug, 1}, is_direct: true})
+    DB.add_user_chat_edge(a1.id, c_a1.id)
+
+    # this is a group chat that a1 and a2 are in.
+    c_a1a2 = Chat.resolve(%Chat{platform_id: {:debug, 2}, is_direct: false})
+    DB.add_user_chat_edge(a1.id, c_a1a2.id)
+    DB.add_user_chat_edge(a2.id, c_a1.id)
+
+    # a1 creates a new definition in his personal chat.
+    d_a1 = Defn.new("megumin", "acute", :text)
+    {:ok, d_a1_id} = DB.add_defn(d_a1, a1.id, c_a1.id)
+
+    # a2 creates a new definition in the shared chat.
+    d_a2 = Defn.new("aqua", "baqua", :text)
+    {:ok, d_a2_id} = DB.add_defn(d_a2, a2.id, c_a1a2.id)
+
+    # confirm we can find these defns the normal way
+    {:ok, _} = DB.find_defn(a1.id, c_a1.id, "megumin")
+    {:ok, _} = DB.find_defn(a2.id, c_a1a2.id, "aqua")
+
+    # confirm we can also find them by their chat
+    [%Defn{id: d_a1_id}] = DB.get_defns_by_chat(c_a1.id)
+    [%Defn{id: d_a2_id}] = DB.get_defns_by_chat(c_a1a2.id)
+
+    # TODO: FIX: this currently fails. hmm.
+    # {:ok, _} = DB.find_defn(a2.id, c_a1a2.id, "megumin")
+  end
+
   test "users" do
     Schema.debug_clear_collections()
 
