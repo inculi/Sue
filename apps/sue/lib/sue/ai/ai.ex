@@ -21,7 +21,7 @@ defmodule Sue.AI do
                %{role: "user", content: text}
              ]
            ) do
-      {:ok, response} = [%{"message" => %{"content" => content}}] = response.choices
+      [%{"message" => %{"content" => content}}] = response.choices
       content |> String.trim("\n")
     else
       {:error, :timeout} ->
