@@ -45,7 +45,7 @@ defmodule Sue.MixProject do
       {:jason, "~> 1.2"},
       {:castore, "~> 0.1.0"},
       {:mint, "~> 1.1"},
-      {:sqlitex, "~> 1.7"},
+      {:exqlite, "~> 0.13"},
       {:openai, "~> 0.3.1"},
       # discord
 

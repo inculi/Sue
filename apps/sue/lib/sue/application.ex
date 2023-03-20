@@ -19,11 +19,7 @@ defmodule Sue.Application do
       if Sue.Utils.contains?(@platforms, :imessage) do
         # Method used to avoid strange Dialyzer error...
         [
-          %{
-            id: Sqlitex.Server,
-            start: {Sqlitex.Server, :start_link, [@chat_db_path, [name: Sue.IMessageChatDB]]}
-          },
-          Sue.Mailbox.IMessage
+          {Sue.Mailbox.IMessage, [@chat_db_path]}
         ]
       else
         []

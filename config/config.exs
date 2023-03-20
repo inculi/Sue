@@ -52,7 +52,7 @@ Logger.put_module_level(Tesla, :warn)
 config :phoenix, :json_library, Jason
 
 config :sue,
-  platforms: [:debug, :telegram, :imessage],
+  platforms: [:debug, :imessage],
   chat_db_path: Path.join(System.user_home(), "Library/Messages/chat.db")
 
 config :subaru,

@@ -6,7 +6,7 @@ defmodule Sue.Mailbox.IMessage do
   alias Sue.Models.{Attachment, Chat, Message, Response}
 
   @applescript_dir Path.join(:code.priv_dir(:sue), "applescript/")
-  @update_interval 1_000
+  @update_interval 5_000
   @cache_table :suestate_cache
 
   def start_link(args) do
@@ -14,16 +14,30 @@ defmodule Sue.Mailbox.IMessage do
     GenServer.start_link(__MODULE__, args, name: __MODULE__)
   end
 
-  def init(_args) do
+  @impl true
+  def init([chat_db_path]) do
     # https://blog.appsignal.com/2019/05/14/elixir-alchemy-background-processing.html
+
+    {:ok, conn} = Exqlite.Sqlite3.open(chat_db_path)
     Process.send_after(self(), :get_updates, @update_interval)
-    {:ok, nil}
+
+    state = %{conn: conn, last_updated: nil}
+    {:ok, state}
   end
 
-  def handle_info(:get_updates, _last_run_at) do
+  @impl true
+  def handle_info(:get_updates, state) do
     get_updates()
     Process.send_after(self(), :get_updates, @update_interval)
-    {:noreply, :calendar.local_time()}
+    {:noreply, %{state | last_updated: :calendar.local_time()}}
+  end
+
+  @impl true
+  def handle_call({:query, query}, _from, %{conn: conn} = state) do
+    {:ok, statement} = Exqlite.Sqlite3.prepare(conn, query)
+    {:ok, rows} = Exqlite.Sqlite3.fetch_all(conn, statement)
+
+    {:reply, rows, state}
   end
 
   # === INBOX ===
@@ -172,8 +186,7 @@ defmodule Sue.Mailbox.IMessage do
 
   @spec query(String.t()) :: [Keyword.t()]
   defp query(query) do
-    {:ok, results} = Sqlitex.Server.query(Sue.IMessageChatDB, query)
-    results
+    GenServer.call(__MODULE__, {:query, query})
   end
 
   defp get_current_max_rowid() do
@@ -182,7 +195,7 @@ defmodule Sue.Mailbox.IMessage do
     case Subaru.Cache.get!(@cache_table, "imsg_max_rowid") do
       nil ->
         # Haven't seen it before, use the max of ROWID.
-        [[ROWID: rowid]] = query("SELECT MAX(message.ROWID) AS ROWID FROM message;")
+        [[rowid]] = query("SELECT MAX(message.ROWID) AS ROWID FROM message;")
         Subaru.Cache.put(@cache_table, "imsg_max_rowid", rowid)
         rowid
 
@@ -193,7 +206,7 @@ defmodule Sue.Mailbox.IMessage do
 
   defp query_messages_since(rowid) do
     q = """
-    SELECT handle.id, handle.person_centric_id, message.cache_has_attachments, message.text, message.ROWID, message.cache_roomnames, message.is_from_me, message.date/1000000000 + strftime("%s", "2001-01-01") AS utc_date FROM message INNER JOIN handle ON message.handle_id = handle.ROWID WHERE message.ROWID > #{rowid};
+    SELECT handle.id, handle.person_centric_id, message.cache_has_attachments, message.text, message.ROWID, message.cache_roomnames, message.is_from_me, message.date/1000000000 + 978307200 AS utc_date FROM message INNER JOIN handle ON message.handle_id = handle.ROWID WHERE message.ROWID > #{rowid};
     """
 
     query(q)
