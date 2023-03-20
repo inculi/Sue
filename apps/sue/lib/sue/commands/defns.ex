@@ -4,24 +4,26 @@ defmodule Sue.Commands.Defns do
     stored for their command key.
   """
 
-  # TODO: Scoped definitions.
   # TODO: re-implement #variable injection
   # TODO: User-defined lambdas
 
   Module.register_attribute(__MODULE__, :is_persisted, persist: true)
   @is_persisted "is persisted"
 
-  alias Sue.Models.{Response, Message, Definition}
+  alias Sue.Models.{Defn, Message, Response}
+  alias Sue.DB
 
   def calldefn(msg) do
     # meaning = get_defn!(msg) || "Command not found. Add it with !define."
+    varname = msg.command
 
-    case Definition.get(msg.command |> String.downcase(), :text, msg.chat, msg.account) do
-      nil -> %Response{body: "Command not found. Add it with !define."}
-      defn -> %Response{body: defn.val}
+    case DB.find_defn(msg.account.id, msg.chat.id, varname) do
+      {:ok, %Defn{val: val}} -> %Response{body: val}
+      {:error, :dne} -> %Response{body: "Command not found. Add it with !define."}
     end
   end
 
+  @spec c_define(atom | %{:args => binary, optional(any) => any}) :: Sue.Models.Response.t()
   @doc """
   Create a quick alias that makes Sue say something.
   Usage: !define <word> <... meaning ...>
@@ -40,9 +42,47 @@ defmodule Sue.Commands.Defns do
         %Response{body: "Please supply a meaning for the word. See !help define"}
 
       [word, val] ->
-        {:ok, _} = Definition.set(word |> String.downcase(), val, :text, msg.chat, msg.account)
+        var = word |> String.downcase()
 
-        %Response{body: "#{word} updated."}
+        {:ok, _} =
+          Defn.new(var, val, :text)
+          |> DB.add_defn(msg.account.id, msg.chat.id)
+
+        %Response{body: "#{var} updated."}
     end
+  end
+
+  @doc """
+  Output the variables !define'd by the calling user or in the current chat.
+  Usage: !phrases
+  """
+  def c_phrases(msg) do
+    defn_user = DB.get_defns_by_user(msg.account.id)
+
+    defn_user_ids =
+      defn_user
+      |> Enum.map(fn d -> d.id end)
+      |> MapSet.new()
+
+    defn_user_list =
+      case defn_user
+           |> Enum.map(fn d -> "- #{d.var}" end)
+           |> Enum.join("\n") do
+        "" -> ""
+        otherwise -> "defns by user:\n" <> otherwise
+      end
+
+    defn_chat_list =
+      case DB.get_defns_by_chat(msg.chat.id)
+           |> Enum.filter(fn d -> not MapSet.member?(defn_user_ids, d.id) end)
+           |> Enum.map(fn d -> "- #{d.var}" end)
+           |> Enum.join("\n") do
+        "" -> ""
+        otherwise -> "defns by chat:\n" <> otherwise
+      end
+
+    %Response{
+      body: (defn_user_list <> "\n\n" <> defn_chat_list) |> String.trim()
+    }
   end
 end

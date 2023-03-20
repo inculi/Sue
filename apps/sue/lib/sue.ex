@@ -2,10 +2,10 @@ defmodule Sue do
   use GenServer
   require Logger
 
-  alias Sue.Commands.{Core, Defns, Images, Rand, Shell, Poll}
+  alias Sue.Commands.{Core, Defns, Images, Rand, Shell, Poll, Gpt}
   alias Sue.Models.{Message, Response, Attachment}
 
-  @modules [Core, Defns, Images, Rand, Shell, Poll]
+  @modules [Core, Defns, Images, Rand, Shell, Poll, Gpt]
 
   def start_link(args) do
     GenServer.start_link(__MODULE__, args, name: __MODULE__)
@@ -40,13 +40,7 @@ defmodule Sue do
   def handle_cast({:process, msg}, state) do
     {uSecs, :ok} =
       :timer.tc(fn ->
-        {module, f, _} =
-          case Map.get(state.commands, msg.command) do
-            nil -> {Defns, :calldefn, ""}
-            {module, fname, doc} -> {module, String.to_atom("c_" <> fname), doc}
-          end
-
-        rsp = apply(module, f, [msg])
+        rsp = execute_command(state.commands, msg)
         send_response(msg, rsp)
       end)
 
@@ -76,17 +70,19 @@ defmodule Sue do
   @spec process_messages([Message.t()]) :: :ok
   def process_messages(msgs) do
     for msg <- msgs do
-      if !msg.is_ignorable do
-        Task.start(fn -> process_message(msg) end)
-      end
+      Task.start(fn -> process_message(msg) end)
     end
 
     :ok
   end
 
+  @spec debug_blocking_process_message(Message.t()) :: Response.t()
+  def debug_blocking_process_message(msg), do: execute_command(get_commands(), msg)
+
   @spec process_message(Message.t()) :: :ok
+  defp process_message(%Message{is_ignorable: true}), do: :ok
+
   defp process_message(msg) do
-    msg = msg |> Message.augment_two()
     Logger.info("[Sue] Processing: #{inspect(msg)}")
     GenServer.cast(__MODULE__, {:process, msg})
   end
@@ -112,7 +108,7 @@ defmodule Sue do
         end)
       else
         e ->
-          Logger.error("Couldn't initialize module: #{e |> inspect()}")
+          Logger.error("Couldn't initialize module #{module}: #{e |> inspect()}")
           []
       end
     end
@@ -122,6 +118,19 @@ defmodule Sue do
     end)
   end
 
+  @spec execute_command(map(), Message.t()) :: Response.t()
+  defp execute_command(commands, msg) do
+    {module, f, _} =
+      case Map.get(commands, msg.command) do
+        nil -> {Defns, :calldefn, ""}
+        {module, fname, doc} -> {module, String.to_atom("c_" <> fname), doc}
+      end
+
+    apply(module, f, [msg])
+  end
+
+  # Functions starting with c_ are actually callable Sue commands, and are thus
+  #   the only ones we care to initialize.
   defp make_func_doc_tuple(module, "c_" <> fname, %{"en" => doc}) do
     {module, fname, doc}
   end

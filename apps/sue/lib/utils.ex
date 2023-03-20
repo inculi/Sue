@@ -1,4 +1,8 @@
 defmodule Sue.Utils do
+  def quoted(s) when is_bitstring(s) do
+    "\"#{s}\""
+  end
+
   @spec tokenize(String.t()) :: [String.t()]
   def tokenize(args) do
     cond do
@@ -23,6 +27,11 @@ defmodule Sue.Utils do
     prefix <> suffix
   end
 
+  @spec unix_now() :: integer()
+  def unix_now() do
+    DateTime.utc_now() |> DateTime.to_unix()
+  end
+
   def random_string do
     Integer.to_string(rand_uniform(0x100000000), 36) |> String.downcase()
   end
@@ -36,4 +45,14 @@ defmodule Sue.Utils do
       :random.uniform(num)
     end
   end
+
+  def struct_to_map(s) do
+    s
+    |> Map.from_struct()
+    |> Map.drop([:id])
+  end
+
+  @spec string_to_atom(atom | bitstring()) :: atom
+  def string_to_atom(s) when is_bitstring(s), do: String.to_atom(s)
+  def string_to_atom(a) when is_atom(a), do: a
 end

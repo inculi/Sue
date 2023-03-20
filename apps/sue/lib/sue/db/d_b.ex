@@ -1,18 +1,10 @@
 defmodule Sue.DB do
-  @moduledoc """
-  The following is, I suppose, temporary. While I find Mnesia really cool, I
-    think going forward we're better off using something else.
-  """
-
   use GenServer
 
   require Logger
 
-  alias __MODULE__
-  alias :mnesia, as: Mnesia
-  alias DB.Schema
-
-  @type result() :: {:ok, any()} | {:error, any()}
+  alias Sue.DB.Schema
+  alias Sue.Models.{Chat, Defn, Poll, Account, Message}
 
   def start_link(args) do
     GenServer.start_link(__MODULE__, args, name: __MODULE__)
@@ -20,125 +12,193 @@ defmodule Sue.DB do
 
   @impl true
   def init(_args) do
-    db_nodes = [Node.self() | Node.list()]
-
-    Mnesia.create_schema(db_nodes)
-    :ok = Mnesia.start()
-    :ok = Mnesia.wait_for_tables(Mnesia.system_info(:local_tables), 5_000)
-
-    init_schema(db_nodes)
+    init_schema()
 
     {:ok, []}
   end
 
-  # Public API
-  @spec set(atom(), any(), any()) :: any()
-  def set(table, key, val) do
-    with {:ok, res} <- write({table, key, val}) do
-      res
+  # initialize the collections that need to be in our db for sue.
+  defp init_schema() do
+    for vcolname <- Schema.vertex_collections() do
+      Subaru.DB.create_collection(vcolname, :doc)
+    end
+
+    for ecolname <- Schema.edge_collections() do
+      Subaru.DB.create_collection(ecolname, :edge)
     end
   end
 
-  @spec get(Schema.Vertex.t()) :: {:ok, any()} | {:error, :dne}
-  def get(v), do: get(Schema.Vertex.label(v), Schema.Vertex.id(v))
+  @doc """
+  Mark users as being present in a chat.
+  """
+  @spec add_user_chat_edge(Subaru.dbid(), Subaru.dbid()) :: Subaru.res_id()
+  def add_user_chat_edge(user_id, chat_id) do
+    Subaru.upsert_edge(user_id, chat_id, "sue_user_in_chat")
+  end
 
-  @spec get(atom(), any()) :: {:ok, any()} | {:error, :dne}
-  def get(table, key), do: t_get(table, key) |> exec()
+  # =================
+  # || DEFINITIONS ||
+  # =================
 
-  @spec get!(atom(), any()) :: any()
-  def get!(table, key) do
-    with {:ok, val} <- get(table, key) do
-      val
-    else
-      {:error, :dne} -> nil
+  @doc """
+  Upsert a definition.
+  """
+  @spec add_defn(Defn.t(), Subaru.dbid(), Subaru.dbid()) :: {:ok, Subaru.dbid()}
+  def add_defn(defn, account_id, chat_id) do
+    defndoc = Defn.doc(defn)
+    defncol = Defn.collection()
+
+    d_search = %{var: defn.var, val: defn.val, type: defn.type}
+
+    {:ok, defn_id} = Subaru.upsert(d_search, defndoc, %{}, defncol)
+    {:ok, _} = Subaru.upsert_edge(account_id, defn_id, "sue_defn_by_user")
+    {:ok, _} = Subaru.upsert_edge(chat_id, defn_id, "sue_defn_by_chat")
+
+    {:ok, defn_id}
+  end
+
+  @doc """
+  Search definitions by user.
+  """
+  @spec get_defns_by_user(Subaru.dbid()) :: [Defn.t()]
+  def get_defns_by_user(account_id) do
+    # only search a depth of one to get adjacent definitions.
+    Subaru.traverse!("sue_defn_by_user", :outbound, account_id, 1, 1)
+    |> Enum.map(&Defn.from_doc/1)
+  end
+
+  @doc """
+  Search definitions by chat.
+  """
+  @spec get_defns_by_chat(Subaru.dbid()) :: [Defn.t()]
+  def get_defns_by_chat(chat_id) do
+    # only search a depth of one to get adjacent definitions.
+    Subaru.traverse!("sue_defn_by_chat", :outbound, chat_id, 1, 1)
+    |> Enum.map(&Defn.from_doc/1)
+  end
+
+  @doc """
+  Important: There are multiple possible algorithms we can use to resolve which
+    definition a user is looking for when they call for it. Most of the time,
+    these definitions represent inside jokes for a user group. Thus, it is
+    useful for defns to be group (chat) writable.
+
+  For now, the logic is this:
+    If a user is chatting 1-1 with Sue: return the user's personal value.
+    If a user is chatting in a group: return the last modified v for that k
+      owned by any user in the chat group.
+  """
+  @spec find_defn(Subaru.dbid(), Subaru.dbid(), binary()) :: {:ok, Defn.t()} | {:error, :dne}
+  def find_defn(account_id, chat_id, varname) do
+    # TODO: add an option to these methods that allows for specifying K
+    pass1 = get_defns_by_user(account_id)
+    pass2 = get_defns_by_chat(chat_id)
+
+    hits =
+      (pass1 ++ pass2)
+      |> Enum.filter(fn d -> d.var == varname end)
+      |> Enum.uniq_by(fn d -> d.id end)
+      |> Enum.sort_by(fn d -> d.date_modified end, :desc)
+
+    case hits do
+      [] -> {:error, :dne}
+      [best | _others] -> {:ok, best}
     end
   end
 
-  def del(table, key), do: t_del(table, key) |> exec()
+  # ===========
+  # || POLLS ||
+  # ===========
+  @spec add_poll(Poll.t(), Subaru.dbid()) :: {:ok, Poll.t()}
+  def add_poll(%Poll{chat_id: chat_id} = poll, chat_id) do
+    polldoc = Poll.doc(poll)
+    pollcol = Poll.collection()
 
-  def del!(table, key) do
-    with {:ok, :ok} <- del(table, key) do
-      :ok
+    d_search = %{chat_id: chat_id}
+    {:ok, newpoll} = Subaru.upsert_return(d_search, polldoc, %{}, pollcol)
+    {:ok, _} = Subaru.upsert_edge(chat_id, newpoll["_id"], "sue_poll_by_chat")
+
+    {:ok, Poll.from_doc(newpoll)}
+  end
+
+  @spec find_poll(Chat.t()) :: {:ok, Poll.t()} | {:ok, :dne}
+  def find_poll(chat) do
+    case Subaru.find_one(Poll.collection(), {:==, "x.chat_id", chat.id}) do
+      {:ok, doc} when is_map(doc) -> {:ok, Poll.from_doc(doc)}
+      {:ok, :dne} -> {:ok, :dne}
     end
   end
 
-  def get!(v), do: get!(Schema.Vertex.label(v), Schema.Vertex.id(v))
+  @spec add_poll_vote(Chat.t(), Account.t(), integer()) :: {:ok, Poll.t()}
+  def add_poll_vote(chat, account, choice_idx) do
+    d_search = %{chat_id: chat.id}
 
-  @spec t_get(Schema.Vertex.t()) :: fun()
-  def t_get(v), do: t_get(Schema.Vertex.label(v), Schema.Vertex.id(v))
+    {:ok, newpoll} =
+      Subaru.upsert_return(
+        d_search,
+        %{},
+        %{votes: %{account.id => choice_idx}},
+        Poll.collection()
+      )
 
-  @spec t_get(atom(), any()) :: fun()
-  def t_get(table, key) do
-    fn ->
-      case Mnesia.read(table, key) do
-        [] -> {:error, :dne}
-        [{^table, ^key, val}] -> {:ok, val}
-      end
+    {:ok, Poll.from_doc(newpoll)}
+  end
+
+  def import_mnesia_dump(edge_bin_file, defn_bin_file) do
+    {:ok, edge_bindata} = :file.read_file(edge_bin_file)
+    edges = :erlang.binary_to_term(edge_bindata)
+
+    {:ok, defn_bindata} = :file.read_file(defn_bin_file)
+    defns = :erlang.binary_to_term(defn_bindata)
+
+    # ({@edge_table, src_type, dst_type, src_id, dst_id, metadata})
+    groups = edges |> Enum.group_by(fn t -> Tuple.to_list(t) |> Enum.at(2) end)
+
+    # defn_ref -> defn
+    defn_map =
+      Enum.reduce(defns, %{}, fn {_, k, v}, acc ->
+        Map.put(acc, k, %{var: v.var, val: v.val, date: v.date})
+      end)
+
+    # [:account, :chat]
+    defn_by_account_or_chat =
+      groups[:defn] |> Enum.group_by(fn t -> Tuple.to_list(t) |> Enum.at(1) end)
+
+    # defn_id -> account_id
+    defn_to_account_map =
+      Enum.reduce(defn_by_account_or_chat[:account], %{}, fn {_, _, _, srcid, dstid, _}, acc ->
+        Map.put(acc, dstid, srcid)
+      end)
+
+    # defn_id -> {platform, chatid}
+    defn_to_chat_map =
+      Enum.reduce(defn_by_account_or_chat[:chat], %{}, fn {_, _, _, srcid, dstid, _}, acc ->
+        Map.put(acc, dstid, srcid)
+      end)
+
+    # account_ref -> {platform, id}
+    platform_account_edge_map =
+      Enum.reduce(groups[:platform_account], %{}, fn {_, _, _, srcid, dstid, _}, acc ->
+        Map.put(acc, srcid, dstid)
+      end)
+
+    defn_to_pa_map =
+      Enum.reduce(defn_to_account_map, %{}, fn {k, v}, acc ->
+        Map.put(acc, k, platform_account_edge_map[v])
+      end)
+
+    for {k, v} <- defn_map do
+      account_pi = defn_to_pa_map[k]
+      chat_pi = defn_to_chat_map[k]
+
+      account = %Account{platform_id: account_pi} |> Account.resolve()
+
+      chat =
+        %Chat{platform_id: chat_pi, is_direct: Message.helper_is_direct?(account_pi, chat_pi)}
+        |> Chat.resolve()
+
+      {:ok, _} = Defn.new(v.var, v.val, :text) |> add_defn(account.id, chat.id)
+      add_user_chat_edge(account.id, chat.id)
     end
-  end
-
-  @spec t_del(atom(), any()) :: fun()
-  def t_del(table, key), do: fn -> Mnesia.delete({table, key}) end
-
-  # TODO: optimize
-  @spec get_all([{atom(), any()}]) :: [any()]
-  def get_all(tups) do
-    for {table, id} <- tups do
-      get!(table, id)
-    end
-  end
-
-  # Mnesia wrappers, best not use these outside of Sue.DB.*
-  @spec write(tuple()) :: result()
-  def write(record), do: t_write(record) |> exec()
-
-  @spec t_write(tuple()) :: fun()
-  def t_write(record), do: fn -> Mnesia.write(record) end
-
-  @spec read(tuple()) :: result()
-  def read(record), do: t_read(record) |> exec()
-
-  @spec t_read(tuple()) :: fun()
-  def t_read(record), do: fn -> Mnesia.read(record) end
-
-  def match(record), do: t_match(record) |> DB.exec()
-
-  def match!(record) do
-    {:ok, res} = match(record)
-    res
-  end
-
-  @spec t_match(tuple()) :: fun()
-  def t_match(record), do: fn -> Mnesia.match_object(record) end
-
-  # Internal Methods :: Setup
-  def init_schema(db_nodes) do
-    for {table_name, table_opts} <- Schema.tables() do
-      create_table(table_name, Keyword.put(table_opts, :disc_copies, db_nodes))
-    end
-  end
-
-  # Internal Methods :: Utility
-  @spec exec(fun()) :: result()
-  def exec(f), do: f |> Mnesia.transaction() |> elixirize_output()
-
-  @spec elixirize_output({:aborted, any} | {:atomic, any}) :: result()
-  def elixirize_output(out) do
-    case out do
-      # avoid {:ok, {:error, _}}
-      {:atomic, {:error, _reason} = err_reason} -> err_reason
-      # avoid {:ok, {:ok, _}}
-      {:atomic, {:ok, _result} = ok_result} -> ok_result
-      # likely {:ok, :ok}
-      {:atomic, val} -> {:ok, val}
-      # mnesia error
-      {:aborted, reason} -> {:error, reason}
-    end
-  end
-
-  defp create_table(name, opts) when is_atom(name) do
-    res = Mnesia.create_table(name, opts)
-    Logger.info("create_table(#{name}) -> #{inspect(res)}")
-    res
   end
 end

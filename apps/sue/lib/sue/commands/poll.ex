@@ -1,7 +1,9 @@
 defmodule Sue.Commands.Poll do
   Module.register_attribute(__MODULE__, :is_persisted, persist: true)
   @is_persisted "is persisted"
+
   alias Sue.Models.{Message, Response, Poll}
+  alias Sue.DB
 
   @doc """
   Create a poll for people to !vote on.
@@ -25,14 +27,15 @@ defmodule Sue.Commands.Poll do
   """
   def c_vote(msg) do
     # Before voting on a poll, first confirm one exists for the current chat.
-    case Poll.get(msg.chat) do
+
+    case DB.find_poll(msg.chat) do
       {:ok, %Poll{interface: :platform}} ->
         %Response{body: "Please use this messenger's custom polling interface."}
 
       {:ok, %Poll{}} ->
         vote(msg)
 
-      {:error, :dne} ->
+      {:ok, :dne} ->
         %Response{body: "A poll does not exist for this chat."}
     end
   end
@@ -41,12 +44,8 @@ defmodule Sue.Commands.Poll do
     args = String.downcase(msg.args)
 
     if String.match?(args, ~r/^[a-z]$/) do
-      case Poll.add_vote(msg.chat, msg.platform_account, alpha_to_idx(args)) do
-        {:ok, %Poll{} = newpoll} ->
-          poll_to_response(newpoll, msg)
-
-        {:error, reason} ->
-          %Response{body: reason}
+      case DB.add_poll_vote(msg.chat, msg.account, alpha_to_idx(args)) do
+        {:ok, newpoll} -> poll_to_response(newpoll, msg)
       end
     else
       %Response{body: "Not an option in this poll. See: !help vote"}
@@ -62,23 +61,23 @@ defmodule Sue.Commands.Poll do
     cond do
       # Telegram's custom polling interface requires 10 options or less.
       msg.platform == :telegram and length(choices) <= 10 ->
-        Poll.new(msg.chat, topic, choices, :platform)
-        |> poll_to_response(msg)
+        {:ok, p} =
+          Poll.new(msg.chat, topic, choices, :platform)
+          |> DB.add_poll(msg.chat.id)
+
+        poll_to_response(p, msg)
 
       true ->
-        Poll.new(msg.chat, topic, choices, :standard)
-        |> poll_to_response(msg)
+        {:ok, p} =
+          Poll.new(msg.chat, topic, choices, :standard)
+          |> DB.add_poll(msg.chat.id)
+
+        poll_to_response(p, msg)
     end
   end
 
   defp create_poll(_msg, _) do
     %Response{body: "Please limit to 26 options or less."}
-  end
-
-  @spec poll_to_response(Poll.t(), Message.t()) :: Response.t()
-  defp poll_to_response(poll, %Message{platform: :imessage}) do
-    # To text
-    %Response{body: poll_text(poll)}
   end
 
   defp poll_to_response(poll, %Message{platform: :telegram, chat: chat}) do
@@ -91,6 +90,9 @@ defmodule Sue.Commands.Poll do
       %Response{}
     end
   end
+
+  @spec poll_to_response(Poll.t(), Message.t()) :: Response.t()
+  defp poll_to_response(poll, _msg), do: %Response{body: poll_text(poll)}
 
   defp poll_text(%Poll{votes: votes} = poll) when map_size(votes) == 0 do
     ([poll.topic] ++

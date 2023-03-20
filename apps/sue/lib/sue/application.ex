@@ -4,26 +4,26 @@ defmodule Sue.Application do
   use Application
   require Logger
 
-  @platforms Application.get_env(:sue, :platforms, [])
+  @platforms Application.compile_env(:sue, :platforms, [])
+  @chat_db_path Application.compile_env(:sue, :chat_db_path)
+  @ex_gram_token Application.compile_env(:ex_gram, :token)
 
   def start(_type, _args) do
-    import Supervisor.Spec
-
     children = [
       Sue,
       Sue.DB,
-      {Phoenix.PubSub, name: Sue.PubSub}
+      Sue.AI
     ]
 
     children_imessage =
       if Sue.Utils.contains?(@platforms, :imessage) do
         # Method used to avoid strange Dialyzer error...
         [
-          Sue.Mailbox.IMessage,
-          worker(Sqlitex.Server, [
-            Application.get_env(:sue, :chat_db_path),
-            [name: Sue.IMessageChatDB]
-          ])
+          %{
+            id: Sqlitex.Server,
+            start: {Sqlitex.Server, :start_link, [@chat_db_path, [name: Sue.IMessageChatDB]]}
+          },
+          Sue.Mailbox.IMessage
         ]
       else
         []
@@ -33,7 +33,7 @@ defmodule Sue.Application do
       if Sue.Utils.contains?(@platforms, :telegram) do
         [
           ExGram,
-          {Sue.Mailbox.Telegram, [method: :polling, token: Application.get_env(:ex_gram, :token)]}
+          {Sue.Mailbox.Telegram, [method: :polling, token: @ex_gram_token]}
         ]
       else
         []

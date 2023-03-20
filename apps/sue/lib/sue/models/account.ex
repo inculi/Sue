@@ -1,25 +1,45 @@
 defmodule Sue.Models.Account do
-  @enforce_keys [:ref]
-  defstruct [:ref, name: "Anonymous"]
+  @behaviour Subaru.Vertex
+
+  @enforce_keys [:platform_id]
+  defstruct [:platform_id, :id, name: "", handle: ""]
+
+  @collection "sue_users"
 
   @type t() :: %__MODULE__{
-          ref: reference(),
-          name: String.t()
+          name: bitstring(),
+          handle: bitstring(),
+          platform_id: {atom(), integer() | bitstring()},
+          id: nil | bitstring()
         }
 
-  alias Sue.DB
-  alias Sue.Models.PlatformAccount
+  alias __MODULE__
 
-  @doc """
-  Find Account, otherwise create it.
-  """
-  @spec resolve(PlatformAccount.t()) :: Account.t()
-  def resolve(platform_account) do
-    potentially_new_account = %Sue.Models.Account{
-      ref: make_ref()
+  @spec resolve(t) :: t
+  def resolve(a) do
+    {platform, id} = a.platform_id
+    doc_search = %{platform: platform, id: id}
+    doc_insert = doc(a)
+
+    {:ok, account_id} = Subaru.upsert(doc_search, doc_insert, %{}, @collection)
+    %Account{a | id: account_id}
+  end
+
+  @spec from_doc(Map.t()) :: t
+  def from_doc(doc) do
+    %Account{
+      name: doc.name,
+      handle: doc.handle,
+      platform_id: {Sue.Utils.string_to_atom(doc.platform), doc.id},
+      id: doc._id
     }
+  end
 
-    {:ok, account} = DB.Graph.getsert_bi_edge_if_unique(platform_account, potentially_new_account)
-    account
+  @impl Subaru.Vertex
+  def collection(), do: @collection
+
+  @impl Subaru.Vertex
+  def doc(%Account{platform_id: {platform, id}} = a) do
+    %{name: a.name, handle: a.handle, platform: platform, id: id}
   end
 end
