@@ -43,7 +43,7 @@ defmodule DBTest do
     # this is a group chat that a1 and a2 are in.
     c_a1a2 = Chat.resolve(%Chat{platform_id: {:debug, 2}, is_direct: false})
     DB.add_user_chat_edge(a1.id, c_a1a2.id)
-    DB.add_user_chat_edge(a2.id, c_a1.id)
+    DB.add_user_chat_edge(a2.id, c_a1a2.id)
 
     # a1 creates a new definition in his personal chat.
     d_a1 = Defn.new("megumin", "acute", :text)
