@@ -43,11 +43,13 @@ defmodule Sue.Commands.Dumb do
 
   def rub_response(ms, relative) do
     hours = ms / 3.6e9
+    days = hours / 24
 
     ([
        "#{ms} microseconds",
        "#{round(ms / 1_000_000_000)} ice hockey periods",
-       "#{trunc(960 * hours)} human breaths"
+       "#{trunc(960 * hours)} human breaths",
+       "#{:erlang.float_to_binary(days / 12, decimals: 2)} Virginian opossum gestation periods"
      ]
      |> Enum.random()) <> " until rubbing day.\n(#{relative})"
   end
