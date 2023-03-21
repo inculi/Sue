@@ -5,7 +5,7 @@ defmodule Sue.Commands.Dumb do
 
   alias Sue.Models.Response
 
-  def c_rub() do
+  def c_rub(_msg) do
     now = Timex.local()
     weekday = Timex.weekday(now)
     dtr = Integer.mod(3 - weekday, 7)
