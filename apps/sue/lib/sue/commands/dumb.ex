@@ -30,7 +30,7 @@ defmodule Sue.Commands.Dumb do
   end
 
   def rub_response(0, _) do
-    "It's rubbing day!\n" <>
+    "Today is rubbing day!\n" <>
       ([
          "https://www.youtube.com/watch?v=l2fKbktcyIs",
          "https://www.youtube.com/watch?v=GyhLj-YdJW4",
