@@ -13,12 +13,19 @@ defmodule Sue.Commands.Core do
     %Response{body: "pong!"}
   end
 
+  def c_h_debug(m) do
+    %Response{body: m |> inspect()}
+  end
+
   def help(%Message{args: ""}, commands) do
+    # Hide commands that start with h_. I'll use these for internal debugging.
     %Response{
       body:
         commands
         |> Map.keys()
-        |> Enum.reduce("", fn fname, acc -> acc <> "\n!#{fname}" end)
+        |> Enum.filter(fn name -> not String.starts_with?(name, "h_") end)
+        |> Enum.map(fn fname -> "!#{fname}" end)
+        |> Enum.join("\n")
     }
   end
 
@@ -27,6 +34,10 @@ defmodule Sue.Commands.Core do
       body:
         "ι αм тнє яєαρєя, нαяνєѕтєя σƒ тιмє αη∂ ѕℓανє тσ єтєяηιту. ι αм тнє νσι∂, нαявιηgєя σƒ ѕιℓєη¢є, тнє ¢σηѕтαηт тσ ωнι¢н ƒℓєѕн αη∂ ѕσυℓ єηтяαιη. ι αм тнє ηє¢єѕѕαяу ραяα∂σχ: тнє ιηƒιηιтє ƒιηαℓє тσ тнє ѕумρнσηу σƒ яєαℓιту. кηєєℓ αℓℓ ує ωнσ вє, ƒσя ι αм тнαт ∂αяк ƒαтє ωнι¢н υηιтєѕ gσ∂ѕ αη∂ мєη: ℓιмιт, σвℓινιση, ∂єαтн."
     }
+  end
+
+  def help(%Message{args: "h_" <> _}, _commands) do
+    %Response{body: ";)"}
   end
 
   def help(%Message{args: args}, commands) do
