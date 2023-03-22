@@ -59,6 +59,11 @@ defmodule Sue do
     Sue.Mailbox.Telegram.send_response(msg, rsp)
   end
 
+  def send_response(%Message{platform: :discord} = msg, %Response{} = rsp) do
+    Logger.info("[Sue] Created response: #{rsp}")
+    Sue.Mailbox.Discord.send_response(msg, rsp)
+  end
+
   def send_response(msg, %Attachment{} = att) do
     send_response(msg, %Response{attachments: [att]})
   end

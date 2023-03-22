@@ -49,7 +49,9 @@ defmodule Sue.MixProject do
       {:exqlite, "~> 0.13"},
       {:openai, "~> 0.3.1"},
       # discord
-
+      {:nostrum, "~> 0.6"},
+      {:cowlib, "~> 2.11", [env: :prod, hex: "remedy_cowlib", override: true, repo: "hexpm"]},
+      {:gun, "2.0.1", [env: :prod, hex: "remedy_gun", override: true, repo: "hexpm"]},
       # imagemagick
       {:mogrify, "~> 0.8.0"}
     ]

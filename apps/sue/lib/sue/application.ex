@@ -36,7 +36,18 @@ defmodule Sue.Application do
         []
       end
 
+    children_discord =
+      if Sue.Utils.contains?(@platforms, :discord) do
+        [
+          Sue.Mailbox.Discord
+        ]
+      end
+
     opts = [strategy: :one_for_one, name: Sue.Supervisor]
-    Supervisor.start_link(children ++ children_imessage ++ children_telegram, opts)
+
+    Supervisor.start_link(
+      children ++ children_imessage ++ children_telegram ++ children_discord,
+      opts
+    )
   end
 end
