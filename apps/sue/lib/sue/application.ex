@@ -39,8 +39,14 @@ defmodule Sue.Application do
     children_discord =
       if Sue.Utils.contains?(@platforms, :discord) do
         [
+          %{
+            id: Nostrum.Application,
+            start: {Nostrum.Application, :start, [:normal, []]}
+          },
           Sue.Mailbox.Discord
         ]
+      else
+        []
       end
 
     opts = [strategy: :one_for_one, name: Sue.Supervisor]
