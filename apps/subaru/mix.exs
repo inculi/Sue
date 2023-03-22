@@ -28,9 +28,7 @@ defmodule Subaru.MixProject do
     [
       {:velocy, "~> 0.1"},
       {:arangox, git: "https://github.com/ArangoDB-Community/arangox"},
-      {:cachex, "~> 3.4"},
-      # override for nostrum discord
-      {:gun, "2.0.1", [env: :prod, hex: "remedy_gun", override: true, repo: "hexpm"]}
+      {:cachex, "~> 3.4"}
     ]
   end
 end

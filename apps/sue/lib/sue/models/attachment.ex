@@ -1,6 +1,6 @@
 defmodule Sue.Models.Attachment do
   alias __MODULE__
-  alias Sue.Models.Message
+  alias Sue.Models.Platform
 
   @type t() :: %__MODULE__{}
 
@@ -10,7 +10,7 @@ defmodule Sue.Models.Attachment do
 
   defstruct [
     :id,
-    # :message_id,
+    :message_id,
     :filename,
     :mime_type,
     :fsize,
@@ -19,16 +19,13 @@ defmodule Sue.Models.Attachment do
     metadata: %{}
   ]
 
-  # TODO: This code is crap. Keep filepath and filename separate.
-  #       Update the constructors.
-
   def new(
-        [a_id: aid, m_id: _mid, filename: filename, mime_type: mime_type, total_bytes: fsize],
+        [a_id: aid, m_id: mid, filename: filename, mime_type: mime_type, total_bytes: fsize],
         :imessage
       ) do
     %Attachment{
       id: aid,
-      # message_id: mid,
+      message_id: mid,
       filename: filename,
       mime_type: mime_type,
       fsize: fsize,
@@ -56,60 +53,47 @@ defmodule Sue.Models.Attachment do
     }
   end
 
-  @spec resolve(Message.t(), t()) ::
-          {:ok, t()} | {:error, t() | :too_big | :not_image}
-  def resolve(_, %Attachment{resolved: true} = att), do: {:ok, att}
-  def resolve(_, %Attachment{errors: [_]} = att), do: {:error, att}
+  @spec resolve(Attachment.t(), Platform.t()) :: {:ok | :error, Attachment.t()}
+  def resolve(%Attachment{resolved: true} = att, _), do: {:ok, att}
+  def resolve(%Attachment{errors: [_]} = att, _), do: {:error, att}
 
-  def resolve(%Message{platform: _}, att) do
-    with :ok <- check_img_size(att),
-         :ok <- check_is_image(att) do
-      att_filepath = dl_url_to_path(att.metadata.url, "#{att.id}")
+  def resolve(att, :telegram) do
+    att_filepath = from_url(att.metadata.url, att.id).filename
 
-      {:ok,
-       %Attachment{
-         att
-         | resolved: true,
-           filename: att_filepath
-       }}
-    else
-      error -> error
-    end
+    {:ok,
+     %Attachment{
+       att
+       | resolved: true,
+         filename: att_filepath
+     }}
   end
 
-  @spec dl_url_to_path(binary, binary) :: bitstring()
-  def dl_url_to_path(url, filename \\ Sue.Utils.unique_string()) do
+  @spec from_url(binary, binary) :: Sue.Models.Attachment.t()
+  def from_url(url, filename \\ Sue.Utils.unique_string()) do
     file_path = Path.join(@tmp_path, filename <> Path.extname(url))
-    {:ok, env} = Tesla.get(url)
-    :ok = File.write!(file_path, env.body)
+    env = Tesla.get!(url)
+    File.write!(file_path, env.body)
 
-    file_path
-  end
-
-  defp check_is_image(%Attachment{mime_type: mime_type}) when is_bitstring(mime_type) do
-    if mime_type |> String.starts_with?("image/") and not (mime_type |> String.ends_with?("gif")) do
-      :ok
-    else
-      {:error, :not_image}
-    end
+    %Attachment{
+      filename: file_path
+    }
   end
 
   # TODO: Have some part of the message processing pipeline that can detect if
   #   we are processing a message with an attachment with an error and warn the
   #   user as soon as we detect this.
   defp check_size_for_errors(fsize) do
-    if fsize <= @max_attachment_size_bytes do
-      []
-    else
+    if fsize > @max_attachment_size_bytes do
       [{:size, "File size is #{@max_attachment_size_bytes - fsize} bytes too big."}]
+    else
+      []
     end
   end
 
-  defp check_img_size(att) do
-    if att.fsize <= @max_attachment_size_bytes do
-      :ok
-    else
-      {:error, :too_big}
-    end
+  def is_too_large?(att) do
+    att.fsize > @max_attachment_size_bytes
   end
 end
+
+# AgACAgEAAxkBAAID_17ZaI3Bgu7rzpQedYhwcM-7D670AAJQqDEbOhXQRtfk4eHJcZhuFv3wSBcAAwEAAwIAA3gAA3gzAAIaBA
+# AgACAgEAAxkBAAID_17ZaI3Bgu7rzpQedYhwcM-7D670AAJQqDEbOhXQRtfk4eHJcZhuFv3wSBcAAwEAAwIAA20AA3czAAIaBA

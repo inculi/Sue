@@ -6,8 +6,6 @@ defmodule Sue.DB do
   alias Sue.DB.Schema
   alias Sue.Models.{Chat, Defn, Poll, Account, Message}
 
-  import Subaru, only: [is_dbid: 1]
-
   def start_link(args) do
     GenServer.start_link(__MODULE__, args, name: __MODULE__)
   end
@@ -46,7 +44,7 @@ defmodule Sue.DB do
   Upsert a definition.
   """
   @spec add_defn(Defn.t(), Subaru.dbid(), Subaru.dbid()) :: {:ok, Subaru.dbid()}
-  def add_defn(defn, account_id, chat_id) when is_dbid(account_id) and is_dbid(chat_id) do
+  def add_defn(defn, account_id, chat_id) do
     defndoc = Defn.doc(defn)
     defncol = Defn.collection()
 
@@ -63,7 +61,7 @@ defmodule Sue.DB do
   Search definitions by user.
   """
   @spec get_defns_by_user(Subaru.dbid()) :: [Defn.t()]
-  def get_defns_by_user(account_id) when is_dbid(account_id) do
+  def get_defns_by_user(account_id) do
     # only search a depth of one to get adjacent definitions.
     Subaru.traverse!("sue_defn_by_user", :outbound, account_id, 1, 1)
     |> Enum.map(&Defn.from_doc/1)
@@ -73,7 +71,7 @@ defmodule Sue.DB do
   Search definitions by chat.
   """
   @spec get_defns_by_chat(Subaru.dbid()) :: [Defn.t()]
-  def get_defns_by_chat(chat_id) when is_dbid(chat_id) do
+  def get_defns_by_chat(chat_id) do
     # only search a depth of one to get adjacent definitions.
     Subaru.traverse!("sue_defn_by_chat", :outbound, chat_id, 1, 1)
     |> Enum.map(&Defn.from_doc/1)
@@ -90,9 +88,8 @@ defmodule Sue.DB do
     If a user is chatting in a group: return the last modified v for that k
       owned by any user in the chat group.
   """
-  @spec find_defn(Subaru.dbid(), Subaru.dbid(), bitstring()) :: {:ok, Defn.t()} | {:error, :dne}
-  def find_defn(account_id, chat_id, varname)
-      when is_dbid(account_id) and is_dbid(chat_id) and is_bitstring(varname) do
+  @spec find_defn(Subaru.dbid(), Subaru.dbid(), binary()) :: {:ok, Defn.t()} | {:error, :dne}
+  def find_defn(account_id, chat_id, varname) do
     # TODO: add an option to these methods that allows for specifying K
     pass1 = get_defns_by_user(account_id)
     pass2 = get_defns_by_chat(chat_id)
@@ -113,7 +110,7 @@ defmodule Sue.DB do
   # || POLLS ||
   # ===========
   @spec add_poll(Poll.t(), Subaru.dbid()) :: {:ok, Poll.t()}
-  def add_poll(%Poll{chat_id: chat_id} = poll, chat_id) when is_dbid(chat_id) do
+  def add_poll(%Poll{chat_id: chat_id} = poll, chat_id) do
     polldoc = Poll.doc(poll)
     pollcol = Poll.collection()
 

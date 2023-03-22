@@ -7,8 +7,6 @@ defmodule Subaru do
   @type dbid() :: bitstring()
   @type res_id() :: {:ok, dbid()} | {:error, any()}
 
-  defguard is_dbid(id) when is_bitstring(id)
-
   @doc """
   Upserts and returns the ID to the document.
   """

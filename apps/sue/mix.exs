@@ -37,24 +37,18 @@ defmodule Sue.MixProject do
   defp deps do
     [
       {:subaru, in_umbrella: true},
-      {:timex, "~> 3.0"},
       {:phoenix_pubsub, "~> 2.0"},
-      # elixir
       {:ex_gram, git: "https://github.com/rockneurotiko/ex_gram"},
       # {:tesla, "~> 1.4"},
       {:tesla, git: "https://github.com/teamon/tesla", override: true},
       {:jason, "~> 1.2"},
       {:castore, "~> 0.1.0"},
       {:mint, "~> 1.1"},
-      {:exqlite, "~> 0.13"},
-      {:openai, "~> 0.3.1"},
-      # discord
-      {:nostrum, "~> 0.6", runtime: false},
-      {:cowlib, "~> 2.11", [env: :prod, hex: "remedy_cowlib", override: true, repo: "hexpm"]},
-      {:gun, "2.0.1", [env: :prod, hex: "remedy_gun", override: true, repo: "hexpm"]},
-      {:mime, "~> 2.0"},
+      {:sqlitex, "~> 1.7"},
+
       # imagemagick
-      {:mogrify, "~> 0.8.0"}
+      {:mogrify, "~> 0.8.0"},
+      {:openai, "~> 0.3.1"}
     ]
   end
 

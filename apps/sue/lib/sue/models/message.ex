@@ -21,8 +21,7 @@ defmodule Sue.Models.Message do
     #
     :is_from_sue,
     :is_ignorable,
-    :has_attachments,
-    metadata: %{}
+    :has_attachments
   ]
 
   @type t() :: %__MODULE__{
@@ -41,8 +40,7 @@ defmodule Sue.Models.Message do
           ###
           is_from_sue: boolean() | nil,
           is_ignorable: boolean() | nil,
-          has_attachments: boolean() | nil,
-          metadata: map()
+          has_attachments: boolean() | nil
         }
 
   @spec from_imessage(Keyword.t()) :: t()
@@ -133,41 +131,6 @@ defmodule Sue.Models.Message do
     |> add_account_and_chat_to_graph()
   end
 
-  def from_discord(msg) do
-    chat =
-      %Chat{
-        platform_id: {:discord, msg.guild_id || msg.author.id},
-        is_direct: is_nil(msg.guild_id)
-      }
-      |> Chat.resolve()
-
-    account = %Account{platform_id: {:discord, msg.author.id}} |> Account.resolve()
-
-    {command, args, body} = command_args_from_body(:discord, msg.content)
-
-    from_sue = msg.author.bot != nil
-
-    %Message{
-      platform: :discord,
-      id: msg.id,
-      #
-      chat: chat,
-      account: account,
-      #
-      body: body,
-      command: command,
-      args: args,
-      time: msg.timestamp,
-      #
-      is_from_sue: from_sue,
-      is_ignorable: from_sue or command == "",
-      has_attachments: length(msg.attachments) > 0,
-      metadata: %{channel_id: msg.channel_id}
-    }
-    |> add_account_and_chat_to_graph()
-    |> construct_attachments(msg.attachments)
-  end
-
   def from_debug(text) do
     chat =
       %Chat{platform_id: {:debug, 0}, is_direct: true}
@@ -193,7 +156,6 @@ defmodule Sue.Models.Message do
     |> add_account_and_chat_to_graph()
   end
 
-  # TODO: Move this inside the Attachments module. No clue why it's here.
   def construct_attachments(%Message{has_attachments: false} = msg, _), do: msg
 
   def construct_attachments(%Message{platform: :telegram} = msg, data) do
@@ -216,23 +178,6 @@ defmodule Sue.Models.Message do
       | attachments:
           list_of_atts
           |> Enum.map(fn a -> Attachment.new(a, :telegram) end)
-    }
-  end
-
-  def construct_attachments(%Message{platform: :discord} = msg, attachments) do
-    %Message{
-      msg
-      | attachments:
-          for a <- attachments do
-            %Attachment{
-              id: a.id,
-              filename: a.filename,
-              mime_type: MIME.from_path(a.filename),
-              fsize: a.size,
-              metadata: %{url: a.url, height: a.height, width: a.width},
-              resolved: false
-            }
-          end
     }
   end
 
@@ -265,21 +210,10 @@ defmodule Sue.Models.Message do
   end
 
   # TODO: Replace all of this with regular expressions.
-  # returns {command, args, body}
   @spec command_args_from_body(Platform.t(), String.t()) :: {String.t(), String.t(), String.t()}
   defp command_args_from_body(:telegram, body) do
     if has_command?(:telegram, body) do
       "/" <> newbody = body |> better_trim()
-      [command | args] = String.split(newbody, " ", parts: 2)
-      {command, Enum.at(args, 0) || "", newbody}
-    else
-      {"", "", body |> better_trim()}
-    end
-  end
-
-  defp command_args_from_body(platform, body) do
-    if has_command?(platform, body) do
-      "!" <> newbody = body |> better_trim()
       [command | args] = String.split(newbody, " ", parts: 2)
       {command, Enum.at(args, 0) || "", newbody}
     else
@@ -313,7 +247,6 @@ defmodule Sue.Models.Message do
   end
 
   # This binary classifier will grow in complexity over time.
-  defp is_ignorable?(platform, from_sue, body)
   defp is_ignorable?(_platform, true, _body), do: true
 
   defp is_ignorable?(_platform, _from_me, nil), do: true

@@ -82,11 +82,7 @@ defmodule Sue.Commands.Defns do
       end
 
     %Response{
-      body:
-        case (defn_user_list <> "\n\n" <> defn_chat_list) |> String.trim() do
-          "" -> "You have not defined anything. See !help define"
-          otherwise -> otherwise
-        end
+      body: (defn_user_list <> "\n\n" <> defn_chat_list) |> String.trim()
     }
   end
 end

@@ -35,26 +35,27 @@ defmodule Sue.Commands.Images do
     %Response{body: "Please include an image with your message. See !help motivate"}
   end
 
-  # TODO: verify this even works for discord
   def c_motivate(%Message{has_attachments: true, attachments: [att | _]} = msg) do
     # only process the first attachment.
-    with {:ok, att} <- Attachment.resolve(msg, att) do
-      path = resolve_filepath(att.filename)
+    cond do
+      is_image?(att) and not Attachment.is_too_large?(att) ->
+        {:ok, att} = Attachment.resolve(att, :telegram)
+        path = resolve_filepath(att.filename)
 
-      {top_text, bot_text} =
-        case String.split(msg.args, ~r{,}, parts: 2, trim: true) |> Enum.map(&String.trim/1) do
-          [] -> {nil, nil}
-          [top] -> {top, ""}
-          [top, bot] -> {top, bot}
-        end
+        {top_text, bot_text} =
+          case String.split(msg.args, ~r{,}, parts: 2, trim: true) |> Enum.map(&String.trim/1) do
+            [] -> {nil, nil}
+            [top] -> {top, ""}
+            [top, bot] -> {top, bot}
+          end
 
-      motivate_helper(path, top_text, bot_text)
-    else
-      {:error, :not_image} ->
-        %Response{body: "!motivate only supports images right now, sorry :("}
+        motivate_helper(path, top_text, bot_text)
 
-      {:error, :too_big} ->
+      Attachment.is_too_large?(att) ->
         %Response{body: "Media is too large. Please try again with a smaller file."}
+
+      true ->
+        %Response{body: "!motivate only supports images right now, sorry :("}
     end
   end
 
@@ -88,5 +89,9 @@ defmodule Sue.Commands.Images do
     else
       Path.absname(maybe_path)
     end
+  end
+
+  defp is_image?(%Attachment{mime_type: mime_type}) when is_bitstring(mime_type) do
+    mime_type |> String.starts_with?("image/") and not (mime_type |> String.ends_with?("gif"))
   end
 end

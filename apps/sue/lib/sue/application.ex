@@ -19,8 +19,11 @@ defmodule Sue.Application do
       if Sue.Utils.contains?(@platforms, :imessage) do
         # Method used to avoid strange Dialyzer error...
         [
-          Sue.Mailbox.IMessage,
-          {Sue.Mailbox.IMessageSqlite, [@chat_db_path]}
+          %{
+            id: Sqlitex.Server,
+            start: {Sqlitex.Server, :start_link, [@chat_db_path, [name: Sue.IMessageChatDB]]}
+          },
+          Sue.Mailbox.IMessage
         ]
       else
         []
@@ -36,24 +39,7 @@ defmodule Sue.Application do
         []
       end
 
-    children_discord =
-      if Sue.Utils.contains?(@platforms, :discord) do
-        [
-          %{
-            id: Nostrum.Application,
-            start: {Nostrum.Application, :start, [:normal, []]}
-          },
-          Sue.Mailbox.Discord
-        ]
-      else
-        []
-      end
-
     opts = [strategy: :one_for_one, name: Sue.Supervisor]
-
-    Supervisor.start_link(
-      children ++ children_imessage ++ children_telegram ++ children_discord,
-      opts
-    )
+    Supervisor.start_link(children ++ children_imessage ++ children_telegram, opts)
   end
 end

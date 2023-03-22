@@ -2,10 +2,10 @@ defmodule Sue do
   use GenServer
   require Logger
 
-  alias Sue.Commands.{Core, Defns, Images, Rand, Shell, Poll, Gpt, Dumb}
+  alias Sue.Commands.{Core, Defns, Images, Rand, Shell, Poll, Gpt}
   alias Sue.Models.{Message, Response, Attachment}
 
-  @modules [Core, Defns, Images, Rand, Shell, Poll, Gpt, Dumb]
+  @modules [Core, Defns, Images, Rand, Shell, Poll, Gpt]
 
   def start_link(args) do
     GenServer.start_link(__MODULE__, args, name: __MODULE__)
@@ -57,11 +57,6 @@ defmodule Sue do
   def send_response(%Message{platform: :telegram} = msg, %Response{} = rsp) do
     Logger.info("[Sue] Created response: #{rsp}")
     Sue.Mailbox.Telegram.send_response(msg, rsp)
-  end
-
-  def send_response(%Message{platform: :discord} = msg, %Response{} = rsp) do
-    Logger.info("[Sue] Created response: #{rsp}")
-    Sue.Mailbox.Discord.send_response(msg, rsp)
   end
 
   def send_response(msg, %Attachment{} = att) do
