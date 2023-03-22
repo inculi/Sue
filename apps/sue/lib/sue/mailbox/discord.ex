@@ -11,6 +11,7 @@ defmodule Sue.Mailbox.Discord do
   end
 
   def handle_event({:MESSAGE_CREATE, dmsg, _ws_state}) do
+    # Logger.debug(dmsg |> inspect(pretty: true))
     msg = Message.from_discord(dmsg)
     Sue.process_messages([msg])
   end

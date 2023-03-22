@@ -161,9 +161,11 @@ defmodule Sue.Models.Message do
       #
       is_from_sue: from_sue,
       is_ignorable: from_sue or command == "",
+      has_attachments: length(msg.attachments) > 0,
       metadata: %{channel_id: msg.channel_id}
     }
     |> add_account_and_chat_to_graph()
+    |> construct_attachments(msg.attachments)
   end
 
   def from_debug(text) do
@@ -191,6 +193,7 @@ defmodule Sue.Models.Message do
     |> add_account_and_chat_to_graph()
   end
 
+  # TODO: Move this inside the Attachments module. No clue why it's here.
   def construct_attachments(%Message{has_attachments: false} = msg, _), do: msg
 
   def construct_attachments(%Message{platform: :telegram} = msg, data) do
@@ -213,6 +216,23 @@ defmodule Sue.Models.Message do
       | attachments:
           list_of_atts
           |> Enum.map(fn a -> Attachment.new(a, :telegram) end)
+    }
+  end
+
+  def construct_attachments(%Message{platform: :discord} = msg, attachments) do
+    %Message{
+      msg
+      | attachments:
+          for a <- attachments do
+            %Attachment{
+              id: a.id,
+              filename: a.filename,
+              mime_type: MIME.from_path(a.filename),
+              fsize: a.size,
+              metadata: %{url: a.url, height: a.height, width: a.width},
+              resolved: false
+            }
+          end
     }
   end
 
