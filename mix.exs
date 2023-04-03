@@ -4,7 +4,7 @@ defmodule Sue.Umbrella.MixProject do
   def project do
     [
       apps_path: "apps",
-      version: "3.1.1",
+      version: "3.1.2",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       aliases: aliases(),

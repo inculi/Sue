@@ -98,6 +98,59 @@ defmodule Sue.Commands.Rand do
     |> (fn body -> %Response{body: body} end).()
   end
 
+  @doc """
+  Roll a weapon from the mystery box.
+  Usage !box
+  """
+  def c_box(_msg) do
+    # 0.0 - 0.15: wonder weapon
+    # 0.15 - 0.35: meme gun
+    # 0.35 - 1.0: normal gun
+    roll = :rand.uniform()
+
+    wonder_weapons = [
+      "Ray Gun",
+      "Thundergun",
+      "Wunderwaffe"
+    ]
+
+    meme_guns = [
+      "Ballistic Knife",
+      "China Lake",
+      "Crossbow"
+    ]
+
+    normal_guns = [
+      "AUG",
+      "Commando",
+      "CZ75",
+      "Dragunov",
+      "Famas",
+      "FN FAL",
+      "G11",
+      "Galil",
+      "HS-10",
+      "HK21",
+      "L96A1",
+      "M72 LAW",
+      "Monkey Bomb",
+      "Python",
+      "RPK",
+      "SPAS-12",
+      "Spectre"
+    ]
+
+    selection_string =
+      cond do
+        roll < 0.15 -> wonder_weapons
+        roll < 0.35 -> meme_guns
+        true -> normal_guns
+      end
+      |> Enum.random()
+
+    %Response{body: "Box landed on the " <> selection_string <> "!"}
+  end
+
   defp rand_range([l, h]) do
     ((:rand.uniform() * (h - l)) |> trunc()) + l
   end

@@ -66,6 +66,7 @@ defmodule Sue.Commands.Defns do
 
     defn_user_list =
       case defn_user
+           |> Enum.uniq_by(fn d -> d.var end)
            |> Enum.map(fn d -> "- #{d.var}" end)
            |> Enum.join("\n") do
         "" -> ""
@@ -75,6 +76,7 @@ defmodule Sue.Commands.Defns do
     defn_chat_list =
       case DB.get_defns_by_chat(msg.chat.id)
            |> Enum.filter(fn d -> not MapSet.member?(defn_user_ids, d.id) end)
+           |> Enum.uniq_by(fn d -> d.var end)
            |> Enum.map(fn d -> "- #{d.var}" end)
            |> Enum.join("\n") do
         "" -> ""

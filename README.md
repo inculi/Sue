@@ -14,6 +14,7 @@ The following commands are currently supported:
 
 ```
 !8ball
+!box
 !choose
 !cringe
 !define
@@ -27,6 +28,7 @@ The following commands are currently supported:
 !poll
 !qt
 !random
+!rub
 !uptime
 !vote
 ```
