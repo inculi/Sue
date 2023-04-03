@@ -7,7 +7,8 @@ defmodule DesuWeb.Endpoint do
   @session_options [
     store: :cookie,
     key: "_desu_web_key",
-    signing_salt: "CrbVEulo"
+    signing_salt: "cRpjmCXy",
+    same_site: "Lax"
   ]
 
   socket "/live", Phoenix.LiveView.Socket, websocket: [connect_info: [session: @session_options]]
@@ -20,7 +21,7 @@ defmodule DesuWeb.Endpoint do
     at: "/",
     from: :desu_web,
     gzip: false,
-    only: ~w(assets fonts images favicon.ico robots.txt)
+    only: DesuWeb.static_paths()
 
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.

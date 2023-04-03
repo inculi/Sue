@@ -15,18 +15,33 @@ config :desu_web,
 # Configures the endpoint
 config :desu_web, DesuWeb.Endpoint,
   url: [host: "localhost"],
-  render_errors: [view: DesuWeb.ErrorView, accepts: ~w(html json), layout: false],
-  pubsub_server: DesuWeb.PubSub,
-  live_view: [signing_salt: "bYkiLu0D"]
+  render_errors: [
+    formats: [html: DesuWeb.ErrorHTML, json: DesuWeb.ErrorJSON],
+    layout: false
+  ],
+  pubsub_server: Desu.PubSub,
+  live_view: [signing_salt: "YEBB28eM"]
 
 # Configure esbuild (the version is required)
 config :esbuild,
-  version: "0.12.18",
+  version: "0.17.11",
   default: [
     args:
-      ~w(js/app.js --bundle --target=es2016 --outdir=../priv/static/assets --external:/fonts/* --external:/images/*),
+      ~w(js/app.js --bundle --target=es2017 --outdir=../priv/static/assets --external:/fonts/* --external:/images/*),
     cd: Path.expand("../apps/desu_web/assets", __DIR__),
     env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)}
+  ]
+
+# Configure tailwind (the version is required)
+config :tailwind,
+  version: "3.2.7",
+  default: [
+    args: ~w(
+      --config=tailwind.config.js
+      --input=css/app.css
+      --output=../priv/static/assets/app.css
+    ),
+    cd: Path.expand("../apps/desu_web/assets", __DIR__)
   ]
 
 # Configures Elixir's Logger
@@ -52,7 +67,7 @@ Logger.put_module_level(Tesla, :warn)
 config :phoenix, :json_library, Jason
 
 config :sue,
-  platforms: [:debug, :imessage, :telegram, :discord],
+  platforms: [:debug, :telegram],
   chat_db_path: Path.join(System.user_home(), "Library/Messages/chat.db")
 
 config :subaru,
