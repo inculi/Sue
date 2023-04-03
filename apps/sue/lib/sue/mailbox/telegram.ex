@@ -18,7 +18,6 @@ defmodule Sue.Mailbox.Telegram do
     Logger.debug("context: #{context |> inspect(pretty: @pretty_debug)}")
     Logger.debug("=== end :command handle ===")
 
-    # Logger.info("msg: #{inspect(msg)}\n\ncontext: #{inspect(context)}")
     msg = Message.from_telegram(%{msg: msg, command: command, context: context})
     Sue.process_messages([msg])
     context
@@ -37,7 +36,6 @@ defmodule Sue.Mailbox.Telegram do
 
   def handle({:text, _text, _msg}, _context) do
     # Direct text or reply in group
-    # Logger.info("text: #{inspect(text)}\nmsg: #{inspect(msg)}\n\ncontext: #{inspect(context)}")
     :ok
   end
 
@@ -51,7 +49,7 @@ defmodule Sue.Mailbox.Telegram do
     :ok
   end
 
-  def send_response(%Message{} = msg, %Response{attachments: []} = rsp) do
+  def send_response(msg, %Response{attachments: []} = rsp) do
     # No attachments
     send_response_text(msg, rsp)
   end

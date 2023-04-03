@@ -2,7 +2,7 @@
 
 # Sue
 
-Greetings and welcome to Sue V3.1, a chatbot for iMessage and Telegram written in Elixir. *Now with ArangoDB and ChatGPT!*
+Greetings and welcome to Sue V3.1, a chatbot for iMessage, Discord, and Telegram written in Elixir. *Now with ArangoDB and ChatGPT!*
 
 *Note: If you ran an earlier version of Sue and want to import your data, see "Upgrading from Sue V3.0" below.*
 
@@ -31,7 +31,7 @@ The following commands are currently supported:
 !vote
 ```
 
-Telegram uses the slash (/) prefix instead. Sue will not respond to you unless you use the proper prefix. **Do not just message her "hi", expecting a miracle**. You would be amazed how many people do.
+Telegram uses the slash (/) prefix instead. Sue will not respond to you unless you use the proper prefix. **Do not just message her "hi", expecting a miracle**. You would be amazed how many people do. Discord uses exclamation mark same as iMessage.
 
 ## How do I run it?
 
@@ -39,9 +39,10 @@ Firstly, I aplogize. I used to use Elixir's built-in database, Mnesia, which was
 
 1. If you want to use iMessage, you need a mac with iMessage. You may be asked to enable disk access and Message control for this program (or, rather, Terminal/iTerm). I've been primarily testing this on Catalina, but it *should* work on Monterrey and some older versions.
 2. If you want to use Telegram, you should make a Telegram API key. Look up how, it's pretty straightforward. Similarly if you want to use ChatGPT, make an OpenAI account and generate an API key.
-3. If you wish to disable the Telegram or iMessage half of this program, modify the platform list under `config/config.exs` to what you wish to keep.
-4. If you want to be able to use commands that write text atop images (currently only !motivate does this), you will need to install imagemagick with pango. If you already have imagemagick installed, you can run `$ convert -list format | grep -i pango` to see if you can at least read it. If you don't see `r--`, you can't read it and need to do the following: If you're on Mac, you're probably using homebrew, in which case you'll need to edit the install file (they removed pango because it depends on cairo which has many dependencies). After running `$ brew edit imagemagick`, you should be in an editor. Add a `depends_on "pango"` near its friends. Remove the `--without-pango`, adding a `--with-pango` near its friends. Save and quit. `$ brew reinstall imagemagick --build-from-source` (or `install` if you hadn't installed to begin with). Run that `-list format` command now and you should see it.
-5. [Download and install ArangoDB](https://www.arangodb.com/download-major/). Make a user account and remember the password. You'll later enter it in the config described below. Create three databases:
+3. If you want to use Discord, again, make an API key, a bot, and under gateway intents enable message content intent.
+4. If you wish to disable any platforms such as Telegram or iMessage, modify the platform list under `config/config.exs` to what you wish to keep.
+5. If you want to be able to use commands that write text atop images (currently only !motivate does this), you will need to install imagemagick with pango. **If you don't care about this command, feel free to ignore the rest of this**. If you already have imagemagick installed, you can run `$ convert -list format | grep -i pango` to see if you can at least read it. If you don't see `r--`, you can't read it and need to do the following: If you're on Mac, you're probably using homebrew, in which case you'll need to edit the install file (they removed pango because it depends on cairo which has many dependencies). After running `$ brew edit imagemagick`, you should be in an editor. Add a `depends_on "pango"` near its friends. Remove the `--without-pango`, adding a `--with-pango` near its friends. Save and quit. `$ brew reinstall imagemagick --build-from-source` (or `install` if you hadn't installed to begin with). Run that `-list format` command now and you should see it.
+6. [Download and install ArangoDB](https://www.arangodb.com/download-major/). Make a user account and remember the password. You'll later enter it in the config described below. Create three databases:
 
 - subaru_test
 - subaru_dev
@@ -49,15 +50,27 @@ Firstly, I aplogize. I used to use Elixir's built-in database, Mnesia, which was
 
 Make sure the user you created has access to the databases. You can edit user permissions by being in the `_system` database, clicking the `Users` sidebar, selecting a user, then navigating to the `Permissions` tab.
 
-6. `$ git clone https://github.com/inculi/Sue`
-7. `$ cd Sue`
-8. Make a `config/config.secret.exs` file, here is an example:
+7. `$ git clone https://github.com/inculi/Sue`
+8. `$ cd Sue`
+9. Make a `config/config.secret.exs` file, here is an example:
 
 ```elixir
 import Config
 
 # Telegram API
 config :ex_gram, token: "mytoken"
+
+# Discord API
+config :nostrum,
+  gateway_intents: [
+    :guilds,
+    :guild_messages,
+    :guild_message_reactions,
+    :direct_messages,
+    :direct_message_reactions,
+    :message_content
+  ],
+  token: "mytoken"
 
 config :desu_web, DesuWeb.Endpoint,
   secret_key_base: "Run this command: $ mix phx.gen.secret"
@@ -71,10 +84,11 @@ config :openai,
   api_key: "myapikey",
   http_options: [recv_timeout: 40_000]
 
+
 ```
-9. `$ mix deps.get`
-10. To create a prod build, run `$ MIX_ENV=prod mix release` It should then tell you the path to the newly created executable.
-11. To run in interactive dev mode, you can run `$ iex -S mix`.  If you want to Telegram to autocomplete your commands, run `Sue.post_init()` from within this interactive prompt. Sorry this part is a little scuffed.
+10. `$ mix deps.get`
+11. To create a prod build, run `$ MIX_ENV=prod mix release` It should then tell you the path to the newly created executable.
+12. To run in interactive dev mode, you can run `$ iex -S mix`.  If you want to Telegram to autocomplete your commands, run `Sue.post_init()` from within this interactive prompt. Sorry this part is a little scuffed.
 
 ## How do I add a command?
 
