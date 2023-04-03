@@ -49,7 +49,7 @@ defmodule Sue.MixProject do
       {:exqlite, "~> 0.13"},
       {:openai, "~> 0.3.1"},
       # discord
-      {:nostrum, "~> 0.6", runtime: false},
+      {:nostrum, git: "https://github.com/desudigital/nostrum"},
       {:cowlib, "~> 2.11", [env: :prod, hex: "remedy_cowlib", override: true, repo: "hexpm"]},
       {:gun, "2.0.1", [env: :prod, hex: "remedy_gun", override: true, repo: "hexpm"]},
       {:mime, "~> 2.0"},
