@@ -10,7 +10,6 @@ defmodule Sue.Models.Attachment do
 
   defstruct [
     :id,
-    # :message_id,
     :filename,
     :mime_type,
     :fsize,
@@ -23,7 +22,7 @@ defmodule Sue.Models.Attachment do
   #       Update the constructors.
 
   def new(
-        [a_id: aid, m_id: _mid, filename: filename, mime_type: mime_type, total_bytes: fsize],
+        [a_id: aid, m_id: mid, filename: filename, mime_type: mime_type, total_bytes: fsize],
         :imessage
       ) do
     %Attachment{
@@ -32,7 +31,8 @@ defmodule Sue.Models.Attachment do
       filename: filename,
       mime_type: mime_type,
       fsize: fsize,
-      resolved: true
+      resolved: true,
+      metadata: %{message_id: mid}
     }
   end
 

@@ -132,7 +132,7 @@ defmodule Sue.Mailbox.IMessage do
           |> query_attachments_since()
           |> Enum.map(fn a -> Attachment.new(a, :imessage) end)
           |> Enum.filter(fn a -> a.mime_type != nil end)
-          |> Enum.group_by(fn a -> a.message_id end)
+          |> Enum.group_by(fn a -> a.metadata.message_id end)
       end
 
     Logger.debug("Attachments: #{attachments |> inspect()}")
