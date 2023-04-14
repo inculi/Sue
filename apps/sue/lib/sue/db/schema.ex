@@ -9,7 +9,13 @@ defmodule Sue.DB.Schema do
 
   @spec edge_collections() :: [bitstring()]
   def edge_collections() do
-    ["sue_user_in_chat", "sue_defn_by_user", "sue_defn_by_chat", "sue_poll_by_chat"]
+    [
+      "sue_user_in_chat",
+      "sue_defn_by_user",
+      "sue_defn_by_chat",
+      "sue_poll_by_chat",
+      "sue_user_by_platformaccount"
+    ]
   end
 
   # TODO: It would be really nice if there was a way to auto-register these
@@ -19,7 +25,8 @@ defmodule Sue.DB.Schema do
       Account.collection(),
       Chat.collection(),
       Defn.collection(),
-      Poll.collection()
+      Poll.collection(),
+      "sue_platformaccounts"
     ]
   end
 

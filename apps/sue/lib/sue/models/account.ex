@@ -1,19 +1,18 @@
 defmodule Sue.Models.Account do
   @behaviour Subaru.Vertex
 
-  @enforce_keys [:platform_id]
-  defstruct [:platform_id, :id, name: "", handle: ""]
+  defstruct [:id, name: "", handle: ""]
 
   @collection "sue_users"
 
   @type t() :: %__MODULE__{
           name: bitstring(),
           handle: bitstring(),
-          platform_id: {atom(), integer() | bitstring()},
           id: nil | bitstring()
         }
 
   alias __MODULE__
+  alias Sue.Models.Platform
 
   @spec resolve(t) :: t
   def resolve(a) do
@@ -23,6 +22,11 @@ defmodule Sue.Models.Account do
 
     {:ok, account_id} = Subaru.upsert(doc_search, doc_insert, %{}, @collection)
     %Account{a | id: account_id}
+  end
+
+  @spec from_platform_id(Platform.t(), any()) :: t
+  def from_platform_id(platform, id) do
+    platform_account_search = %{platform: platform, id: id}
   end
 
   @spec from_doc(Map.t()) :: t
