@@ -8,13 +8,14 @@ defmodule Desu.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      # Starts a worker by calling: Desu.Worker.start_link(arg)
-      {Phoenix.PubSub, name: DesuWeb.PubSub}
+      # Start the PubSub system
+      {Phoenix.PubSub, name: Desu.PubSub},
+      # Start Finch
+      {Finch, name: Desu.Finch}
+      # Start a worker by calling: Desu.Worker.start_link(arg)
+      # {Desu.Worker, arg}
     ]
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: Desu.Supervisor]
-    Supervisor.start_link(children, opts)
+    Supervisor.start_link(children, strategy: :one_for_one, name: Desu.Supervisor)
   end
 end

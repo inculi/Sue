@@ -19,15 +19,15 @@ defmodule DesuWeb.ConnCase do
 
   using do
     quote do
+      # The default endpoint for testing
+      @endpoint DesuWeb.Endpoint
+
+      use DesuWeb, :verified_routes
+
       # Import conveniences for testing with connections
       import Plug.Conn
       import Phoenix.ConnTest
       import DesuWeb.ConnCase
-
-      alias DesuWeb.Router.Helpers, as: Routes
-
-      # The default endpoint for testing
-      @endpoint DesuWeb.Endpoint
     end
   end
 
