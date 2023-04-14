@@ -1,6 +1,8 @@
 defmodule DesuWeb.Router do
   use DesuWeb, :router
 
+  import Phoenix.LiveView.Router
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
@@ -17,7 +19,8 @@ defmodule DesuWeb.Router do
   scope "/", DesuWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    get "/", OedoController, :home
+    live "/box", Live.Home
   end
 
   # Other scopes may use custom stacks.
