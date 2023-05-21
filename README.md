@@ -2,9 +2,19 @@
 
 # Sue
 
-Greetings and welcome to Sue V3.1, a chatbot for iMessage, Discord, and Telegram written in Elixir. *Now with ArangoDB and ChatGPT!*
+Greetings and welcome to Sue V3.1, a chatbot for iMessage, Discord, and Telegram written in Elixir. Now with ChatGPT and ArangoDB!
 
 *Note: If you ran an earlier version of Sue and want to import your data, see "Upgrading from Sue V3.0" below.*
+
+## Demo
+
+Feedback is greatly appreciated!
+
+| Platform |                                 |
+| ---------|---------------------------------|
+| iMessage | send !help to sue@robertism.com |
+| Telegram | send /help to @ImSueBot         |
+| Discord  | send !help after [adding to your server](https://discord.com/api/oauth2/authorize?client_id=1087905317838409778&permissions=534723950656&scope=bot%20applications.commands) |
 
 ## Introduction
 
@@ -89,9 +99,28 @@ config :openai,
 
 
 ```
-10. `$ mix deps.get`
-11. To create a prod build, run `$ MIX_ENV=prod mix release` It should then tell you the path to the newly created executable.
-12. To run in interactive dev mode, you can run `$ iex -S mix`.  If you want to Telegram to autocomplete your commands, run `Sue.post_init()` from within this interactive prompt. Sorry this part is a little scuffed.
+10. Install Elixir if you don't already have it. I recommend using [asdf](https://asdf-vm.com/) to install.
+
+```bash
+# Use whatever version tag it recommends on the website:
+# https://asdf-vm.com/guide/getting-started.html#official-download
+# For me, this is:
+$ git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.11.3
+
+# Add erlang and elixir plugins, install and set a version.
+$ asdf plugin add erlang https://github.com/asdf-vm/asdf-erlang.git
+$ asdf plugin-add elixir https://github.com/asdf-vm/asdf-elixir.git
+$ asdf install erlang 25.2.3
+$ asdf install elixir 1.14.3-otp-25
+$ asdf global erlang 25.2.3
+$ asdf global elixir 1.14.3-otp-25
+
+# add to path: ~/.asdf/shims
+```
+
+11. `$ mix deps.get`
+12. To create a prod build, run `$ MIX_ENV=prod mix release` It should then tell you the path to the newly created executable.
+13. To run in interactive dev mode, you can run `$ iex -S mix`.  If you want to Telegram to autocomplete your commands, run `Sue.post_init()` from within this interactive prompt. Sorry this part is a little scuffed.
 
 ## How do I add a command?
 
