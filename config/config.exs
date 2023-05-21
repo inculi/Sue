@@ -44,11 +44,28 @@ config :tailwind,
     cd: Path.expand("../apps/desu_web/assets", __DIR__)
   ]
 
-# Configures Elixir's Logger
-config :logger, :console,
+# Configure Elixir's Logger. On Linux, if you want it in /var/log, I'll let you
+#   set up those permissions yourself. On Windows, idk where it ought to go.
+logger_dir =
+  case :os.type() do
+    {:unix, :darwin} -> Path.join(System.user_home(), "Library/Logs/sue")
+    _ -> "logs/"
+  end
+
+config :logger,
+  backends: [:console, {LoggerFileBackend, :file_log}, {LoggerFileBackend, :error_log}],
   format: "$time $metadata[$level] $message\n",
-  level: :debug,
   metadata: [:request_id]
+
+config :logger, :console, level: :debug
+
+config :logger, :file_log,
+  path: Path.join(logger_dir, "info.log"),
+  level: :info
+
+config :logger, :error_log,
+  path: Path.join(logger_dir, "error.log"),
+  level: :error
 
 config :tesla,
   log_level: :warn,
