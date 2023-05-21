@@ -13,6 +13,7 @@ Sue has a long history. You'll have to ask me about it, because I'm not writing 
 The following commands are currently supported:
 
 ```
+!1984
 !8ball
 !box
 !choose
