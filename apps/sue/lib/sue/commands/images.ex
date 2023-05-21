@@ -20,7 +20,7 @@ defmodule Sue.Commands.Images do
   Literally 1984
   Usage: !1984
   """
-  def c_doog(_msg) do
+  def c_1984(_msg) do
     %Attachment{filename: Path.join(@media_path, "1984.jpg")}
   end
 
