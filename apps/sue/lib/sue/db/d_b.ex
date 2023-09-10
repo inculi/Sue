@@ -173,4 +173,36 @@ defmodule Sue.DB do
 
     {:ok, Poll.from_doc(newpoll)}
   end
+
+  def testswag() do
+    import Sue.Mock
+
+    {_, a1} = mock_paccount_account(100)
+    {_, a2} = mock_paccount_account(101)
+
+    # this is a direct chat that a1 has with Sue
+    c_a1 = mock_chat(1, true)
+    add_user_chat_edge(a1, c_a1)
+
+    # this is a group chat that a1 and a2 are in.
+    c_a1a2 = mock_chat(2, false)
+    add_user_chat_edge(a1, c_a1a2)
+    add_user_chat_edge(a2, c_a1a2)
+
+    # a1 creates a new definition in his personal chat.
+    d_a1 = Defn.new("megumin", "acute", :text)
+    {:ok, d_a1_id} = add_defn(d_a1, a1.id, c_a1.id)
+
+    # a2 creates a new definition in the shared chat.
+    d_a2 = Defn.new("aqua", "baqua", :text)
+    {:ok, d_a2_id} = add_defn(d_a2, a2.id, c_a1a2.id)
+
+    # confirm we can find these defns the normal way
+    {:ok, _} = find_defn(a1.id, c_a1.id, "megumin")
+    {:ok, _} = find_defn(a2.id, c_a1a2.id, "aqua")
+
+    # confirm we can also find them by their chat
+    [%Defn{id: d_a1_id}] = get_defns_by_chat(c_a1.id)
+    [%Defn{id: d_a2_id}] = get_defns_by_chat(c_a1a2.id)
+  end
 end

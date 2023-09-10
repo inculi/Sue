@@ -71,9 +71,17 @@ defmodule Subaru.Query do
     push(q, item)
   end
 
-  def traverse(q, ecoll, direction, startvert, min, max) do
-    item = {:traverse, ecoll, direction, startvert, min, max}
+  @doc """
+  Perform a graph traversal on one or more edge collections.
+  """
+  @spec traverse(t(), [bitstring(), ...] | bitstring(), atom(), bitstring(), any(), any()) :: t()
+  def traverse(q, ecolls, direction, startvert, min, max) when is_list(ecolls) do
+    item = {:traverse, ecolls, direction, startvert, min, max}
     push(q, item)
+  end
+
+  def traverse(q, ecoll, direction, startvert, min, max) when is_bitstring(ecoll) do
+    traverse(q, [ecoll], direction, startvert, min, max)
   end
 
   @spec filter(t, boolean_expression()) :: t
@@ -217,7 +225,7 @@ defmodule Subaru.Query do
     |> gen()
   end
 
-  defp gen({:traverse, ecoll, direction, startvert, min, max}, query) do
+  defp gen({:traverse, ecolls, direction, startvert, min, max}, query) do
     # ecoll_bindvars = Enum.map(ecolls, fn ec -> "@" <> generate_bindvar(ec) end)
     # ecoll_bindvar = "@" <> generate_bindvar(ecoll)
     startvert_bindvar_id = generate_bindvar(startvert)
@@ -232,14 +240,16 @@ defmodule Subaru.Query do
     statement = """
     FOR v IN#{stm_min_max} #{edgedir_to_str(direction)}
         #{startvert_bindvar_id}
-        #{ecoll}
+        #{Enum.join(ecolls, ",")}
+        OPTIONS { order: "bfs", uniqueVertices: "global" }
+        FILTER IS_SAME_COLLECTION("sue_defns", v)
         RETURN v
     """
 
     query
     |> add_statement(statement)
     |> add_bindvar(startvert_bindvar_id, startvert)
-    |> add_read_coll(ecoll)
+    |> add_read_colls(ecolls)
     |> gen()
   end
 

@@ -92,44 +92,4 @@ defmodule SubaruTest do
     assert Subaru.exists?("chats", expr2) == false
     {:ok, _} = Subaru.DB.remove_collection("chats")
   end
-
-  test "hypothetical" do
-    {:ok, _} = Subaru.DB.create_collection("paccounts", :doc)
-    {:ok, _} = Subaru.DB.create_collection("accounts", :doc)
-    {:ok, _} = Subaru.DB.create_collection("account_by_paccount", :edge)
-
-    a = %{platform: "telegram", id: 123}
-    b = %{platform: "imessage", id: 456}
-    c = %{platform: "discord", id: 789}
-
-    {:ok, telegram_account} = Subaru.upsert(a, a, %{}, "paccounts")
-    {:ok, imessage_account} = Subaru.upsert(b, b, %{}, "paccounts")
-    {:ok, discord_account} = Subaru.upsert(c, c, %{}, "paccounts")
-
-    desu_metadata = %{name: "Miko"}
-    {:ok, desu_account} = Subaru.upsert(desu_metadata, desu_metadata, %{}, "accounts")
-
-    Subaru.upsert_edge(telegram_account, desu_account, "account_by_paccount")
-    Subaru.upsert_edge(imessage_account, desu_account, "account_by_paccount")
-    Subaru.upsert_edge(discord_account, desu_account, "account_by_paccount")
-
-    {:ok, [%{"_id" => ^desu_account}]} =
-      Subaru.traverse("account_by_paccount", :outbound, telegram_account)
-
-    assert Subaru.traverse!("account_by_paccount", :inbound, desu_account) |> length() == 3
-
-    Subaru.DB.remove_collection("paccounts")
-    Subaru.DB.remove_collection("accounts")
-    Subaru.DB.remove_collection("account_by_paccount")
-  end
-
-  test "hypothetical2" do
-    {platform, id} = {:imessage, 123}
-
-    doc = %{platform: platform, id: id}
-    doc_search = doc
-    doc_insert = doc
-
-    Query.new()
-  end
 end
