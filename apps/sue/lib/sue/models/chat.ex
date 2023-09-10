@@ -1,19 +1,21 @@
 defmodule Sue.Models.Chat do
+  alias __MODULE__
+  alias Sue.Models.Platform
+
   @enforce_keys [:platform_id, :is_direct]
   defstruct [:platform_id, :is_direct, :id]
 
   @behaviour Subaru.Vertex
 
   @type t() :: %__MODULE__{
-          platform_id: {atom(), bitstring() | integer()},
+          platform_id: {Platform.t(), bitstring() | integer()},
           # is a 1:1 convo with Sue
           is_direct: boolean(),
+          # subaru id
           id: nil | bitstring()
         }
 
   @collection "sue_chats"
-
-  alias __MODULE__
 
   @spec resolve(t) :: t
   def resolve(c) do
@@ -25,6 +27,7 @@ defmodule Sue.Models.Chat do
     %Chat{c | id: chat_id}
   end
 
+  @spec from_doc(map()) :: t
   def from_doc(d) do
     %Chat{
       platform_id: {d.platform, d.id},

@@ -18,7 +18,7 @@ defmodule Sue.Models.Defn do
   alias __MODULE__
 
   # TODO: Add support for more defn types (currently just :text)
-  @spec new(bitstring(), bitstring(), atom()) :: Defn.t()
+  @spec new(bitstring(), bitstring(), atom()) :: t
   def new(var, val, :text = type) when is_bitstring(var) and is_bitstring(val) do
     now = Sue.Utils.unix_now()
 
@@ -31,7 +31,7 @@ defmodule Sue.Models.Defn do
     }
   end
 
-  @spec from_doc(map()) :: t()
+  @spec from_doc(map()) :: t
   def from_doc(doc) do
     %Defn{
       var: doc["var"],

@@ -11,22 +11,21 @@ defmodule Sue.Models.Account do
           id: nil | bitstring()
         }
 
+  alias Sue.Models.PlatformAccount
   alias __MODULE__
-  alias Sue.Models.Platform
 
-  @spec resolve(t) :: t
-  def resolve(a) do
-    {platform, id} = a.platform_id
-    doc_search = %{platform: platform, id: id}
-    doc_insert = doc(a)
+  @spec from_paccount(PlatformAccount.t()) :: t()
+  @doc """
+  Resolves a Sue Account from its associated PlatformAccount.
+  An edge should ideally exist between the two in the database.
+  If not, the account is created. As the PAccount cannot be nil, it is assumed
+    the PAccount is already resolved to a Subaru.dbid
+  """
+  def from_paccount(pa) do
+    account_id = Sue.DB.link_paccount_to_resolved_user(pa)
 
-    {:ok, account_id} = Subaru.upsert(doc_search, doc_insert, %{}, @collection)
-    %Account{a | id: account_id}
-  end
-
-  @spec from_platform_id(Platform.t(), any()) :: t
-  def from_platform_id(platform, id) do
-    platform_account_search = %{platform: platform, id: id}
+    Subaru.get!(@collection, account_id)
+    |> from_doc()
   end
 
   @spec from_doc(Map.t()) :: t
@@ -34,7 +33,6 @@ defmodule Sue.Models.Account do
     %Account{
       name: doc.name,
       handle: doc.handle,
-      platform_id: {Sue.Utils.string_to_atom(doc.platform), doc.id},
       id: doc._id
     }
   end
@@ -43,7 +41,7 @@ defmodule Sue.Models.Account do
   def collection(), do: @collection
 
   @impl Subaru.Vertex
-  def doc(%Account{platform_id: {platform, id}} = a) do
-    %{name: a.name, handle: a.handle, platform: platform, id: id}
+  def doc(a) do
+    %{name: a.name, handle: a.handle, id: a.id}
   end
 end

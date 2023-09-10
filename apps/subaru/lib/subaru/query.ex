@@ -374,7 +374,7 @@ defmodule Subaru.Query do
     %Query{query | reads: MapSet.put(query.reads, coll)}
   end
 
-  @spec add_read_colls(t(), [bitstring()]) :: t()
+  @spec add_read_colls(t(), [bitstring()]) :: t
   defp add_read_colls(query, colls) do
     %Query{query | reads: MapSet.union(query.reads, MapSet.new(colls))}
   end

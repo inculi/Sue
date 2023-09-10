@@ -9,6 +9,18 @@ defmodule Subaru do
 
   defguard is_dbid(id) when is_bitstring(id)
 
+  def get(collection, id) do
+    Query.new()
+    |> Query.get(collection, id)
+    |> Query.exec()
+    |> result_one()
+  end
+
+  def get!(collection, id) do
+    {:ok, res} = get(collection, id)
+    res
+  end
+
   @doc """
   Upserts and returns the ID to the document.
   """
@@ -117,6 +129,12 @@ defmodule Subaru do
     exists?(edge_collection, expr)
   end
 
+  defp core_traverse(ecoll, direction, startvert, min, max) do
+    Query.new()
+    |> Query.traverse(ecoll, direction, startvert, min, max)
+    |> Query.exec()
+  end
+
   # GRAPH TRAVERSAL
   # ===============
   @spec traverse(
@@ -127,15 +145,18 @@ defmodule Subaru do
           integer() | nil
         ) :: {:ok, [map() | dbid()]} | {:error, any()}
   def traverse(ecoll, direction, startvert, min \\ nil, max \\ nil) do
-    Query.new()
-    |> Query.traverse(ecoll, direction, startvert, min, max)
-    |> Query.exec()
+    core_traverse(ecoll, direction, startvert, min, max)
     |> result()
   end
 
   def traverse!(ecoll, direction, startvert, min \\ nil, max \\ nil) do
     {:ok, res} = traverse(ecoll, direction, startvert, min, max)
     res
+  end
+
+  def traverse_one(ecoll, direction, startvert, min \\ nil, max \\ nil) do
+    core_traverse(ecoll, direction, startvert, min, max)
+    |> result_one()
   end
 
   # RESULT OUTPUT HELPERS
