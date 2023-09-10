@@ -22,6 +22,7 @@ defmodule Sue.Mailbox.IMessage do
     {:ok, nil}
   end
 
+  @impl true
   def handle_info(:get_updates, _last_run_at) do
     get_updates()
     Process.send_after(self(), :get_updates, @update_interval)
@@ -53,7 +54,7 @@ defmodule Sue.Mailbox.IMessage do
 
   # === OUTBOX ===
   defp send_response_text(%Message{chat: %Chat{is_direct: true}} = msg, rsp) do
-    {_platform, account_id} = msg.account.platform_id
+    {_platform, account_id} = msg.paccount.platform_id
 
     args = [
       Path.join(@applescript_dir, "SendTextSingleBuddy.scpt"),
@@ -81,7 +82,7 @@ defmodule Sue.Mailbox.IMessage do
   defp send_response_attachments(_msg, []), do: :ok
 
   defp send_response_attachments(%Message{chat: %Chat{is_direct: true}} = msg, [att | atts]) do
-    {_platform, account_id} = msg.account.platform_id
+    {_platform, account_id} = msg.paccount.platform_id
 
     args = [
       Path.join(@applescript_dir, "SendImageSingleBuddy.scpt"),

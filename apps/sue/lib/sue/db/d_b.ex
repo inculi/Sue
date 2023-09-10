@@ -44,10 +44,10 @@ defmodule Sue.DB do
     account_id =
       case Subaru.traverse_one(Schema.ecoll_sue_user_by_platformaccount(), :outbound, paccount_id) do
         {:ok, :dne} ->
-          _account_id = Subaru.insert!(%Account{}, Account.collection())
+          _account_id = Subaru.insert!(Account.doc(%Account{}), Account.collection())
 
         {:ok, account_doc} ->
-          account_doc._id
+          account_doc["_id"]
       end
 
     {:ok, _} =

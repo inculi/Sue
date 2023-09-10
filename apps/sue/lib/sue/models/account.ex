@@ -31,9 +31,9 @@ defmodule Sue.Models.Account do
   @spec from_doc(Map.t()) :: t
   def from_doc(doc) do
     %Account{
-      name: doc.name,
-      handle: doc.handle,
-      id: doc._id
+      name: doc["name"],
+      handle: doc["handle"],
+      id: doc["_id"]
     }
   end
 
@@ -42,6 +42,6 @@ defmodule Sue.Models.Account do
 
   @impl Subaru.Vertex
   def doc(a) do
-    %{name: a.name, handle: a.handle, id: a.id}
+    Sue.Utils.struct_to_map(a)
   end
 end

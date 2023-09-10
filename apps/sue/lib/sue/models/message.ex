@@ -5,11 +5,12 @@ defmodule Sue.Models.Message do
   alias Sue.Models.{Account, Attachment, Chat, Platform, PlatformAccount}
   alias Sue.DB
 
-  @enforce_keys [:platform, :id, :chat, :account, :body, :is_ignorable]
+  @enforce_keys [:platform, :id, :paccount, :chat, :account, :body, :is_ignorable]
   defstruct [
     :platform,
     :id,
     #
+    :paccount,
     :chat,
     :account,
     #
@@ -30,6 +31,7 @@ defmodule Sue.Models.Message do
           platform: Platform.t(),
           id: bitstring() | integer(),
           ###
+          paccount: PlatformAccount.t(),
           chat: Chat.t(),
           account: Account.t() | nil,
           ###
@@ -77,6 +79,7 @@ defmodule Sue.Models.Message do
       platform: :imessage,
       id: message_id,
       #
+      paccount: paccount,
       chat: chat,
       account: account,
       #
@@ -119,6 +122,7 @@ defmodule Sue.Models.Message do
       platform: :telegram,
       id: msg.chat.id,
       #
+      paccount: paccount,
       chat: chat,
       account: account,
       #
@@ -163,6 +167,7 @@ defmodule Sue.Models.Message do
       platform: :discord,
       id: msg.id,
       #
+      paccount: paccount,
       chat: chat,
       account: account,
       #
@@ -195,6 +200,7 @@ defmodule Sue.Models.Message do
       platform: :debug,
       id: Sue.Utils.random_string(),
       #
+      paccount: paccount,
       chat: chat,
       account: account,
       #
