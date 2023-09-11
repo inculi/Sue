@@ -37,7 +37,6 @@ defmodule Desu.MixProject do
   defp deps do
     [
       {:phoenix_pubsub, "~> 2.1"},
-      {:swoosh, "~> 1.3"},
       {:finch, "~> 0.13"}
     ]
   end

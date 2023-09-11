@@ -11,6 +11,8 @@ defmodule Subaru.DB do
 
   @impl true
   def init([database_name]) when is_bitstring(database_name) do
+    Logger.info("[Subaru.DB] Opening database: #{database_name}")
+
     options = [
       username: Application.fetch_env!(:arangox, :username),
       password: Application.fetch_env!(:arangox, :password),

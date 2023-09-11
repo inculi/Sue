@@ -4,7 +4,7 @@ defmodule Sue.DB do
   require Logger
 
   alias Sue.DB.Schema
-  alias Sue.Models.{Chat, Defn, Poll, Account, Message, PlatformAccount}
+  alias Sue.Models.{Chat, Defn, Poll, Account, PlatformAccount}
 
   import Subaru, only: [is_dbid: 1]
 
