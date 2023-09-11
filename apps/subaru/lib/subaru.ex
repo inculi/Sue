@@ -129,12 +129,6 @@ defmodule Subaru do
     exists?(edge_collection, expr)
   end
 
-  defp core_traverse(ecoll, direction, startvert, min, max) do
-    Query.new()
-    |> Query.traverse(ecoll, direction, startvert, min, max)
-    |> Query.exec()
-  end
-
   # GRAPH TRAVERSAL
 
   # ===============

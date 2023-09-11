@@ -312,8 +312,6 @@ defmodule Subaru.Query do
   end
 
   defp gen({:traverse, ecolls, direction, startvert, min, max}, query) do
-    # ecoll_bindvars = Enum.map(ecolls, fn ec -> "@" <> generate_bindvar(ec) end)
-    # ecoll_bindvar = "@" <> generate_bindvar(ecoll)
     startvert_bindvar_id = generate_bindvar(startvert)
 
     stm_min_max =
@@ -441,8 +439,6 @@ defmodule Subaru.Query do
 
     "(#{p_red} #{op} #{q_red})"
   end
-
-  # IS_SAME_COLLECTION("sue_defns", v)
 
   @spec push(Query.t(), any()) :: Query.t()
   defp push(query, item) do
