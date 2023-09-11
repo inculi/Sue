@@ -25,7 +25,7 @@ defmodule DBTest do
     {:ok, defn_id2} = DB.add_defn(d, a.id, c.id)
     [defn] = DB.get_defns_by_user(a.id)
 
-    {:ok, defn_searched} = DB.find_defn(a.id, c.id, "megumin")
+    {:ok, defn_searched} = DB.find_defn(a.id, c.is_direct, "megumin")
 
     assert defn_id1 == defn_id2
     assert defn_id1 == defn.id
@@ -56,15 +56,16 @@ defmodule DBTest do
     {:ok, d_a2_id} = DB.add_defn(d_a2, a2.id, c_a1a2.id)
 
     # confirm we can find these defns the normal way
-    {:ok, _} = DB.find_defn(a1.id, c_a1.id, "megumin")
-    {:ok, _} = DB.find_defn(a2.id, c_a1a2.id, "aqua")
+    {:ok, _} = DB.find_defn(a1.id, true, "megumin")
+    {:ok, _} = DB.find_defn(a2.id, false, "aqua")
 
     # confirm we can also find them by their chat
-    [%Defn{id: d_a1_id}] = DB.get_defns_by_chat(c_a1.id)
-    [%Defn{id: d_a2_id}] = DB.get_defns_by_chat(c_a1a2.id)
+    [%Defn{id: ^d_a1_id}] = DB.get_defns_by_chat(c_a1.id)
+    [%Defn{id: ^d_a2_id}] = DB.get_defns_by_chat(c_a1a2.id)
 
     # TODO: FIX: this currently fails. hmm.
-    {:ok, _} = DB.find_defn(a2.id, c_a1a2.id, "megumin")
+    # a2 is sue_users/173417
+    {:ok, _} = DB.find_defn(a2.id, c_a1a2.is_direct, "megumin")
   end
 
   test "users" do
@@ -115,8 +116,8 @@ defmodule DBTest do
 
     p = Poll.new(c, "Best movie?", ["TRON Legacy", "Wild Tales", "Whiplash"], :standard)
 
-    {:ok, poll_id} = DB.add_poll(p, c.id)
-    {:ok, new_poll} = DB.add_poll_vote(c, a, 0)
+    {:ok, _poll_id} = DB.add_poll(p, c.id)
+    {:ok, _new_poll} = DB.add_poll_vote(c, a, 0)
 
     assert true
   end

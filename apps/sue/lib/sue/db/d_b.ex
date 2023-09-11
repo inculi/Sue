@@ -42,11 +42,17 @@ defmodule Sue.DB do
       when not is_nil(paccount_id) do
     # Find Sue Account for this Platform Account, if not exist we'll create later.
     account_id =
-      case Subaru.traverse_one(Schema.ecoll_sue_user_by_platformaccount(), :outbound, paccount_id) do
-        {:ok, :dne} ->
+      case Subaru.traverse_v(
+             [Schema.ecoll_sue_user_by_platformaccount()],
+             :outbound,
+             paccount_id,
+             1,
+             1
+           ) do
+        {:ok, []} ->
           _account_id = Subaru.insert!(Account.doc(%Account{}), Account.collection())
 
-        {:ok, account_doc} ->
+        {:ok, [account_doc]} ->
           account_doc["_id"]
       end
 
@@ -87,53 +93,99 @@ defmodule Sue.DB do
   end
 
   @doc """
-  Search definitions by user.
-  """
-  @spec get_defns_by_user(Subaru.dbid()) :: [Defn.t()]
-  def get_defns_by_user(account_id) when is_dbid(account_id) do
-    # only search a depth of one to get adjacent definitions.
-    Subaru.traverse!(Schema.ecoll_sue_defn_by_user(), :outbound, account_id, 1, 1)
-    |> Enum.map(&Defn.from_doc/1)
-  end
-
-  @doc """
-  Search definitions by chat.
-  """
-  @spec get_defns_by_chat(Subaru.dbid()) :: [Defn.t()]
-  def get_defns_by_chat(chat_id) when is_dbid(chat_id) do
-    # only search a depth of one to get adjacent definitions.
-    Subaru.traverse!(Schema.ecoll_sue_defn_by_chat(), :outbound, chat_id, 1, 1)
-    |> Enum.map(&Defn.from_doc/1)
-  end
-
-  @doc """
   Important: There are multiple possible algorithms we can use to resolve which
     definition a user is looking for when they call for it. Most of the time,
     these definitions represent inside jokes for a user group. Thus, it is
     useful for defns to be group (chat) writable.
 
-  For now, the logic is this:
-    If a user is chatting 1-1 with Sue: return the user's personal value.
-    If a user is chatting in a group: return the last modified v for that k
-      owned by any user in the chat group.
+  The search logic is as follows:
+    1. If the user is in 1-1 chat with Sue, prefer their personal definition.
+    2. Otherwise, retrieve the latest modified defn by any user of the chat.
+
+  # TODO: Make it configurable by user/chat scope, and add another step where
+          we search preferring definition made *in* that chat.
   """
-  @spec find_defn(Subaru.dbid(), Subaru.dbid(), bitstring()) :: {:ok, Defn.t()} | {:error, :dne}
-  def find_defn(account_id, chat_id, varname)
-      when is_dbid(account_id) and is_dbid(chat_id) and is_bitstring(varname) do
-    # TODO: add an option to these methods that allows for specifying K
-    pass1 = get_defns_by_user(account_id)
-    pass2 = get_defns_by_chat(chat_id)
+  @spec find_defn(Subaru.dbid(), boolean(), bitstring()) :: {:ok, Defn.t()} | {:error, :dne}
+  def find_defn(account_id, chat_is_direct, varname)
 
-    hits =
-      (pass1 ++ pass2)
-      |> Enum.filter(fn d -> d.var == varname end)
-      |> Enum.uniq_by(fn d -> d.id end)
-      |> Enum.sort_by(fn d -> d.date_modified end, :desc)
+  def find_defn(account_id, false, varname) do
+    {:ok, hits} = find_defn_by_friends(account_id, varname)
 
-    case hits do
-      [] -> {:error, :dne}
-      [best | _others] -> {:ok, best}
+    case helper_defndocs(hits) do
+      {:ok, [defn | _]} -> {:ok, defn}
+      otherwise -> otherwise
     end
+  end
+
+  def find_defn(account_id, true, varname) do
+    # First attempt to get the user's personal definition
+    case find_defn_by_user(account_id, varname) do
+      {:ok, [_hit | _] = hits} ->
+        {:ok, [defn | _]} = helper_defndocs(hits)
+        {:ok, defn}
+
+      # Otherwise, retrieve the latest modified defn by any user of the chat.
+      _ ->
+        find_defn(account_id, false, varname)
+    end
+  end
+
+  @doc """
+  Find definition objects made by a user.
+  """
+  def find_defn_by_user(account_id, varname) do
+    Subaru.traverse_v(
+      [Schema.ecoll_sue_defn_by_user()],
+      :outbound,
+      account_id,
+      1,
+      1,
+      %{},
+      {:==, "v.var", varname}
+    )
+  end
+
+  def find_defn_by_friends(account_id, varname) do
+    Subaru.traverse_v(
+      [Schema.ecoll_sue_user_in_chat(), Schema.ecoll_sue_defn_by_user()],
+      :any,
+      account_id,
+      1,
+      3,
+      %{"order" => "bfs", "uniqueVertices" => "global"},
+      {:and, {:is_same_collection, Defn.collection(), :v}, {:==, "v.var", varname}}
+    )
+  end
+
+  @spec get_defns_by_chat(Subaru.dbid()) :: [Defn.t()]
+  def get_defns_by_user(account_id) do
+    with {:ok, hits} <-
+           Subaru.traverse_v([Schema.ecoll_sue_defn_by_user()], :outbound, account_id, 1, 1),
+         {:ok, defns} <- helper_defndocs(hits) do
+      defns
+    else
+      _ -> []
+    end
+  end
+
+  def get_defns_by_chat(chat_id) do
+    with {:ok, hits} <-
+           Subaru.traverse_v([Schema.ecoll_sue_defn_by_chat()], :outbound, chat_id, 1, 1),
+         {:ok, defns} <- helper_defndocs(hits) do
+      defns
+    else
+      _ -> []
+    end
+  end
+
+  @spec helper_defndocs([map()]) :: {:ok, [Defn.t(), ...]} | {:error, :dne}
+  defp helper_defndocs([]), do: {:error, :dne}
+
+  defp helper_defndocs([defndoc | _] = defndocs) when is_map(defndoc) do
+    {:ok,
+     defndocs
+     |> Enum.map(&Defn.from_doc/1)
+     |> Enum.sort_by(fn d -> d.date_modified end, :desc)}
   end
 
   # ===========
@@ -172,37 +224,5 @@ defmodule Sue.DB do
       )
 
     {:ok, Poll.from_doc(newpoll)}
-  end
-
-  def testswag() do
-    import Sue.Mock
-
-    {_, a1} = mock_paccount_account(100)
-    {_, a2} = mock_paccount_account(101)
-
-    # this is a direct chat that a1 has with Sue
-    c_a1 = mock_chat(1, true)
-    add_user_chat_edge(a1, c_a1)
-
-    # this is a group chat that a1 and a2 are in.
-    c_a1a2 = mock_chat(2, false)
-    add_user_chat_edge(a1, c_a1a2)
-    add_user_chat_edge(a2, c_a1a2)
-
-    # a1 creates a new definition in his personal chat.
-    d_a1 = Defn.new("megumin", "acute", :text)
-    {:ok, d_a1_id} = add_defn(d_a1, a1.id, c_a1.id)
-
-    # a2 creates a new definition in the shared chat.
-    d_a2 = Defn.new("aqua", "baqua", :text)
-    {:ok, d_a2_id} = add_defn(d_a2, a2.id, c_a1a2.id)
-
-    # confirm we can find these defns the normal way
-    {:ok, _} = find_defn(a1.id, c_a1.id, "megumin")
-    {:ok, _} = find_defn(a2.id, c_a1a2.id, "aqua")
-
-    # confirm we can also find them by their chat
-    [%Defn{id: d_a1_id}] = get_defns_by_chat(c_a1.id)
-    [%Defn{id: d_a2_id}] = get_defns_by_chat(c_a1a2.id)
   end
 end

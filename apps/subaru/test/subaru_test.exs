@@ -2,8 +2,6 @@ defmodule SubaruTest do
   use ExUnit.Case
   doctest Subaru
 
-  alias Subaru.Query
-
   test "create and delete collections" do
     {:ok, _} = Subaru.DB.create_collection("mycollection", :doc)
     {:ok, _} = Subaru.DB.remove_collection("mycollection")
@@ -69,7 +67,7 @@ defmodule SubaruTest do
     Subaru.insert_edge(roa, nijisanji, "vtuber_talent_agency_contracts")
 
     # confirm we can find what we added
-    {:ok, verts} = Subaru.traverse("vtuber_talent_agency_contracts", :any, hololive)
+    {:ok, verts} = Subaru.traverse_v(["vtuber_talent_agency_contracts"], :any, hololive)
     assert Enum.any?(verts, fn x -> x["_id"] == ame end)
     assert Enum.any?(verts, fn x -> x["_id"] == gura end)
 

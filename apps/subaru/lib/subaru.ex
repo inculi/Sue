@@ -136,27 +136,34 @@ defmodule Subaru do
   end
 
   # GRAPH TRAVERSAL
+
   # ===============
-  @spec traverse(
-          bitstring(),
-          :outbound | :inbound | :any,
+  @spec traverse_v(
+          [bitstring(), ...],
+          Query.edge_direction(),
           dbid(),
           integer() | nil,
-          integer() | nil
-        ) :: {:ok, [map() | dbid()]} | {:error, any()}
-  def traverse(ecoll, direction, startvert, min \\ nil, max \\ nil) do
-    core_traverse(ecoll, direction, startvert, min, max)
+          integer() | nil,
+          map(),
+          Query.boolean_expression()
+        ) :: {:ok, [map()]} | {:error, any()}
+  def traverse_v(
+        [edge_collection | _] = ecolls,
+        direction,
+        startvert,
+        min \\ nil,
+        max \\ nil,
+        options \\ %{},
+        filter \\ nil
+      )
+      when is_bitstring(edge_collection) do
+    Query.new()
+    |> Query.traverse_for_v(ecolls, direction, startvert, min, max)
+    |> Query.options(options)
+    |> Query.filter(filter)
+    |> Query.return("v")
+    |> Query.exec()
     |> result()
-  end
-
-  def traverse!(ecoll, direction, startvert, min \\ nil, max \\ nil) do
-    {:ok, res} = traverse(ecoll, direction, startvert, min, max)
-    res
-  end
-
-  def traverse_one(ecoll, direction, startvert, min \\ nil, max \\ nil) do
-    core_traverse(ecoll, direction, startvert, min, max)
-    |> result_one()
   end
 
   # RESULT OUTPUT HELPERS
