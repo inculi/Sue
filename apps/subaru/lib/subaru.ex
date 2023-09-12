@@ -76,6 +76,9 @@ defmodule Subaru do
     |> result_id()
   end
 
+  @doc """
+  Remove all documents from a collection.
+  """
   @spec remove_all(bitstring()) :: Subaru.DB.res()
   def remove_all(collection) do
     Query.new()
@@ -85,6 +88,9 @@ defmodule Subaru do
     |> result()
   end
 
+  @doc """
+  Return all documents in a collection.
+  """
   def all(collection) do
     Query.new()
     |> Query.for(:x, collection)

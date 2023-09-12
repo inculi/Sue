@@ -1,6 +1,5 @@
 defmodule Sue.DB.Schema do
-  alias Sue.Models.Poll
-  alias Sue.Models.{Account, Chat, Defn, PlatformAccount}
+  alias Sue.Models.{Account, Chat, Defn, PlatformAccount, Poll}
 
   @ecoll_sue_user_in_chat "sue_user_in_chat"
   @ecoll_sue_defn_by_user "sue_defn_by_user"

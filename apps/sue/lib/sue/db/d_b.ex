@@ -4,6 +4,7 @@ defmodule Sue.DB do
   require Logger
 
   alias Sue.DB.Schema
+  alias Sue.DB.Migrations
   alias Sue.Models.{Chat, Defn, Poll, Account, PlatformAccount}
 
   import Subaru, only: [is_dbid: 1]
@@ -15,6 +16,7 @@ defmodule Sue.DB do
   @impl true
   def init(_args) do
     init_schema()
+    init_migrations()
 
     {:ok, []}
   end
@@ -28,6 +30,10 @@ defmodule Sue.DB do
     for ecolname <- Schema.edge_collections() do
       Subaru.DB.create_collection(ecolname, :edge)
     end
+  end
+
+  defp init_migrations() do
+    Subaru.DB.create_collection(Migrations.collection(), :doc)
   end
 
   # TODO: Clean this up. Ideally we should have figured out if we want an edge
