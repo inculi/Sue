@@ -48,7 +48,8 @@ defmodule Sue.MixProject do
       {:castore, "~> 0.1.0"},
       {:mint, "~> 1.1"},
       {:exqlite, "~> 0.13"},
-      {:openai, "~> 0.3.1"},
+      {:openai, "~> 0.5.2"},
+      {:replicate, "~> 1.1.0"},
       # discord
       {:nostrum, git: "https://github.com/desudigital/nostrum"},
       {:cowlib, "~> 2.11", [env: :prod, hex: "remedy_cowlib", override: true, repo: "hexpm"]},
