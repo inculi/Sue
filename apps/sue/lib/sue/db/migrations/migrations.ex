@@ -13,7 +13,7 @@ defmodule Sue.DB.Migrations do
   def collection(), do: @collection
 
   @spec set_last_recorded_version(tuple()) :: {:ok, Subaru.dbid()}
-  def set_last_recorded_version(vsn) when is_tuple(vsn) do
+  defp set_last_recorded_version(vsn) when is_tuple(vsn) do
     Subaru.insert(
       %{
         "_key" => "0",
@@ -70,14 +70,14 @@ defmodule Sue.DB.Migrations do
     |> vsn_to_tuple()
   end
 
-  def vsn_to_tuple(vsn) when is_bitstring(vsn) do
+  defp vsn_to_tuple(vsn) when is_bitstring(vsn) do
     vsn
     |> String.split(".")
     |> Enum.map(&String.to_integer/1)
     |> List.to_tuple()
   end
 
-  def version_tuple_to_str({v, s, n}), do: "#{v}.#{s}.#{n}"
+  defp version_tuple_to_str({v, s, n}), do: "#{v}.#{s}.#{n}"
 
   @spec list_migrations() :: [bitstring()]
   def list_migrations() do
