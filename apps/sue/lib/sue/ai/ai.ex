@@ -29,7 +29,11 @@ defmodule Sue.AI do
     end
   end
 
-  def gen_image(prompt) do
+  @doc """
+  Huge thanks to https://github.com/cbh123/emoji for this.
+  """
+  @spec gen_image_emoji(bitstring()) :: {:ok | :error, bitstring()}
+  def gen_image_emoji(prompt) do
     model = Replicate.Models.get!("fofr/sdxl-emoji")
 
     version =
@@ -46,9 +50,37 @@ defmodule Sue.AI do
         num_inference_steps: 30
       })
 
-    {:ok, %Replicate.Predictions.Prediction{output: [url]}} =
-      Replicate.Predictions.wait(prediction)
+    Replicate.Predictions.wait(prediction)
+    |> process_image_output()
+  end
 
-    url
+  @spec gen_image_sd(bitstring()) :: {:ok | :error, bitstring()}
+  def gen_image_sd(prompt) do
+    model = Replicate.Models.get!("stability-ai/sdxl")
+
+    version =
+      Replicate.Models.get_version!(
+        model,
+        "8beff3369e81422112d93b89ca01426147de542cd4684c244b673b105188fe5f"
+      )
+
+    {:ok, prediction} =
+      Replicate.Predictions.create(version, %{
+        prompt: prompt,
+        width: 768,
+        height: 768,
+        num_inference_steps: 30
+      })
+
+    Replicate.Predictions.wait(prediction)
+    |> process_image_output()
+  end
+
+  defp process_image_output({:ok, %Replicate.Predictions.Prediction{error: nil, output: [url]}}) do
+    {:ok, url}
+  end
+
+  defp process_image_output({:ok, %Replicate.Predictions.Prediction{error: error_msg}}) do
+    {:error, error_msg}
   end
 end
