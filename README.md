@@ -30,6 +30,7 @@ The following commands are currently supported:
 !cringe
 !define
 !doog
+!emoji
 !flip
 !fortune
 !gpt
@@ -40,6 +41,7 @@ The following commands are currently supported:
 !qt
 !random
 !rub
+!sd
 !uptime
 !vote
 ```
@@ -97,7 +99,8 @@ config :openai,
   api_key: "myapikey",
   http_options: [recv_timeout: 40_000]
 
-
+config :replicate,
+  replicate_api_token: "myapikey"
 ```
 10. Install Elixir if you don't already have it. I recommend using [asdf](https://asdf-vm.com/) to install.
 
@@ -140,21 +143,21 @@ If your command takes args, these are found in the Message's `args` field. Anoth
 
 ```elixir
 @doc """
-  Returns a random object in your space-delimited argument.
-  Usage: !choose up down left right
-  """
-  def c_choose(%Message{args: ""}) do
-    %Response{body: "Please provide a list of things to select. See !help choose"}
-  end
+Returns a random object in your space-delimited argument.
+Usage: !choose up down left right
+"""
+def c_choose(%Message{args: ""}) do
+  %Response{body: "Please provide a list of things to select. See !help choose"}
+end
 
-  def c_choose(%Message{args: args}) do
-    %Response{
-      body:
-        args
-        |> String.split(" ")
-        |> Enum.random()
-    }
-  end
+def c_choose(%Message{args: args}) do
+  %Response{
+    body:
+      args
+      |> String.split(" ")
+      |> Enum.random()
+  }
+end
 ```
 
 Once you have modified your module, import it and place it in the `@modules` list at the top of `sue.ex`.
