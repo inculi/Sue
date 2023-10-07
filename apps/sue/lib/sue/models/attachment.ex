@@ -77,6 +77,13 @@ defmodule Sue.Models.Attachment do
     end
   end
 
+  @spec from_url(bitstring()) :: t()
+  def from_url(url) do
+    path = dl_url_to_path(url)
+
+    %Attachment{resolved: true, filename: path}
+  end
+
   @spec dl_url_to_path(binary, binary) :: bitstring()
   def dl_url_to_path(url, filename \\ Sue.Utils.unique_string()) do
     file_path = Path.join(@tmp_path, filename <> Path.extname(url))
