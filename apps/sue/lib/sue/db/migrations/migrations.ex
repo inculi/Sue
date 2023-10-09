@@ -7,6 +7,7 @@ defmodule Sue.DB.Migrations do
     make the proper upgrades based on what version you were previously running
     before doing your git pull.
   """
+  require Logger
 
   @collection "sue_db_migrations"
 
@@ -19,7 +20,8 @@ defmodule Sue.DB.Migrations do
         "_key" => "0",
         "vsn" => version_tuple_to_str(vsn)
       },
-      @collection
+      @collection,
+      %{"overwriteMode" => "update"}
     )
   end
 
@@ -50,6 +52,7 @@ defmodule Sue.DB.Migrations do
   defp run_migrations(migrations) do
     migrations
     |> Enum.map(fn {module, _, _} ->
+      Logger.info("[Sue.DB.Migrations] Running migration: #{module}")
       apply(module, :run, [])
     end)
   end

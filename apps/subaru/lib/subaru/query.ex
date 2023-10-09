@@ -228,7 +228,7 @@ defmodule Subaru.Query do
   defp gen({:insert, doc, collection}, query) do
     doc_bindvar = generate_bindvar(doc)
     coll_bindvar = "@" <> generate_bindvar(collection)
-    statement = "INSERT #{doc_bindvar} INTO #{coll_bindvar} RETURN NEW._id"
+    statement = "INSERT #{doc_bindvar} INTO #{coll_bindvar}"
 
     query
     |> add_statement(statement)

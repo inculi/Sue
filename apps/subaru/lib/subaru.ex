@@ -46,9 +46,11 @@ defmodule Subaru do
   end
 
   @spec insert(map(), bitstring()) :: res_id()
-  def insert(doc, collection) when is_map(doc) do
+  def insert(doc, collection, options \\ %{}) when is_map(doc) do
     Query.new()
     |> Query.insert(doc, collection)
+    |> Query.options(options)
+    |> Query.return("NEW._id")
     |> Query.exec()
     |> result_id()
   end
@@ -62,6 +64,7 @@ defmodule Subaru do
   def insert_edge(from_id, to_id, edge_collection) do
     Query.new()
     |> Query.insert(%{_from: from_id, _to: to_id}, edge_collection)
+    |> Query.return("NEW._id")
     |> Query.exec()
     |> result_id()
   end
@@ -133,6 +136,13 @@ defmodule Subaru do
   def exists_edge?(edge_collection, from_id, to_id) do
     expr = {:and, {:==, "x._from", from_id}, {:==, "x._to", to_id}}
     exists?(edge_collection, expr)
+  end
+
+  @doc """
+  Returns true if a collection is empty.
+  """
+  def empty?(collection) do
+    not exists?(collection, {:>, "x._id", 0})
   end
 
   # GRAPH TRAVERSAL
