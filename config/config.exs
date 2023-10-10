@@ -69,7 +69,7 @@ config :phoenix, :json_library, Jason
 config :sue,
   # options include :discord, :imessage, :telegram - :debug is just for testing
   # platforms: [:debug, :discord, :imessage, :telegram],
-  platforms: [:debug, :telegram],
+  platforms: [:debug, :discord, :imessage, :telegram],
   chat_db_path: Path.join(System.user_home(), "Library/Messages/chat.db")
 
 config :subaru,
