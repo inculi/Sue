@@ -18,8 +18,9 @@ defmodule Sue.Utils do
   end
 
   def unique_string() do
-    ("Reference<" <> inspect(make_ref()))
-    |> String.trim_trailing(">")
+    :os.timestamp()
+    |> :erlang.phash2()
+    |> Integer.to_string()
   end
 
   def tmp_file_name(suffix) when is_bitstring(suffix) do

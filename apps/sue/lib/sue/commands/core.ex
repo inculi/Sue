@@ -17,6 +17,11 @@ defmodule Sue.Commands.Core do
     %Response{body: m |> inspect()}
   end
 
+  def c_h_sleep(_m) do
+    Process.sleep(5000)
+    %Response{body: "zzz"}
+  end
+
   def help(%Message{args: ""}, commands) do
     # Hide commands that start with h_. I'll use these for internal debugging.
     %Response{

@@ -17,6 +17,14 @@ defmodule Sue.Commands.Images do
   end
 
   @doc """
+  Literally 1984
+  Usage: !1984
+  """
+  def c_1984(_msg) do
+    %Attachment{filename: Path.join(@media_path, "1984.jpg")}
+  end
+
+  @doc """
   Snap!
   """
   def c_cringe(_msg), do: random_image_from_dir("cringe/")

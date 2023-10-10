@@ -38,13 +38,7 @@ defmodule Sue do
   end
 
   def handle_cast({:process, msg}, state) do
-    {uSecs, :ok} =
-      :timer.tc(fn ->
-        rsp = execute_command(state.commands, msg)
-        send_response(msg, rsp)
-      end)
-
-    Logger.info("[Sue] Processed msg in #{uSecs / 1_000_000}s")
+    spawn(__MODULE__, :execute_in_background, [state.commands, msg])
     {:noreply, state}
   end
 
@@ -74,20 +68,18 @@ defmodule Sue do
 
   @spec process_messages([Message.t()]) :: :ok
   def process_messages(msgs) do
-    for msg <- msgs do
-      Task.start(fn -> process_message(msg) end)
-    end
-
-    :ok
+    Enum.each(msgs, fn msg ->
+      process_message(msg)
+    end)
   end
 
   @spec debug_blocking_process_message(Message.t()) :: Response.t()
   def debug_blocking_process_message(msg), do: execute_command(get_commands(), msg)
 
   @spec process_message(Message.t()) :: :ok
-  defp process_message(%Message{is_ignorable: true}), do: :ok
+  def process_message(%Message{is_ignorable: true}), do: :ok
 
-  defp process_message(msg) do
+  def process_message(msg) do
     Logger.info("[Sue] Processing: #{inspect(msg)}")
     GenServer.cast(__MODULE__, {:process, msg})
   end
@@ -121,6 +113,18 @@ defmodule Sue do
     |> Enum.reduce(%{}, fn {module, fname, doc}, acc ->
       Map.put(acc, fname, {module, fname, doc})
     end)
+  end
+
+  def execute_in_background(commands, msg) do
+    {uSecs, :ok} =
+      :timer.tc(fn ->
+        rsp = execute_command(commands, msg)
+        send_response(msg, rsp)
+      end)
+
+    Logger.info("[Sue] Processed msg in #{uSecs / 1_000_000}s")
+
+    :ok
   end
 
   @spec execute_command(map(), Message.t()) :: Response.t()

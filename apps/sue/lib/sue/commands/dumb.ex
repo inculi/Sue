@@ -11,10 +11,9 @@ defmodule Sue.Commands.Dumb do
     dtr = Integer.mod(3 - weekday, 7)
     ms = calc_microseconds(dtr, now)
 
-    {:ok, relative} =
-      now
-      |> Timex.shift(microseconds: ms)
-      |> Timex.format("{relative}", :relative)
+    relative =
+      Timex.Duration.from_microseconds(ms)
+      |> Timex.Format.Duration.Formatter.format(:humanized)
 
     %Response{body: rub_response(ms, relative)}
   end
