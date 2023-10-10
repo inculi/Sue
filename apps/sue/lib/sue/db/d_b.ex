@@ -4,7 +4,8 @@ defmodule Sue.DB do
   require Logger
 
   alias Sue.DB.Schema
-  alias Sue.Models.{Chat, Defn, Poll, Account, Message}
+  alias Sue.DB.Migrations
+  alias Sue.Models.{Chat, Defn, Poll, Account, PlatformAccount}
 
   import Subaru, only: [is_dbid: 1]
 
@@ -15,6 +16,7 @@ defmodule Sue.DB do
   @impl true
   def init(_args) do
     init_schema()
+    init_migrations()
 
     {:ok, []}
   end
@@ -30,12 +32,50 @@ defmodule Sue.DB do
     end
   end
 
+  defp init_migrations() do
+    Subaru.DB.create_collection(Migrations.collection(), :doc)
+    Migrations.run_new_migrations()
+  end
+
+  # TODO: Clean this up. Ideally we should have figured out if we want an edge
+  #   or an account ID across all these sorts of calls, and only do that. I also
+  #   don't like the naming.
   @doc """
-  Mark users as being present in a chat.
+  Try to find Sue Account for Platform Account. If one does not exist, create it.
+  Then establish (upsert) an edge between the two and return the Account id.
   """
-  @spec add_user_chat_edge(Subaru.dbid(), Subaru.dbid()) :: Subaru.res_id()
-  def add_user_chat_edge(user_id, chat_id) do
-    Subaru.upsert_edge(user_id, chat_id, "sue_user_in_chat")
+  @spec link_paccount_to_resolved_user(PlatformAccount.t()) :: Subaru.dbid()
+  def link_paccount_to_resolved_user(%PlatformAccount{id: paccount_id})
+      when not is_nil(paccount_id) do
+    # Find Sue Account for this Platform Account, if not exist we'll create later.
+    account_id =
+      case Subaru.traverse_v(
+             [Schema.ecoll_sue_user_by_platformaccount()],
+             :outbound,
+             paccount_id,
+             1,
+             1
+           ) do
+        {:ok, []} ->
+          _account_id = Subaru.insert!(Account.doc(%Account{}), Account.collection())
+
+        {:ok, [account_doc]} ->
+          account_doc["_id"]
+      end
+
+    {:ok, _} =
+      Subaru.upsert_edge(paccount_id, account_id, Schema.ecoll_sue_user_by_platformaccount())
+
+    account_id
+  end
+
+  @doc """
+  Mark sue accounts as being present in a chat.
+  """
+  @spec add_user_chat_edge(Account.t(), Chat.t()) :: Subaru.res_id()
+  def add_user_chat_edge(%Account{id: account_id}, %Chat{id: chat_id})
+      when not is_nil(account_id) and not is_nil(chat_id) do
+    Subaru.upsert_edge(account_id, chat_id, Schema.ecoll_sue_user_in_chat())
   end
 
   # =================
@@ -53,30 +93,10 @@ defmodule Sue.DB do
     d_search = %{var: defn.var, val: defn.val, type: defn.type}
 
     {:ok, defn_id} = Subaru.upsert(d_search, defndoc, %{}, defncol)
-    {:ok, _} = Subaru.upsert_edge(account_id, defn_id, "sue_defn_by_user")
-    {:ok, _} = Subaru.upsert_edge(chat_id, defn_id, "sue_defn_by_chat")
+    {:ok, _} = Subaru.upsert_edge(account_id, defn_id, Schema.ecoll_sue_defn_by_user())
+    {:ok, _} = Subaru.upsert_edge(chat_id, defn_id, Schema.ecoll_sue_defn_by_chat())
 
     {:ok, defn_id}
-  end
-
-  @doc """
-  Search definitions by user.
-  """
-  @spec get_defns_by_user(Subaru.dbid()) :: [Defn.t()]
-  def get_defns_by_user(account_id) when is_dbid(account_id) do
-    # only search a depth of one to get adjacent definitions.
-    Subaru.traverse!("sue_defn_by_user", :outbound, account_id, 1, 1)
-    |> Enum.map(&Defn.from_doc/1)
-  end
-
-  @doc """
-  Search definitions by chat.
-  """
-  @spec get_defns_by_chat(Subaru.dbid()) :: [Defn.t()]
-  def get_defns_by_chat(chat_id) when is_dbid(chat_id) do
-    # only search a depth of one to get adjacent definitions.
-    Subaru.traverse!("sue_defn_by_chat", :outbound, chat_id, 1, 1)
-    |> Enum.map(&Defn.from_doc/1)
   end
 
   @doc """
@@ -85,28 +105,94 @@ defmodule Sue.DB do
     these definitions represent inside jokes for a user group. Thus, it is
     useful for defns to be group (chat) writable.
 
-  For now, the logic is this:
-    If a user is chatting 1-1 with Sue: return the user's personal value.
-    If a user is chatting in a group: return the last modified v for that k
-      owned by any user in the chat group.
+  The search logic is as follows:
+    1. If the user is in 1-1 chat with Sue, prefer their personal definition.
+    2. Otherwise, retrieve the latest modified defn by any user of the chat.
+
+  # TODO: Make it configurable by user/chat scope, and add another step where
+          we search preferring definition made *in* that chat.
   """
-  @spec find_defn(Subaru.dbid(), Subaru.dbid(), bitstring()) :: {:ok, Defn.t()} | {:error, :dne}
-  def find_defn(account_id, chat_id, varname)
-      when is_dbid(account_id) and is_dbid(chat_id) and is_bitstring(varname) do
-    # TODO: add an option to these methods that allows for specifying K
-    pass1 = get_defns_by_user(account_id)
-    pass2 = get_defns_by_chat(chat_id)
+  @spec find_defn(Subaru.dbid(), boolean(), bitstring()) :: {:ok, Defn.t()} | {:error, :dne}
+  def find_defn(account_id, chat_is_direct, varname)
 
-    hits =
-      (pass1 ++ pass2)
-      |> Enum.filter(fn d -> d.var == varname end)
-      |> Enum.uniq_by(fn d -> d.id end)
-      |> Enum.sort_by(fn d -> d.date_modified end, :desc)
+  def find_defn(account_id, false, varname) do
+    {:ok, hits} = find_defn_by_friends(account_id, varname)
 
-    case hits do
-      [] -> {:error, :dne}
-      [best | _others] -> {:ok, best}
+    case helper_defndocs(hits) do
+      {:ok, [defn | _]} -> {:ok, defn}
+      otherwise -> otherwise
     end
+  end
+
+  def find_defn(account_id, true, varname) do
+    # First attempt to get the user's personal definition
+    case find_defn_by_user(account_id, varname) do
+      {:ok, [_hit | _] = hits} ->
+        {:ok, [defn | _]} = helper_defndocs(hits)
+        {:ok, defn}
+
+      # Otherwise, retrieve the latest modified defn by any user of the chat.
+      _ ->
+        find_defn(account_id, false, varname)
+    end
+  end
+
+  @doc """
+  Find definition objects made by a user.
+  """
+  def find_defn_by_user(account_id, varname) do
+    Subaru.traverse_v(
+      [Schema.ecoll_sue_defn_by_user()],
+      :outbound,
+      account_id,
+      1,
+      1,
+      %{},
+      {:==, "v.var", varname}
+    )
+  end
+
+  def find_defn_by_friends(account_id, varname) do
+    Subaru.traverse_v(
+      [Schema.ecoll_sue_user_in_chat(), Schema.ecoll_sue_defn_by_user()],
+      :any,
+      account_id,
+      1,
+      3,
+      %{"order" => "bfs", "uniqueVertices" => "global"},
+      {:and, {:is_same_collection, Defn.collection(), :v}, {:==, "v.var", varname}}
+    )
+  end
+
+  @spec get_defns_by_chat(Subaru.dbid()) :: [Defn.t()]
+  def get_defns_by_user(account_id) do
+    with {:ok, hits} <-
+           Subaru.traverse_v([Schema.ecoll_sue_defn_by_user()], :outbound, account_id, 1, 1),
+         {:ok, defns} <- helper_defndocs(hits) do
+      defns
+    else
+      _ -> []
+    end
+  end
+
+  def get_defns_by_chat(chat_id) do
+    with {:ok, hits} <-
+           Subaru.traverse_v([Schema.ecoll_sue_defn_by_chat()], :outbound, chat_id, 1, 1),
+         {:ok, defns} <- helper_defndocs(hits) do
+      defns
+    else
+      _ -> []
+    end
+  end
+
+  @spec helper_defndocs([map()]) :: {:ok, [Defn.t(), ...]} | {:error, :dne}
+  defp helper_defndocs([]), do: {:error, :dne}
+
+  defp helper_defndocs([defndoc | _] = defndocs) when is_map(defndoc) do
+    {:ok,
+     defndocs
+     |> Enum.map(&Defn.from_doc/1)
+     |> Enum.sort_by(fn d -> d.date_modified end, :desc)}
   end
 
   # ===========
@@ -119,7 +205,7 @@ defmodule Sue.DB do
 
     d_search = %{chat_id: chat_id}
     {:ok, newpoll} = Subaru.upsert_return(d_search, polldoc, %{}, pollcol)
-    {:ok, _} = Subaru.upsert_edge(chat_id, newpoll["_id"], "sue_poll_by_chat")
+    {:ok, _} = Subaru.upsert_edge(chat_id, newpoll["_id"], Schema.ecoll_sue_poll_by_chat())
 
     {:ok, Poll.from_doc(newpoll)}
   end
@@ -145,63 +231,5 @@ defmodule Sue.DB do
       )
 
     {:ok, Poll.from_doc(newpoll)}
-  end
-
-  def import_mnesia_dump(edge_bin_file, defn_bin_file) do
-    {:ok, edge_bindata} = :file.read_file(edge_bin_file)
-    edges = :erlang.binary_to_term(edge_bindata)
-
-    {:ok, defn_bindata} = :file.read_file(defn_bin_file)
-    defns = :erlang.binary_to_term(defn_bindata)
-
-    # ({@edge_table, src_type, dst_type, src_id, dst_id, metadata})
-    groups = edges |> Enum.group_by(fn t -> Tuple.to_list(t) |> Enum.at(2) end)
-
-    # defn_ref -> defn
-    defn_map =
-      Enum.reduce(defns, %{}, fn {_, k, v}, acc ->
-        Map.put(acc, k, %{var: v.var, val: v.val, date: v.date})
-      end)
-
-    # [:account, :chat]
-    defn_by_account_or_chat =
-      groups[:defn] |> Enum.group_by(fn t -> Tuple.to_list(t) |> Enum.at(1) end)
-
-    # defn_id -> account_id
-    defn_to_account_map =
-      Enum.reduce(defn_by_account_or_chat[:account], %{}, fn {_, _, _, srcid, dstid, _}, acc ->
-        Map.put(acc, dstid, srcid)
-      end)
-
-    # defn_id -> {platform, chatid}
-    defn_to_chat_map =
-      Enum.reduce(defn_by_account_or_chat[:chat], %{}, fn {_, _, _, srcid, dstid, _}, acc ->
-        Map.put(acc, dstid, srcid)
-      end)
-
-    # account_ref -> {platform, id}
-    platform_account_edge_map =
-      Enum.reduce(groups[:platform_account], %{}, fn {_, _, _, srcid, dstid, _}, acc ->
-        Map.put(acc, srcid, dstid)
-      end)
-
-    defn_to_pa_map =
-      Enum.reduce(defn_to_account_map, %{}, fn {k, v}, acc ->
-        Map.put(acc, k, platform_account_edge_map[v])
-      end)
-
-    for {k, v} <- defn_map do
-      account_pi = defn_to_pa_map[k]
-      chat_pi = defn_to_chat_map[k]
-
-      account = %Account{platform_id: account_pi} |> Account.resolve()
-
-      chat =
-        %Chat{platform_id: chat_pi, is_direct: Message.helper_is_direct?(account_pi, chat_pi)}
-        |> Chat.resolve()
-
-      {:ok, _} = Defn.new(v.var, v.val, :text) |> add_defn(account.id, chat.id)
-      add_user_chat_edge(account.id, chat.id)
-    end
   end
 end

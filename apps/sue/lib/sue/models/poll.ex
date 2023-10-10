@@ -19,7 +19,7 @@ defmodule Sue.Models.Poll do
 
   alias __MODULE__
 
-  @spec new(Chat.t(), bitstring(), [bitstring(), ...], interface()) :: t()
+  @spec new(Chat.t(), bitstring(), [bitstring(), ...], interface()) :: t
   def new(chat, topic, options, interface) do
     %Poll{
       chat_id: chat.id,
@@ -30,7 +30,7 @@ defmodule Sue.Models.Poll do
     }
   end
 
-  @spec from_doc(map()) :: t()
+  @spec from_doc(map()) :: t
   def from_doc(doc) do
     %Poll{
       chat_id: doc["chat_id"],

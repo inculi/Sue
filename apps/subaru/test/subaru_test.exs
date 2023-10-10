@@ -52,11 +52,13 @@ defmodule SubaruTest do
 
     # create vtuber talents
     {:ok, gura} = Subaru.insert(%{name: "Gura", subscribers: 3_940_000}, "vtuber_talents")
+
     {:ok, ame} = Subaru.insert(%{name: "Ame", subscribers: 1_650_000}, "vtuber_talents")
     {:ok, roa} = Subaru.insert(%{name: "Roa", subscribers: 353_000}, "vtuber_talents")
 
     # create vtuber agencies
     {:ok, hololive} = Subaru.insert(%{name: "Hololive", country: "JP"}, "vtuber_agencies")
+
     {:ok, nijisanji} = Subaru.insert(%{name: "Nijisanji", country: "JP"}, "vtuber_agencies")
 
     # link talents to agencies
@@ -65,7 +67,7 @@ defmodule SubaruTest do
     Subaru.insert_edge(roa, nijisanji, "vtuber_talent_agency_contracts")
 
     # confirm we can find what we added
-    {:ok, verts} = Subaru.traverse("vtuber_talent_agency_contracts", :any, hololive)
+    {:ok, verts} = Subaru.traverse_v(["vtuber_talent_agency_contracts"], :any, hololive)
     assert Enum.any?(verts, fn x -> x["_id"] == ame end)
     assert Enum.any?(verts, fn x -> x["_id"] == gura end)
 

@@ -2,14 +2,15 @@ defmodule Sue.Models.Message do
   require Logger
 
   alias __MODULE__
-  alias Sue.Models.{Account, Attachment, Chat, Platform}
+  alias Sue.Models.{Account, Attachment, Chat, Platform, PlatformAccount}
   alias Sue.DB
 
-  @enforce_keys [:platform, :id, :chat, :account, :body, :is_ignorable]
+  @enforce_keys [:platform, :id, :paccount, :chat, :account, :body, :is_ignorable]
   defstruct [
     :platform,
     :id,
     #
+    :paccount,
     :chat,
     :account,
     #
@@ -30,6 +31,7 @@ defmodule Sue.Models.Message do
           platform: Platform.t(),
           id: bitstring() | integer(),
           ###
+          paccount: PlatformAccount.t(),
           chat: Chat.t(),
           account: Account.t() | nil,
           ###
@@ -45,7 +47,7 @@ defmodule Sue.Models.Message do
           metadata: map()
         }
 
-  @spec from_imessage(Keyword.t()) :: t()
+  @spec from_imessage(Keyword.t()) :: t
   def from_imessage(kw) do
     [
       id: handle_id,
@@ -60,6 +62,10 @@ defmodule Sue.Models.Message do
 
     from_me = from_me == 1
 
+    paccount =
+      %PlatformAccount{platform_id: {:imessage, handle_id}}
+      |> PlatformAccount.resolve()
+
     chat =
       %Chat{
         platform_id: {:imessage, chat_id || "direct;#{handle_id}"},
@@ -67,12 +73,13 @@ defmodule Sue.Models.Message do
       }
       |> Chat.resolve()
 
-    account = %Account{platform_id: {:imessage, handle_id}} |> Account.resolve()
+    account = Account.from_paccount(paccount)
 
     %Message{
       platform: :imessage,
       id: message_id,
       #
+      paccount: paccount,
       chat: chat,
       account: account,
       #
@@ -87,7 +94,7 @@ defmodule Sue.Models.Message do
     |> add_account_and_chat_to_graph()
   end
 
-  @spec from_telegram(Map.t()) :: t()
+  @spec from_telegram(Map.t()) :: t
   def from_telegram(%{msg: msg, context: context} = update) do
     {command, args, body} =
       case Map.get(update, :command) do
@@ -98,6 +105,10 @@ defmodule Sue.Models.Message do
     command =
       parse_command_potentially_with_botname_suffix(command, "@" <> context.bot_info.username)
 
+    paccount =
+      %PlatformAccount{platform_id: {:telegram, msg.from.id}}
+      |> PlatformAccount.resolve()
+
     chat =
       %Chat{
         platform_id: {:telegram, msg.chat.id},
@@ -105,12 +116,13 @@ defmodule Sue.Models.Message do
       }
       |> Chat.resolve()
 
-    account = %Account{platform_id: {:telegram, msg.from.id}} |> Account.resolve()
+    account = Account.from_paccount(paccount)
 
     %Message{
       platform: :telegram,
       id: msg.chat.id,
       #
+      paccount: paccount,
       chat: chat,
       account: account,
       #
@@ -134,6 +146,10 @@ defmodule Sue.Models.Message do
   end
 
   def from_discord(msg) do
+    paccount =
+      %PlatformAccount{platform_id: {:discord, msg.author.id}}
+      |> PlatformAccount.resolve()
+
     chat =
       %Chat{
         platform_id: {:discord, msg.guild_id || msg.author.id},
@@ -141,7 +157,7 @@ defmodule Sue.Models.Message do
       }
       |> Chat.resolve()
 
-    account = %Account{platform_id: {:discord, msg.author.id}} |> Account.resolve()
+    account = Account.from_paccount(paccount)
 
     {command, args, body} = command_args_from_body(:discord, msg.content)
 
@@ -151,6 +167,7 @@ defmodule Sue.Models.Message do
       platform: :discord,
       id: msg.id,
       #
+      paccount: paccount,
       chat: chat,
       account: account,
       #
@@ -169,16 +186,21 @@ defmodule Sue.Models.Message do
   end
 
   def from_debug(text) do
+    paccount =
+      %PlatformAccount{platform_id: {:debug, 0}}
+      |> PlatformAccount.resolve()
+
     chat =
       %Chat{platform_id: {:debug, 0}, is_direct: true}
       |> Chat.resolve()
 
-    account = %Account{platform_id: {:debug, 1}} |> Account.resolve()
+    account = Account.from_paccount(paccount)
 
     %Message{
       platform: :debug,
       id: Sue.Utils.random_string(),
       #
+      paccount: paccount,
       chat: chat,
       account: account,
       #
@@ -246,9 +268,9 @@ defmodule Sue.Models.Message do
     parse_command(msg, newbody)
   end
 
-  @spec add_account_and_chat_to_graph(t()) :: t()
+  @spec add_account_and_chat_to_graph(t()) :: t
   def add_account_and_chat_to_graph(%Message{account: a, chat: c} = msg) do
-    {:ok, _dbid} = DB.add_user_chat_edge(a.id, c.id)
+    {:ok, _dbid} = DB.add_user_chat_edge(a, c)
     msg
   end
 

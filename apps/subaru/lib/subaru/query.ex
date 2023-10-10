@@ -24,10 +24,49 @@ defmodule Subaru.Query do
 
   @type literal() :: integer() | bitstring() | atom()
   @type relational_operator() :: :> | :>= | :< | :<= | :== | :!=
-  @type truthy() :: :and | :or
+  @type logical_operator() :: :and | :or
+  @type edge_direction() :: :any | :outbound | :inbound
 
   @type conditional() :: {relational_operator(), bitstring(), literal()}
-  @type boolean_expression() :: {truthy(), conditional(), conditional()} | conditional()
+  @type boolean_expression() ::
+          {logical_operator(), conditional(), conditional()}
+          | conditional()
+          | dof_boolean()
+
+  ## Document-Object Functions
+  @type dof_boolean() ::
+          {:is_same_collection, bitstring(), literal()}
+          | {:has, map(), bitstring()}
+
+  # TODO: Someday I'll get around to implementing all of these.
+  """
+  Boolean:
+    HAS()
+    IS_SAME_COLLECTION()
+
+  Number:
+    COUNT()
+    LENGTH()
+    MATCHES() (if returnIndex is enabled)
+
+  Array:
+    ATTRIBUTES()
+    VALUES()
+
+  Object:
+    KEEP()
+    KEEP_RECURSIVE()
+    MERGE()
+    MERGE_RECURSIVE()
+    PARSE_IDENTIFIER()
+    UNSET()
+    UNSET_RECURSIVE()
+    ZIP()
+
+  Any:
+    TRANSLATE()
+    VALUE()
+  """
 
   @spec new :: Query.t()
   def new() do
@@ -66,15 +105,59 @@ defmodule Subaru.Query do
     push(q, item)
   end
 
+  @doc """
+  Replaces the document at a given key.
+
+  `keyExpression` is the value of the document ._key
+
+  `updatedoc` can be either a map representing a document, or a DOF call written
+  as a literal.
+
+  `collection` is the ArangoDB collection being modified.
+
+  ## Example
+
+  Query.new()
+  |> Query.for(:x, "sue_users")
+  |> Query.filter({:!=, "x.id", nil})
+  |> Query.replace_with("x._key", "UNSET(x, ['id', 'platform'])", "sue_users")
+  """
+  def replace_with(q, keyExpression, updatedoc, collection) do
+    item = {:replace_with, keyExpression, updatedoc, collection}
+    push(q, item)
+  end
+
   def remove(q, variableName, collection) do
     item = {:remove, variableName, collection}
     push(q, item)
   end
 
-  def traverse(q, ecoll, direction, startvert, min, max) do
-    item = {:traverse, ecoll, direction, startvert, min, max}
+  def traverse_for_v(q, ecolls, direction, startvert, min, max) do
+    item = {:traverse_for, ecolls, direction, startvert, min, max}
     push(q, item)
   end
+
+  @doc """
+  Perform a graph traversal on one or more edge collections.
+  """
+  @spec traverse(t(), [bitstring(), ...] | bitstring(), atom(), bitstring(), any(), any()) :: t()
+  def traverse(q, ecolls, direction, startvert, min, max) when is_list(ecolls) do
+    item = {:traverse, ecolls, direction, startvert, min, max}
+    push(q, item)
+  end
+
+  def traverse(q, ecoll, direction, startvert, min, max) when is_bitstring(ecoll) do
+    traverse(q, [ecoll], direction, startvert, min, max)
+  end
+
+  def options(q, map) when is_map(map) and map_size(map) > 0 do
+    item = {:options, map}
+    push(q, item)
+  end
+
+  def options(q, %{}), do: q
+
+  def filter(q, nil), do: q
 
   @spec filter(t, boolean_expression()) :: t
   def filter(q, expr) do
@@ -124,7 +207,7 @@ defmodule Subaru.Query do
       |> Enum.map(&String.length/1)
       |> Enum.max()
 
-    logborder = String.duplicate("*", maxlinelen)
+    # logborder = String.duplicate("*", maxlinelen)
     # Logger.debug("EXECUTING QUERY:\n#{logborder}\n#{statement}\n#{logborder}")
 
     {statement, bindvars, opts}
@@ -167,7 +250,7 @@ defmodule Subaru.Query do
   defp gen({:insert, doc, collection}, query) do
     doc_bindvar = generate_bindvar(doc)
     coll_bindvar = "@" <> generate_bindvar(collection)
-    statement = "INSERT #{doc_bindvar} INTO #{coll_bindvar} RETURN NEW._id"
+    statement = "INSERT #{doc_bindvar} INTO #{coll_bindvar}"
 
     query
     |> add_statement(statement)
@@ -195,6 +278,22 @@ defmodule Subaru.Query do
     |> gen()
   end
 
+  defp gen({:replace_with, keyExpression, doc, collection}, query) do
+    # bv_kedoc = generate_bindvar(keyExpression)
+    # bv_doc = generate_bindvar(doc)
+    coll_bindvar = "@" <> generate_bindvar(collection)
+
+    statement = "REPLACE #{keyExpression} WITH #{doc} IN #{coll_bindvar}"
+
+    query
+    |> add_statement(statement)
+    # |> add_bindvar(bv_kedoc, bv_kedoc)
+    # |> add_bindvar(bv_doc, doc)
+    |> add_bindvar(coll_bindvar, collection)
+    |> add_write_coll(collection)
+    |> gen()
+  end
+
   defp gen({:remove, variableName, collection}, query) do
     coll_bindvar = "@" <> generate_bindvar(collection)
     statement = "REMOVE #{variableName} IN #{coll_bindvar}"
@@ -217,9 +316,40 @@ defmodule Subaru.Query do
     |> gen()
   end
 
-  defp gen({:traverse, ecoll, direction, startvert, min, max}, query) do
-    # ecoll_bindvars = Enum.map(ecolls, fn ec -> "@" <> generate_bindvar(ec) end)
-    # ecoll_bindvar = "@" <> generate_bindvar(ecoll)
+  defp gen({:traverse_for, ecolls, direction, startvert, min, max}, query) do
+    startvert_bindvar_id = generate_bindvar(startvert)
+
+    stm_min_max =
+      if !is_nil(min) and !is_nil(max) do
+        " #{min}..#{max}"
+      else
+        ""
+      end
+
+    statement =
+      """
+      FOR v IN#{stm_min_max} #{edgedir_to_str(direction)}
+          #{startvert_bindvar_id}
+          #{Enum.join(ecolls, ",")}
+      """
+      |> String.trim()
+
+    query
+    |> add_statement(statement)
+    |> add_bindvar(startvert_bindvar_id, startvert)
+    |> add_read_colls(ecolls)
+    |> gen()
+  end
+
+  defp gen({:options, map}, query) do
+    statement = "OPTIONS " <> map_to_str(map)
+
+    query
+    |> add_statement(statement)
+    |> gen()
+  end
+
+  defp gen({:traverse, ecolls, direction, startvert, min, max}, query) do
     startvert_bindvar_id = generate_bindvar(startvert)
 
     stm_min_max =
@@ -232,14 +362,16 @@ defmodule Subaru.Query do
     statement = """
     FOR v IN#{stm_min_max} #{edgedir_to_str(direction)}
         #{startvert_bindvar_id}
-        #{ecoll}
+        #{Enum.join(ecolls, ",")}
+        OPTIONS { order: "bfs", uniqueVertices: "global" }
+        FILTER IS_SAME_COLLECTION("sue_defns", v)
         RETURN v
     """
 
     query
     |> add_statement(statement)
     |> add_bindvar(startvert_bindvar_id, startvert)
-    |> add_read_coll(ecoll)
+    |> add_read_colls(ecolls)
     |> gen()
   end
 
@@ -325,18 +457,27 @@ defmodule Subaru.Query do
   end
 
   @spec reduce_expr(boolean_expression()) :: bitstring()
+  defp reduce_expr({:is_same_collection, collection, v}) do
+    # TODO: HACK: yeah this is scuffed
+    "IS_SAME_COLLECTION(#{quoted(collection)}, #{v})"
+  end
+
   defp reduce_expr({op, var, val}) when is_bitstring(var) and is_bitstring(val) do
     "#{var} #{op} #{quoted(val)}"
+  end
+
+  defp reduce_expr({op, var, val}) when is_nil(val) do
+    "#{var} #{op} null"
   end
 
   defp reduce_expr({op, var, val}) when is_number(val) do
     "#{var} #{op} #{val}"
   end
 
-  defp reduce_expr({truthy, p, q}) do
+  defp reduce_expr({logical_operator, p, q}) do
     p_red = reduce_expr(p)
     q_red = reduce_expr(q)
-    op = truthy_to_str(truthy)
+    op = logical_op_to_str(logical_operator)
 
     "(#{p_red} #{op} #{q_red})"
   end
@@ -344,6 +485,17 @@ defmodule Subaru.Query do
   @spec push(Query.t(), any()) :: Query.t()
   defp push(query, item) do
     %Query{query | q: Queue.in(item, query.q)}
+  end
+
+  @spec pop(Query.t()) :: {Query.t(), any()}
+  defp pop(query) do
+    case Queue.out(query.q) do
+      {{:value, item}, tail} ->
+        {%Query{query | q: tail}, item}
+
+      {:empty, _} ->
+        {query, :empty}
+    end
   end
 
   @spec add_statement(Query.t(), binary()) :: Query.t()
@@ -374,7 +526,7 @@ defmodule Subaru.Query do
     %Query{query | reads: MapSet.put(query.reads, coll)}
   end
 
-  @spec add_read_colls(t(), [bitstring()]) :: t()
+  @spec add_read_colls(t(), [bitstring()]) :: t
   defp add_read_colls(query, colls) do
     %Query{query | reads: MapSet.union(query.reads, MapSet.new(colls))}
   end
@@ -385,17 +537,6 @@ defmodule Subaru.Query do
       | reads: MapSet.union(query.reads, reads),
         writes: MapSet.union(query.writes, writes)
     }
-  end
-
-  @spec pop(Query.t()) :: {Query.t(), any()}
-  defp pop(query) do
-    case Queue.out(query.q) do
-      {{:value, item}, tail} ->
-        {%Query{query | q: tail}, item}
-
-      {:empty, _} ->
-        {query, :empty}
-    end
   end
 
   defp context_update(%Query{context: [:root]} = query, :pop) do
@@ -416,14 +557,22 @@ defmodule Subaru.Query do
     "@var#{id}"
   end
 
-  defp truthy_to_str(:and), do: "&&"
-  defp truthy_to_str(:or), do: "||"
+  defp logical_op_to_str(:and), do: "&&"
+  defp logical_op_to_str(:or), do: "||"
 
+  @spec edgedir_to_str(edge_direction()) :: bitstring()
   defp edgedir_to_str(:outbound), do: "OUTBOUND"
   defp edgedir_to_str(:inbound), do: "INBOUND"
   defp edgedir_to_str(:any), do: "ANY"
 
   defp quoted(s) when is_bitstring(s) do
     "\"#{s}\""
+  end
+
+  defp map_to_str(m) do
+    "{ " <>
+      (m
+       |> Enum.map(fn {k, v} -> "#{k}: \"#{v}\"" end)
+       |> Enum.join(", ")) <> " }"
   end
 end

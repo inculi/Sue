@@ -1,6 +1,11 @@
 defmodule Sue.DB.Schema do
-  alias Sue.Models.Poll
-  alias Sue.Models.{Account, Chat, Defn}
+  alias Sue.Models.{Account, Chat, Defn, PlatformAccount, Poll}
+
+  @ecoll_sue_user_in_chat "sue_user_in_chat"
+  @ecoll_sue_defn_by_user "sue_defn_by_user"
+  @ecoll_sue_defn_by_chat "sue_defn_by_chat"
+  @ecoll_sue_poll_by_chat "sue_poll_by_chat"
+  @ecoll_sue_user_by_platformaccount "sue_user_by_platformaccount"
 
   @spec vertex_collections() :: [bitstring()]
   def vertex_collections() do
@@ -9,7 +14,13 @@ defmodule Sue.DB.Schema do
 
   @spec edge_collections() :: [bitstring()]
   def edge_collections() do
-    ["sue_user_in_chat", "sue_defn_by_user", "sue_defn_by_chat", "sue_poll_by_chat"]
+    [
+      @ecoll_sue_user_in_chat,
+      @ecoll_sue_defn_by_user,
+      @ecoll_sue_defn_by_chat,
+      @ecoll_sue_poll_by_chat,
+      @ecoll_sue_user_by_platformaccount
+    ]
   end
 
   # TODO: It would be really nice if there was a way to auto-register these
@@ -19,7 +30,8 @@ defmodule Sue.DB.Schema do
       Account.collection(),
       Chat.collection(),
       Defn.collection(),
-      Poll.collection()
+      Poll.collection(),
+      PlatformAccount.collection()
     ]
   end
 
@@ -32,4 +44,10 @@ defmodule Sue.DB.Schema do
       Subaru.remove_all(ec)
     end
   end
+
+  def ecoll_sue_user_in_chat(), do: @ecoll_sue_user_in_chat
+  def ecoll_sue_defn_by_user(), do: @ecoll_sue_defn_by_user
+  def ecoll_sue_defn_by_chat(), do: @ecoll_sue_defn_by_chat
+  def ecoll_sue_poll_by_chat(), do: @ecoll_sue_poll_by_chat
+  def ecoll_sue_user_by_platformaccount(), do: @ecoll_sue_user_by_platformaccount
 end

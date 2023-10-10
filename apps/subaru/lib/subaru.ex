@@ -9,6 +9,18 @@ defmodule Subaru do
 
   defguard is_dbid(id) when is_bitstring(id)
 
+  def get(collection, id) do
+    Query.new()
+    |> Query.get(collection, id)
+    |> Query.exec()
+    |> result_one()
+  end
+
+  def get!(collection, id) do
+    {:ok, res} = get(collection, id)
+    res
+  end
+
   @doc """
   Upserts and returns the ID to the document.
   """
@@ -34,9 +46,11 @@ defmodule Subaru do
   end
 
   @spec insert(map(), bitstring()) :: res_id()
-  def insert(doc, collection) when is_map(doc) do
+  def insert(doc, collection, options \\ %{}) when is_map(doc) do
     Query.new()
     |> Query.insert(doc, collection)
+    |> Query.options(options)
+    |> Query.return("NEW._id")
     |> Query.exec()
     |> result_id()
   end
@@ -50,6 +64,7 @@ defmodule Subaru do
   def insert_edge(from_id, to_id, edge_collection) do
     Query.new()
     |> Query.insert(%{_from: from_id, _to: to_id}, edge_collection)
+    |> Query.return("NEW._id")
     |> Query.exec()
     |> result_id()
   end
@@ -64,6 +79,15 @@ defmodule Subaru do
     |> result_id()
   end
 
+  def replace_with(keyExpression, doc, collection) do
+    Query.new()
+    |> Query.replace_with(keyExpression, doc, collection)
+    |> Query.exec()
+  end
+
+  @doc """
+  Remove all documents from a collection.
+  """
   @spec remove_all(bitstring()) :: Subaru.DB.res()
   def remove_all(collection) do
     Query.new()
@@ -73,6 +97,9 @@ defmodule Subaru do
     |> result()
   end
 
+  @doc """
+  Return all documents in a collection.
+  """
   def all(collection) do
     Query.new()
     |> Query.for(:x, collection)
@@ -105,6 +132,20 @@ defmodule Subaru do
     res
   end
 
+  def find(collection, expr) do
+    Query.new()
+    |> Query.for(:x, collection)
+    |> Query.filter(expr)
+    |> Query.return("x")
+    |> Query.exec()
+    |> result()
+  end
+
+  def find!(collection, expr) do
+    {:ok, res} = find(collection, expr)
+    res
+  end
+
   def exists?(collection, expr) do
     case find_one!(collection, expr) do
       :dne -> false
@@ -117,25 +158,42 @@ defmodule Subaru do
     exists?(edge_collection, expr)
   end
 
-  # GRAPH TRAVERSAL
-  # ===============
-  @spec traverse(
-          bitstring(),
-          :outbound | :inbound | :any,
-          dbid(),
-          integer() | nil,
-          integer() | nil
-        ) :: {:ok, [map() | dbid()]} | {:error, any()}
-  def traverse(ecoll, direction, startvert, min \\ nil, max \\ nil) do
-    Query.new()
-    |> Query.traverse(ecoll, direction, startvert, min, max)
-    |> Query.exec()
-    |> result()
+  @doc """
+  Returns true if a collection is empty.
+  """
+  def empty?(collection) do
+    not exists?(collection, {:>, "x._id", 0})
   end
 
-  def traverse!(ecoll, direction, startvert, min \\ nil, max \\ nil) do
-    {:ok, res} = traverse(ecoll, direction, startvert, min, max)
-    res
+  # GRAPH TRAVERSAL
+
+  # ===============
+  @spec traverse_v(
+          [bitstring(), ...],
+          Query.edge_direction(),
+          dbid(),
+          integer() | nil,
+          integer() | nil,
+          map(),
+          Query.boolean_expression()
+        ) :: {:ok, [map()]} | {:error, any()}
+  def traverse_v(
+        [edge_collection | _] = ecolls,
+        direction,
+        startvert,
+        min \\ nil,
+        max \\ nil,
+        options \\ %{},
+        filter \\ nil
+      )
+      when is_bitstring(edge_collection) do
+    Query.new()
+    |> Query.traverse_for_v(ecolls, direction, startvert, min, max)
+    |> Query.options(options)
+    |> Query.filter(filter)
+    |> Query.return("v")
+    |> Query.exec()
+    |> result()
   end
 
   # RESULT OUTPUT HELPERS

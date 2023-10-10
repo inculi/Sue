@@ -17,7 +17,7 @@ defmodule Sue.Commands.Defns do
     # meaning = get_defn!(msg) || "Command not found. Add it with !define."
     varname = msg.command
 
-    case DB.find_defn(msg.account.id, msg.chat.id, varname) do
+    case DB.find_defn(msg.account.id, msg.chat.is_direct, varname) do
       {:ok, %Defn{val: val}} -> %Response{body: val}
       {:error, :dne} -> %Response{body: "Command not found. Add it with !define."}
     end
