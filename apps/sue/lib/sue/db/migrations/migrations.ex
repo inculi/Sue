@@ -39,6 +39,8 @@ defmodule Sue.DB.Migrations do
 
       {:ok, _} = set_last_recorded_version(current_version)
     end
+
+    :ok
   end
 
   @spec find_migrations_newer_than(tuple()) :: [tuple()]
@@ -57,12 +59,12 @@ defmodule Sue.DB.Migrations do
     end)
   end
 
-  @spec get_last_recorded_version() :: {:ok, tuple()}
+  @spec get_last_recorded_version() :: tuple()
   defp get_last_recorded_version() do
     case Subaru.get(@collection, "0") do
       # Return {0, 0, 0} if we don't have anything recorded.
-      {:ok, nil} -> {:ok, {0, 0, 0}}
-      {:ok, doc} -> {:ok, vsn_to_tuple(doc["vsn"])}
+      {:ok, nil} -> {0, 0, 0}
+      {:ok, doc} -> vsn_to_tuple(doc["vsn"])
     end
   end
 

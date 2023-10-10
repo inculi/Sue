@@ -105,6 +105,28 @@ defmodule Subaru.Query do
     push(q, item)
   end
 
+  @doc """
+  Replaces the document at a given key.
+
+  `keyExpression` is the value of the document ._key
+
+  `updatedoc` can be either a map representing a document, or a DOF call written
+  as a literal.
+
+  `collection` is the ArangoDB collection being modified.
+
+  ## Example
+
+  Query.new()
+  |> Query.for(:x, "sue_users")
+  |> Query.filter({:!=, "x.id", nil})
+  |> Query.replace_with("x._key", "UNSET(x, ['id', 'platform'])", "sue_users")
+  """
+  def replace_with(q, keyExpression, updatedoc, collection) do
+    item = {:replace_with, keyExpression, updatedoc, collection}
+    push(q, item)
+  end
+
   def remove(q, variableName, collection) do
     item = {:remove, variableName, collection}
     push(q, item)
@@ -251,6 +273,22 @@ defmodule Subaru.Query do
     |> add_bindvar(bv_sdoc, searchdoc)
     |> add_bindvar(bv_idoc, insertdoc)
     |> add_bindvar(bv_udoc, updatedoc)
+    |> add_bindvar(coll_bindvar, collection)
+    |> add_write_coll(collection)
+    |> gen()
+  end
+
+  defp gen({:replace_with, keyExpression, doc, collection}, query) do
+    # bv_kedoc = generate_bindvar(keyExpression)
+    # bv_doc = generate_bindvar(doc)
+    coll_bindvar = "@" <> generate_bindvar(collection)
+
+    statement = "REPLACE #{keyExpression} WITH #{doc} IN #{coll_bindvar}"
+
+    query
+    |> add_statement(statement)
+    # |> add_bindvar(bv_kedoc, bv_kedoc)
+    # |> add_bindvar(bv_doc, doc)
     |> add_bindvar(coll_bindvar, collection)
     |> add_write_coll(collection)
     |> gen()
@@ -426,6 +464,10 @@ defmodule Subaru.Query do
 
   defp reduce_expr({op, var, val}) when is_bitstring(var) and is_bitstring(val) do
     "#{var} #{op} #{quoted(val)}"
+  end
+
+  defp reduce_expr({op, var, val}) when is_nil(val) do
+    "#{var} #{op} null"
   end
 
   defp reduce_expr({op, var, val}) when is_number(val) do

@@ -34,6 +34,7 @@ defmodule Sue.DB do
 
   defp init_migrations() do
     Subaru.DB.create_collection(Migrations.collection(), :doc)
+    Migrations.run_new_migrations()
   end
 
   # TODO: Clean this up. Ideally we should have figured out if we want an edge

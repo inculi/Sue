@@ -79,6 +79,12 @@ defmodule Subaru do
     |> result_id()
   end
 
+  def replace_with(keyExpression, doc, collection) do
+    Query.new()
+    |> Query.replace_with(keyExpression, doc, collection)
+    |> Query.exec()
+  end
+
   @doc """
   Remove all documents from a collection.
   """
@@ -123,6 +129,20 @@ defmodule Subaru do
 
   def find_one!(collection, expr) do
     {:ok, res} = find_one(collection, expr)
+    res
+  end
+
+  def find(collection, expr) do
+    Query.new()
+    |> Query.for(:x, collection)
+    |> Query.filter(expr)
+    |> Query.return("x")
+    |> Query.exec()
+    |> result()
+  end
+
+  def find!(collection, expr) do
+    {:ok, res} = find(collection, expr)
     res
   end
 
