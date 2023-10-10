@@ -1,14 +1,16 @@
 defmodule Sue.Models.Account do
   @behaviour Subaru.Vertex
 
-  defstruct [:id, name: "", handle: ""]
+  defstruct [:id, name: "", handle: "", is_premium: false, is_admin: false]
 
   @collection "sue_users"
 
   @type t() :: %__MODULE__{
           name: bitstring(),
           handle: bitstring(),
-          id: nil | bitstring()
+          id: nil | bitstring(),
+          is_premium: boolean(),
+          is_admin: boolean()
         }
 
   alias Sue.Models.PlatformAccount
@@ -33,7 +35,9 @@ defmodule Sue.Models.Account do
     %Account{
       name: doc["name"],
       handle: doc["handle"],
-      id: doc["_id"]
+      id: doc["_id"],
+      is_premium: Map.get("is_premium", false),
+      is_admin: Map.get("is_admin", false)
     }
   end
 
