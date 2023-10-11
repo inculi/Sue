@@ -24,7 +24,7 @@ defmodule Sue.DB.Migrations.M1694479355 do
     Query.new()
     |> Query.for(:x, Account.collection())
     |> Query.filter({:!=, "x.id", nil})
-    |> Query.replace_with("x._key", "UNSET(x, ['id', 'platform'])", "sue_users")
+    |> Query.replace_with("x._key", "UNSET(x, ['id', 'platform'])", Account.collection())
     |> Query.exec()
 
     :ok
