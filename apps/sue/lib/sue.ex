@@ -2,10 +2,8 @@ defmodule Sue do
   use GenServer
   require Logger
 
-  alias Sue.Commands.{Core, Defns, Images, Rand, Shell, Poll, Gpt, Dumb}
+  alias Sue.Commands.{Core, Defns}
   alias Sue.Models.{Message, Response, Attachment}
-
-  @modules [Core, Defns, Images, Rand, Shell, Poll, Gpt, Dumb]
 
   def start_link(args) do
     GenServer.start_link(__MODULE__, args, name: __MODULE__)
@@ -91,7 +89,7 @@ defmodule Sue do
   # Iterate through the documentation of our modules' functions. Called once by
   #   this GenServer, and again by Telegram's command setup.
   defp init_commands() do
-    for module <- @modules do
+    for module <- Sue.Utils.list_modules_of_prefix("Elixir.Sue.Commands") do
       with {_, _, _, _, _, _, func_docs} <- Code.fetch_docs(module) do
         func_docs
         |> Enum.map(fn func_doc_tuple ->

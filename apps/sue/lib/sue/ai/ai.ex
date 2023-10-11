@@ -12,11 +12,19 @@ defmodule Sue.AI do
     {:ok, []}
   end
 
-  @spec chat_completion(bitstring()) :: bitstring()
-  def chat_completion(text) do
+  @spec chat_completion(bitstring(), :gpt35 | :gpt4) :: bitstring()
+  def chat_completion(text, modelversion) when is_atom(modelversion) do
+    model =
+      case modelversion do
+        :gpt35 -> "gpt-3.5-turbo"
+        :gpt4 -> "gpt-4"
+      end
+
+    Logger.debug("Running chat_completion with #{model}")
+
     with {:ok, response} <-
            OpenAI.chat_completion(
-             model: "gpt-3.5-turbo",
+             model: model,
              messages: [
                %{role: "user", content: text}
              ]

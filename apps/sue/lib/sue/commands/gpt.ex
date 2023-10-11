@@ -1,5 +1,5 @@
 defmodule Sue.Commands.Gpt do
-  alias Sue.Models.{Message, Response, Attachment}
+  alias Sue.Models.{Message, Response, Attachment, Account}
 
   @doc """
   Asks ChatGPT a question.
@@ -10,7 +10,22 @@ defmodule Sue.Commands.Gpt do
   end
 
   def c_gpt(%Message{args: args}) do
-    %Response{body: Sue.AI.chat_completion(args)}
+    %Response{body: Sue.AI.chat_completion(args, :gpt35)}
+  end
+
+  @doc """
+  Asks ChatGPT a question, using the newer GPT-4 model. Only available to premium users for now.
+  Usage !gpt4 write a poem about a bot named sue
+  """
+  def c_gpt4(%Message{account: %Account{is_premium: false}}) do
+    %Response{
+      body:
+        "Sorry, this command is only available for premium Sue users. Check back later for more info."
+    }
+  end
+
+  def c_gpt4(%Message{account: %Account{is_premium: true}, args: args}) do
+    %Response{body: Sue.AI.chat_completion(args, :gpt4)}
   end
 
   @doc """

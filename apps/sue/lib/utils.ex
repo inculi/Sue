@@ -47,6 +47,18 @@ defmodule Sue.Utils do
     end
   end
 
+  @spec list_modules_of_prefix(bitstring()) :: [module()]
+  def list_modules_of_prefix(prefix) do
+    :code.all_available()
+    |> Enum.map(fn {module, _, _} ->
+      List.to_string(module)
+    end)
+    |> Enum.filter(fn m ->
+      String.starts_with?(m, prefix)
+    end)
+    |> Enum.map(&String.to_atom/1)
+  end
+
   def struct_to_map(s) do
     s
     |> Map.from_struct()

@@ -1,10 +1,8 @@
-![](https://i.imgur.com/rEeXfKX.jpg)
+![](https://i.imgur.com/TIVNQ7o.jpg)
 
 # Sue
 
-Greetings and welcome to Sue V3.1, a chatbot for iMessage, Discord, and Telegram written in Elixir. Now with ChatGPT and ArangoDB!
-
-*Note: If you ran an earlier version of Sue and want to import your data, see "Upgrading from Sue V3.0" below.*
+Greetings and welcome to Sue, a chatbot for iMessage, Discord, and Telegram written in Elixir. Now with ChatGPT and Stable Diffusion!
 
 ## Demo
 
@@ -34,6 +32,7 @@ The following commands are currently supported:
 !flip
 !fortune
 !gpt
+!gpt4
 !motivate
 !phrases
 !ping
