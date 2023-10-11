@@ -79,11 +79,20 @@ defmodule Subaru do
     |> result_id()
   end
 
-  def replace_with(keyExpression, doc, collection) do
-    Query.new()
-    |> Query.replace_with(keyExpression, doc, collection)
-    |> Query.exec()
-  end
+  # TODO: Currently I just use the Query API for these. I don't yet know what
+  # their API or return type should look lke.
+
+  # def update(doc, collection) do
+  #   Query.new()
+  #   |> Query.update(doc, collection)
+  #   |> Query.exec()
+  # end
+
+  # def replace_with(keyExpression, doc, collection) do
+  #   Query.new()
+  #   |> Query.replace_with(keyExpression, doc, collection)
+  #   |> Query.exec()
+  # end
 
   @doc """
   Remove all documents from a collection.

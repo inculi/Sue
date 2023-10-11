@@ -105,6 +105,11 @@ defmodule Subaru.Query do
     push(q, item)
   end
 
+  def update_with(q, keyExpression, doc, collection) do
+    item = {:update_with, keyExpression, doc, collection}
+    push(q, item)
+  end
+
   @doc """
   Replaces the document at a given key.
 
@@ -249,13 +254,13 @@ defmodule Subaru.Query do
 
   defp gen({:insert, doc, collection}, query) do
     doc_bindvar = generate_bindvar(doc)
-    coll_bindvar = "@" <> generate_bindvar(collection)
-    statement = "INSERT #{doc_bindvar} INTO #{coll_bindvar}"
+    bv_coll = "@" <> generate_bindvar(collection)
+    statement = "INSERT #{doc_bindvar} INTO #{bv_coll}"
 
     query
     |> add_statement(statement)
     |> add_bindvar(doc_bindvar, doc)
-    |> add_bindvar(coll_bindvar, collection)
+    |> add_bindvar(bv_coll, collection)
     |> add_write_coll(collection)
     |> gen()
   end
@@ -264,54 +269,64 @@ defmodule Subaru.Query do
     bv_sdoc = generate_bindvar(searchdoc)
     bv_idoc = generate_bindvar(insertdoc)
     bv_udoc = generate_bindvar(updatedoc)
-    coll_bindvar = "@" <> generate_bindvar(collection)
+    bv_coll = "@" <> generate_bindvar(collection)
 
-    statement = "UPSERT #{bv_sdoc} INSERT #{bv_idoc} UPDATE #{bv_udoc} IN #{coll_bindvar}"
+    statement = "UPSERT #{bv_sdoc} INSERT #{bv_idoc} UPDATE #{bv_udoc} IN #{bv_coll}"
 
     query
     |> add_statement(statement)
     |> add_bindvar(bv_sdoc, searchdoc)
     |> add_bindvar(bv_idoc, insertdoc)
     |> add_bindvar(bv_udoc, updatedoc)
-    |> add_bindvar(coll_bindvar, collection)
+    |> add_bindvar(bv_coll, collection)
+    |> add_write_coll(collection)
+    |> gen()
+  end
+
+  defp gen({:update_with, keyExpression, doc, collection}, query) do
+    bv_doc = generate_bindvar(doc)
+    bv_coll = "@" <> generate_bindvar(collection)
+
+    statement = "UPDATE #{keyExpression} WITH #{bv_doc} IN #{bv_coll}"
+
+    query
+    |> add_statement(statement)
+    |> add_bindvar(bv_doc, doc)
+    |> add_bindvar(bv_coll, collection)
     |> add_write_coll(collection)
     |> gen()
   end
 
   defp gen({:replace_with, keyExpression, doc, collection}, query) do
-    # bv_kedoc = generate_bindvar(keyExpression)
-    # bv_doc = generate_bindvar(doc)
-    coll_bindvar = "@" <> generate_bindvar(collection)
+    bv_coll = "@" <> generate_bindvar(collection)
 
-    statement = "REPLACE #{keyExpression} WITH #{doc} IN #{coll_bindvar}"
+    statement = "REPLACE #{keyExpression} WITH #{doc} IN #{bv_coll}"
 
     query
     |> add_statement(statement)
-    # |> add_bindvar(bv_kedoc, bv_kedoc)
-    # |> add_bindvar(bv_doc, doc)
-    |> add_bindvar(coll_bindvar, collection)
+    |> add_bindvar(bv_coll, collection)
     |> add_write_coll(collection)
     |> gen()
   end
 
   defp gen({:remove, variableName, collection}, query) do
-    coll_bindvar = "@" <> generate_bindvar(collection)
-    statement = "REMOVE #{variableName} IN #{coll_bindvar}"
+    bv_coll = "@" <> generate_bindvar(collection)
+    statement = "REMOVE #{variableName} IN #{bv_coll}"
 
     query
     |> add_statement(statement)
-    |> add_bindvar(coll_bindvar, collection)
+    |> add_bindvar(bv_coll, collection)
     |> add_write_coll(collection)
     |> gen()
   end
 
   defp gen({:for, variableName, collection}, query) do
-    coll_bindvar = "@" <> generate_bindvar(collection)
-    statement = "FOR #{variableName} IN #{coll_bindvar}"
+    bv_coll = "@" <> generate_bindvar(collection)
+    statement = "FOR #{variableName} IN #{bv_coll}"
 
     query
     |> add_statement(statement)
-    |> add_bindvar(coll_bindvar, collection)
+    |> add_bindvar(bv_coll, collection)
     |> add_read_coll(collection)
     |> gen()
   end

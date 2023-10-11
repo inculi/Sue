@@ -11,10 +11,6 @@ defmodule Sue.DB.Migrations.M1694479355 do
   alias Subaru.Query
 
   def run() do
-    # Just to be safe - let's remove all PlatformAccounts and links.
-    Subaru.remove_all(PlatformAccount.collection())
-    Subaru.remove_all(Schema.ecoll_sue_user_by_platformaccount())
-
     # Create new PlatformAccounts and draw edges to these accounts.
     for doc <- Subaru.find!(Account.collection(), {:!=, "x.id", nil}) do
       pa =
@@ -30,6 +26,8 @@ defmodule Sue.DB.Migrations.M1694479355 do
     |> Query.filter({:!=, "x.id", nil})
     |> Query.replace_with("x._key", "UNSET(x, ['id', 'platform'])", "sue_users")
     |> Query.exec()
+
+    :ok
   end
 
   def vsn() do

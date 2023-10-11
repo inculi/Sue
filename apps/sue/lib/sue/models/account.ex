@@ -36,8 +36,8 @@ defmodule Sue.Models.Account do
       name: doc["name"],
       handle: doc["handle"],
       id: doc["_id"],
-      is_premium: Map.get("is_premium", false),
-      is_admin: Map.get("is_admin", false)
+      is_premium: doc["is_premium"],
+      is_admin: doc["is_admin"]
     }
   end
 
