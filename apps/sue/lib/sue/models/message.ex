@@ -87,7 +87,7 @@ defmodule Sue.Models.Message do
       time: DateTime.from_unix!(utc_date),
       #
       is_from_sue: from_me,
-      is_ignorable: is_ignorable?(:imessage, from_me, body),
+      is_ignorable: is_ignorable?(:imessage, from_me, body) or account.is_ignored,
       has_attachments: has_attachments == 1
     }
     |> augment_one()
@@ -130,7 +130,7 @@ defmodule Sue.Models.Message do
       time: DateTime.from_unix!(msg.date),
       #
       is_from_sue: false,
-      is_ignorable: command == "",
+      is_ignorable: command == "" or account.is_ignored,
 
       # either in the message sent, or the message referenced in a reply
       has_attachments:
@@ -177,7 +177,7 @@ defmodule Sue.Models.Message do
       time: msg.timestamp,
       #
       is_from_sue: from_sue,
-      is_ignorable: from_sue or command == "",
+      is_ignorable: from_sue or command == "" or account.is_ignored,
       has_attachments: length(msg.attachments) > 0,
       metadata: %{channel_id: msg.channel_id}
     }
@@ -208,7 +208,7 @@ defmodule Sue.Models.Message do
       time: DateTime.utc_now(),
       #
       is_from_sue: false,
-      is_ignorable: is_ignorable?(:debug, false, text),
+      is_ignorable: is_ignorable?(:debug, false, text) or account.is_ignored,
       has_attachments: false
     }
     |> augment_one()

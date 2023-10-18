@@ -3,7 +3,7 @@ defmodule Sue do
   require Logger
 
   alias Sue.Commands.{Core, Defns}
-  alias Sue.Models.{Message, Response, Attachment}
+  alias Sue.Models.{Message, Response, Attachment, Account}
 
   def start_link(args) do
     GenServer.start_link(__MODULE__, args, name: __MODULE__)
@@ -126,6 +126,12 @@ defmodule Sue do
   end
 
   @spec execute_command(map(), Message.t()) :: Response.t()
+  defp execute_command(_, %Message{account: %Account{is_banned: true, ban_reason: ban_reason}}) do
+    %Response{
+      body: "User is banned for reason: '#{ban_reason}'. May God have mercy on your soul."
+    }
+  end
+
   defp execute_command(commands, msg) do
     {module, f, _} =
       case Map.get(commands, msg.command) do
