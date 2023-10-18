@@ -38,6 +38,10 @@ defmodule Sue.Mailbox.Discord do
     send_response_attachments(msg, atts)
   end
 
+  def update_response(%Response{}) do
+    :ok
+  end
+
   def send_response_text(msg, rsp) do
     with {:ok, _} <- Api.create_message(msg.metadata.channel_id, rsp.body) do
       :ok
