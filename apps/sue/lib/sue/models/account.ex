@@ -1,7 +1,16 @@
 defmodule Sue.Models.Account do
   @behaviour Subaru.Vertex
 
-  defstruct [:id, name: "", handle: "", is_premium: false, is_admin: false]
+  defstruct [
+    :id,
+    name: "",
+    handle: "",
+    is_premium: false,
+    is_admin: false,
+    is_banned: false,
+    is_ignored: false,
+    ban_reason: ""
+  ]
 
   @collection "sue_users"
 
@@ -37,7 +46,10 @@ defmodule Sue.Models.Account do
       handle: doc["handle"],
       id: doc["_id"],
       is_premium: doc["is_premium"],
-      is_admin: doc["is_admin"]
+      is_admin: doc["is_admin"],
+      is_banned: doc["is_banned"],
+      is_ignored: doc["is_ignored"],
+      ban_reason: doc["ban_reason"]
     }
   end
 

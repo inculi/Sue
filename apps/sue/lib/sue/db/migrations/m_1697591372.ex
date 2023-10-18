@@ -1,17 +1,17 @@
-defmodule Sue.DB.Migrations.M1697021096 do
+defmodule Sue.DB.Migrations.M1697591372 do
   @moduledoc """
-  Add fields to Account
+  Add fields to Account.
   """
 
   alias Sue.Models.Account
   alias Subaru.Query
 
   def run() do
-    doc = %{"_key" => "x._key", "is_premium" => false, "is_admin" => false}
+    doc = %{"is_banned" => false, "ban_reason" => "", "is_ignored" => false}
 
     Query.new()
     |> Query.for(:x, Account.collection())
-    |> Query.filter({:==, "x.is_premium", nil})
+    |> Query.filter({:==, "x.is_banned", nil})
     |> Query.update_with("x", doc, Account.collection())
     |> Query.exec()
 
@@ -19,6 +19,6 @@ defmodule Sue.DB.Migrations.M1697021096 do
   end
 
   def vsn() do
-    {0, 2, 1}
+    {0, 2, 2}
   end
 end
