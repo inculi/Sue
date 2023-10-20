@@ -30,6 +30,14 @@ defmodule Sue do
     {uSecs, :ok} =
       :timer.tc(fn ->
         rsp = Core.help(msg, state.commands)
+
+        Sue.DB.RecentMessages.add(msg.chat.id, %{
+          account_id: "sue",
+          body: rsp.body,
+          is_from_sue: true,
+          is_from_gpt: false
+        })
+
         send_response(msg, rsp)
       end)
 
@@ -69,6 +77,15 @@ defmodule Sue do
   @spec process_messages([Message.t()]) :: :ok
   def process_messages(msgs) do
     Enum.each(msgs, fn msg ->
+      if not msg.is_from_sue do
+        Sue.DB.RecentMessages.add(msg.chat.id, %{
+          account_id: msg.account.id,
+          body: msg.body,
+          is_from_sue: false,
+          is_from_gpt: false
+        })
+      end
+
       process_message(msg)
     end)
   end
@@ -119,6 +136,17 @@ defmodule Sue do
     {uSecs, :ok} =
       :timer.tc(fn ->
         rsp = execute_command(commands, msg)
+
+        # Don't log incomplete responses that are still streaming their reply.
+        if rsp.is_complete do
+          Sue.DB.RecentMessages.add(msg.chat.id, %{
+            account_id: "sue",
+            body: if(rsp.body != "", do: rsp.body, else: "<media>"),
+            is_from_sue: true,
+            is_from_gpt: rsp.is_from_gpt
+          })
+        end
+
         send_response(msg, rsp)
       end)
 

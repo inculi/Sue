@@ -4,7 +4,10 @@ defmodule Sue.Models.Response do
   @type t() :: %__MODULE__{}
   defstruct [
     :body,
-    attachments: []
+    attachments: [],
+    is_from_gpt: false,
+    # used for streamed replies
+    is_complete: true
   ]
 
   defimpl String.Chars, for: Response do

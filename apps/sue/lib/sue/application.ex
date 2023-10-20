@@ -12,7 +12,8 @@ defmodule Sue.Application do
     children = [
       Sue,
       Sue.DB,
-      Sue.AI
+      Sue.DB.RecentMessages,
+      Sue.AI,
     ]
 
     children_imessage =
