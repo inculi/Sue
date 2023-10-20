@@ -23,6 +23,7 @@ defmodule Sue.MixProject do
   def application do
     [
       mod: {Sue.Application, []},
+      included_applications: [:nostrum],
       extra_applications: [:logger, :runtime_tools, :mint, :eex]
     ]
   end
@@ -51,7 +52,7 @@ defmodule Sue.MixProject do
       {:openai, "~> 0.5.2"},
       {:replicate, "~> 1.1.0"},
       # discord
-      {:nostrum, git: "https://github.com/desudigital/nostrum"},
+      {:nostrum, git: "https://github.com/Kraigie/nostrum", runtime: false},
       {:cowlib, "~> 2.11", [env: :prod, hex: "remedy_cowlib", override: true, repo: "hexpm"]},
       {:gun, "2.0.1", [env: :prod, hex: "remedy_gun", override: true, repo: "hexpm"]},
       {:mime, "~> 2.0"},
