@@ -92,7 +92,7 @@ config :sue,
   chat_db_path: Path.join(System.user_home(), "Library/Messages/chat.db"),
   # Rate limits
   cmd_rate_limit: {:timer.seconds(5), 5},
-  gpt_rate_limit: {:timer.hours(24), 24},
+  gpt_rate_limit: {:timer.hours(24), 50},
   sd_rate_limit: {:timer.hours(24), 17}
 
 config :subaru,

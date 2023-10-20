@@ -9,9 +9,9 @@ defmodule Sue.Limits do
     helper_check_rate(id, scale_ms, limit, can_bypass)
   end
 
-  def helper_check_rate(_, _, _, true), do: :ok
+  defp helper_check_rate(_, _, _, true), do: :ok
 
-  def helper_check_rate(id, scale_ms, limit, _can_bypass) do
+  defp helper_check_rate(id, scale_ms, limit, _can_bypass) do
     case Hammer.check_rate(id, scale_ms, limit) do
       {:allow, _} -> :ok
       _ -> :deny
