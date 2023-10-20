@@ -55,4 +55,20 @@ defmodule CommandTest do
     r = Sue.debug_blocking_process_message(m)
     assert String.contains?(r.body, "(1) b.")
   end
+
+  test "ratelimit" do
+    Schema.debug_clear_collections()
+
+    m = Message.from_debug("!h_ratetest")
+    r = Sue.debug_blocking_process_message(m)
+    assert String.contains?(r.body, "good")
+
+    m = Message.from_debug("!h_ratetest")
+    r = Sue.debug_blocking_process_message(m)
+    assert String.contains?(r.body, "good")
+
+    m = Message.from_debug("!h_ratetest")
+    r = Sue.debug_blocking_process_message(m)
+    assert String.contains?(r.body, "deny")
+  end
 end

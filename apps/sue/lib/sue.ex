@@ -5,6 +5,8 @@ defmodule Sue do
   alias Sue.Commands.{Core, Defns}
   alias Sue.Models.{Message, Response, Attachment, Account}
 
+  @cmd_rate_limit Application.compile_env(:sue, :cmd_rate_limit)
+
   def start_link(args) do
     GenServer.start_link(__MODULE__, args, name: __MODULE__)
   end
@@ -132,14 +134,19 @@ defmodule Sue do
     }
   end
 
-  defp execute_command(commands, msg) do
-    {module, f, _} =
-      case Map.get(commands, msg.command) do
-        nil -> {Defns, :calldefn, ""}
-        {module, fname, doc} -> {module, String.to_atom("c_" <> fname), doc}
-      end
+  defp execute_command(commands, %Message{account: %Account{id: account_id}} = msg) do
+    # Check rate limit for sending commands - 5 cmds per 5 seconds
+    with :ok <- Sue.Limits.check_rate("sue-command:#{account_id}", @cmd_rate_limit) do
+      {module, f, _} =
+        case Map.get(commands, msg.command) do
+          nil -> {Defns, :calldefn, ""}
+          {module, fname, doc} -> {module, String.to_atom("c_" <> fname), doc}
+        end
 
-    apply(module, f, [msg])
+      apply(module, f, [msg])
+    else
+      :deny -> %Response{body: "Please slow down your requests."}
+    end
   end
 
   # Functions starting with c_ are actually callable Sue commands, and are thus

@@ -2,7 +2,7 @@ defmodule Sue.Commands.Core do
   Module.register_attribute(__MODULE__, :is_persisted, persist: true)
   @is_persisted "is persisted"
 
-  alias Sue.Models.{Message, Response}
+  alias Sue.Models.{Message, Response, Account}
   require Logger
 
   @doc """
@@ -20,6 +20,14 @@ defmodule Sue.Commands.Core do
   def c_h_sleep(_m) do
     Process.sleep(5000)
     %Response{body: "zzz"}
+  end
+
+  def c_h_ratetest(%Message{account: %Account{id: account_id}}) do
+    with :ok <- Sue.Limits.check_rate("ratetest:#{account_id}", {:timer.minutes(1), 2}) do
+      %Response{body: "still good for twice per minute."}
+    else
+      :deny -> %Response{body: "deny"}
+    end
   end
 
   def help(%Message{args: ""}, commands) do
