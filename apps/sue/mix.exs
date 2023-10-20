@@ -40,11 +40,11 @@ defmodule Sue.MixProject do
       {:timex, "~> 3.0"},
       {:logger_file_backend, "~> 0.0.10"},
       {:phoenix_pubsub, "~> 2.0"},
-      # elixir
+      # telegram
       {:ex_gram, git: "https://github.com/rockneurotiko/ex_gram"},
-      # {:tesla, "~> 1.4"},
       {:tesla, git: "https://github.com/teamon/tesla", override: true},
       {:jason, "~> 1.2"},
+      {:hammer, "~> 6.1"},
       {:castore, "~> 0.1.0"},
       {:mint, "~> 1.1"},
       {:exqlite, "~> 0.13"},
