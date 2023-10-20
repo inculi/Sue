@@ -39,6 +39,7 @@ defmodule Sue.Application do
     children_discord =
       if Sue.Utils.contains?(@platforms, :discord) do
         [
+          Nostrum.Application,
           Sue.Mailbox.Discord
         ]
       else
