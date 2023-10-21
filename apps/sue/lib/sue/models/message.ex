@@ -5,7 +5,22 @@ defmodule Sue.Models.Message do
   alias Sue.Models.{Account, Attachment, Chat, Platform, PlatformAccount}
   alias Sue.DB
 
-  @enforce_keys [:platform, :id, :paccount, :chat, :account, :body, :is_ignorable]
+  @enforce_keys [
+    :platform,
+    :id,
+    #
+    :paccount,
+    :chat,
+    :account,
+    #
+    :body,
+    :command,
+    :args,
+    :time,
+    #
+    :is_from_sue,
+    :is_ignorable
+  ]
   defstruct [
     :platform,
     :id,
@@ -36,13 +51,13 @@ defmodule Sue.Models.Message do
           account: Account.t() | nil,
           ###
           body: String.t(),
-          command: String.t() | nil,
-          args: String.t() | nil,
+          command: String.t(),
+          args: String.t(),
           attachments: [Attachment.t()] | nil,
-          time: DateTime.t() | nil,
+          time: DateTime.t(),
           ###
-          is_from_sue: boolean() | nil,
-          is_ignorable: boolean() | nil,
+          is_from_sue: boolean(),
+          is_ignorable: boolean(),
           has_attachments: boolean() | nil,
           metadata: map()
         }
@@ -53,7 +68,7 @@ defmodule Sue.Models.Message do
       id: handle_id,
       person_centric_id: _handle_person_centric_id,
       cache_has_attachments: has_attachments,
-      text: body,
+      text: text,
       ROWID: message_id,
       cache_roomnames: chat_id,
       is_from_me: from_me,
@@ -75,6 +90,8 @@ defmodule Sue.Models.Message do
 
     account = Account.from_paccount(paccount)
 
+    {command, args, body} = command_args_from_body(:imessage, text)
+
     %Message{
       platform: :imessage,
       id: message_id,
@@ -84,13 +101,14 @@ defmodule Sue.Models.Message do
       account: account,
       #
       body: body,
+      command: command,
+      args: args,
       time: DateTime.from_unix!(utc_date),
       #
       is_from_sue: from_me,
       is_ignorable: is_ignorable?(:imessage, from_me, body) or account.is_ignored,
       has_attachments: has_attachments == 1
     }
-    |> augment_one()
     |> add_account_and_chat_to_graph()
   end
 
@@ -103,7 +121,10 @@ defmodule Sue.Models.Message do
       end
 
     command =
-      parse_command_potentially_with_botname_suffix(command, "@" <> context.bot_info.username)
+      parse_command_potentially_with_botname_suffix(
+        command,
+        "@" <> context.bot_info.username
+      )
 
     paccount =
       %PlatformAccount{platform_id: {:telegram, msg.from.id}}
@@ -196,6 +217,8 @@ defmodule Sue.Models.Message do
 
     account = Account.from_paccount(paccount)
 
+    {command, args, body} = command_args_from_body(:debug, text)
+
     %Message{
       platform: :debug,
       id: Sue.Utils.random_string(),
@@ -204,14 +227,15 @@ defmodule Sue.Models.Message do
       chat: chat,
       account: account,
       #
-      body: text,
+      body: body,
+      command: command,
+      args: args,
       time: DateTime.utc_now(),
       #
       is_from_sue: false,
       is_ignorable: is_ignorable?(:debug, false, text) or account.is_ignored,
       has_attachments: false
     }
-    |> augment_one()
     |> add_account_and_chat_to_graph()
   end
 
@@ -258,52 +282,22 @@ defmodule Sue.Models.Message do
     }
   end
 
-  # First stage of adding new fields to our Message. Primarily concerned with
-  #   parsing commands, args, stripping whitespace.
-  @spec augment_one(Message.t()) :: Message.t()
-  defp augment_one(%Message{is_ignorable: true} = msg), do: msg
-
-  defp augment_one(msg) do
-    "!" <> newbody = msg.body |> better_trim()
-    parse_command(msg, newbody)
-  end
-
   @spec add_account_and_chat_to_graph(t()) :: t
   def add_account_and_chat_to_graph(%Message{account: a, chat: c} = msg) do
     {:ok, _dbid} = DB.add_user_chat_edge(a, c)
     msg
   end
 
-  @spec parse_command(Message.t(), String.t()) :: Message.t()
-  defp parse_command(msg, newbody) do
-    [command | args] = String.split(newbody, " ", parts: 2)
-
-    %Message{
-      msg
-      | body: newbody,
-        command: command |> String.downcase(),
-        args: if(args == [], do: "", else: args |> hd())
-    }
-  end
-
   # TODO: Replace all of this with regular expressions.
-  # returns {command, args, body}
-  @spec command_args_from_body(Platform.t(), String.t()) :: {String.t(), String.t(), String.t()}
-  defp command_args_from_body(:telegram, body) do
-    if has_command?(:telegram, body) do
-      "/" <> newbody = body |> better_trim()
-      [command | args] = String.split(newbody, " ", parts: 2)
-      {command, Enum.at(args, 0) || "", newbody}
-    else
-      {"", "", body |> better_trim()}
-    end
-  end
 
+  # returns {command, args, body}
+  @spec command_args_from_body(Platform.t(), String.t()) ::
+          {String.t(), String.t(), String.t()}
   defp command_args_from_body(platform, body) do
     if has_command?(platform, body) do
-      "!" <> newbody = body |> better_trim()
-      [command | args] = String.split(newbody, " ", parts: 2)
-      {command, Enum.at(args, 0) || "", newbody}
+      trimmed_body = body |> better_trim()
+      [command | args] = String.split(String.slice(trimmed_body, 1..-1), " ", parts: 2)
+      {command, Enum.at(args, 0) || "", trimmed_body}
     else
       {"", "", body |> better_trim()}
     end
@@ -331,14 +325,14 @@ defmodule Sue.Models.Message do
   defp better_trim(text) do
     text
     |> better_trim_leading()
-    |> String.trim()
+    |> String.trim_trailing()
   end
 
   # This binary classifier will grow in complexity over time.
   defp is_ignorable?(platform, from_sue, body)
   defp is_ignorable?(_platform, true, _body), do: true
 
-  defp is_ignorable?(_platform, _from_me, nil), do: true
+  defp is_ignorable?(_platform, _from_me, ""), do: true
 
   defp is_ignorable?(platform, _from_me, body) do
     not has_command?(platform, body)

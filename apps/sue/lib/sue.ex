@@ -30,14 +30,7 @@ defmodule Sue do
     {uSecs, :ok} =
       :timer.tc(fn ->
         rsp = Core.help(msg, state.commands)
-
-        Sue.DB.RecentMessages.add(msg.chat.id, %{
-          account_id: "sue",
-          body: rsp.body,
-          is_from_sue: true,
-          is_from_gpt: false
-        })
-
+        log_and_cache_recent(msg, rsp)
         send_response(msg, rsp)
       end)
 
@@ -47,6 +40,7 @@ defmodule Sue do
 
   def handle_cast({:process, msg}, state) do
     spawn(__MODULE__, :execute_in_background, [state.commands, msg])
+    # execute_in_background(state.commands, msg)
     {:noreply, state}
   end
 
@@ -77,15 +71,7 @@ defmodule Sue do
   @spec process_messages([Message.t()]) :: :ok
   def process_messages(msgs) do
     Enum.each(msgs, fn msg ->
-      if not msg.is_from_sue do
-        Sue.DB.RecentMessages.add(msg.chat.id, %{
-          account_id: msg.account.id,
-          body: msg.body,
-          is_from_sue: false,
-          is_from_gpt: false
-        })
-      end
-
+      log_and_cache_recent(msg, nil)
       process_message(msg)
     end)
   end
@@ -136,17 +122,7 @@ defmodule Sue do
     {uSecs, :ok} =
       :timer.tc(fn ->
         rsp = execute_command(commands, msg)
-
-        # Don't log incomplete responses that are still streaming their reply.
-        if rsp.is_complete do
-          Sue.DB.RecentMessages.add(msg.chat.id, %{
-            account_id: "sue",
-            body: if(rsp.body != "", do: rsp.body, else: "<media>"),
-            is_from_sue: true,
-            is_from_gpt: rsp.is_from_gpt
-          })
-        end
-
+        log_and_cache_recent(msg, rsp)
         send_response(msg, rsp)
       end)
 
@@ -175,6 +151,44 @@ defmodule Sue do
     else
       :deny -> %Response{body: "Please slow down your requests."}
     end
+  end
+
+  # Message from Sue
+  @spec log_and_cache_recent(Message.t(), Response.t() | Attachment.t() | nil) :: :ok
+  defp log_and_cache_recent(%Message{is_from_sue: true}, nil), do: :ok
+
+  # Message/command from user
+  defp log_and_cache_recent(msg, nil) do
+    Sue.DB.RecentMessages.add(msg.chat.id, %{
+      account_id: msg.account.id,
+      body: msg.body,
+      is_from_sue: false,
+      is_from_gpt: false
+    })
+  end
+
+  # Sue response, attachment.
+  # TODO: Log enough info to be able to use the file.
+  defp log_and_cache_recent(msg, %Attachment{}) do
+    Sue.DB.RecentMessages.add(msg.chat.id, %{
+      account_id: "sue",
+      body: "<media>",
+      is_from_sue: true,
+      is_from_gpt: false
+    })
+  end
+
+  # Sue response, still being streamed.
+  defp log_and_cache_recent(_msg, %Response{is_complete: false}), do: :ok
+
+  # Sue response, non-attachment.
+  defp log_and_cache_recent(msg, rsp) do
+    Sue.DB.RecentMessages.add(msg.chat.id, %{
+      account_id: "sue",
+      body: if(rsp.body != "", do: rsp.body, else: "<media>"),
+      is_from_sue: true,
+      is_from_gpt: rsp.is_from_gpt
+    })
   end
 
   # Functions starting with c_ are actually callable Sue commands, and are thus
