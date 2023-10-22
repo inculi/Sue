@@ -57,7 +57,8 @@ defmodule Sue.Commands.Dumb do
        "#{:erlang.float_to_binary(days / 12, decimals: 2)} Virginian opossum gestation periods",
        "#{trunc(seconds / 66.46)} smoker deaths",
        "#{trunc(seconds / 180)} Perilla tea steepings",
-       "#{trunc(seconds / 150)} commercial breaks"
+       "#{trunc(seconds / 150)} commercial breaks",
+       "#{:io_lib.format("~e", [days / 16_425]) |> List.to_string()} Cold Wars"
      ]
      |> Enum.random()) <> " until rubbing day.\n(#{relative})"
   end
