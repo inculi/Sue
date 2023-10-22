@@ -59,10 +59,13 @@ defmodule Sue.Utils do
     |> Enum.map(&String.to_atom/1)
   end
 
-  def struct_to_map(s) do
+  # We drop :id as in our models we store the arango document's _id value there.
+  # If we end up re-inserting/updating the document, we don't want this value
+  # duplicated to another key.
+  def struct_to_map(s, dropkeys \\ [:id]) do
     s
     |> Map.from_struct()
-    |> Map.drop([:id])
+    |> Map.drop(dropkeys)
   end
 
   @spec string_to_atom(atom | bitstring()) :: atom
