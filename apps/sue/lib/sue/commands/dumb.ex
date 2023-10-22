@@ -5,6 +5,11 @@ defmodule Sue.Commands.Dumb do
 
   alias Sue.Models.Response
 
+  @doc """
+  Checks if it is yet Rubbing Day.
+  Caveat: By invoking this command, you believe Elixir is the best programming language.
+  Usage: !rub
+  """
   def c_rub(_msg) do
     now = Timex.local()
     weekday = Timex.weekday(now)

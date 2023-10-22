@@ -25,12 +25,14 @@ defmodule Subaru do
   Upserts and returns the ID to the document.
   """
   @spec upsert(map(), map(), map(), bitstring()) :: res_id()
-  def upsert(d_search, d_insert, d_update, collection) do
-    Query.new()
-    |> Query.upsert(d_search, d_insert, d_update, collection)
-    |> Query.return("NEW._id")
-    |> Query.exec()
-    |> result_id()
+  def upsert(d_search, d_insert, d_update, collection, return_doc \\ false) do
+    res =
+      Query.new()
+      |> Query.upsert(d_search, d_insert, d_update, collection)
+      |> Query.return(if return_doc, do: "NEW", else: "NEW._id")
+      |> Query.exec()
+
+    if return_doc, do: result_one(res), else: result_id(res)
   end
 
   @doc """
