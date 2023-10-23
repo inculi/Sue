@@ -9,3 +9,6 @@ config :desu_web, DesuWeb.Endpoint,
 
 # Print only warnings and errors during test
 config :logger, level: :debug
+
+config :sue,
+  cmd_rate_limit: {:timer.seconds(5), 5000}

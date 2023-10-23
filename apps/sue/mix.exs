@@ -4,7 +4,7 @@ defmodule Sue.MixProject do
   def project do
     [
       app: :sue,
-      version: "0.2.1",
+      version: "0.2.3",
       build_path: "../../_build",
       config_path: "../../config/config.exs",
       deps_path: "../../deps",
@@ -23,6 +23,7 @@ defmodule Sue.MixProject do
   def application do
     [
       mod: {Sue.Application, []},
+      included_applications: [:nostrum],
       extra_applications: [:logger, :runtime_tools, :mint, :eex]
     ]
   end
@@ -40,18 +41,18 @@ defmodule Sue.MixProject do
       {:timex, "~> 3.0"},
       {:logger_file_backend, "~> 0.0.10"},
       {:phoenix_pubsub, "~> 2.0"},
-      # elixir
+      # telegram
       {:ex_gram, git: "https://github.com/rockneurotiko/ex_gram"},
-      # {:tesla, "~> 1.4"},
       {:tesla, git: "https://github.com/teamon/tesla", override: true},
       {:jason, "~> 1.2"},
+      {:hammer, "~> 6.1"},
       {:castore, "~> 0.1.0"},
       {:mint, "~> 1.1"},
       {:exqlite, "~> 0.13"},
       {:openai, "~> 0.5.2"},
       {:replicate, "~> 1.1.0"},
       # discord
-      {:nostrum, git: "https://github.com/desudigital/nostrum"},
+      {:nostrum, git: "https://github.com/Kraigie/nostrum", runtime: false},
       {:cowlib, "~> 2.11", [env: :prod, hex: "remedy_cowlib", override: true, repo: "hexpm"]},
       {:gun, "2.0.1", [env: :prod, hex: "remedy_gun", override: true, repo: "hexpm"]},
       {:mime, "~> 2.0"},

@@ -12,7 +12,8 @@ defmodule Sue.Application do
     children = [
       Sue,
       Sue.DB,
-      Sue.AI
+      Sue.DB.RecentMessages,
+      Sue.AI,
     ]
 
     children_imessage =
@@ -39,6 +40,7 @@ defmodule Sue.Application do
     children_discord =
       if Sue.Utils.contains?(@platforms, :discord) do
         [
+          Nostrum.Application,
           Sue.Mailbox.Discord
         ]
       else

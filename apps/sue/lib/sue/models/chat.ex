@@ -3,15 +3,14 @@ defmodule Sue.Models.Chat do
   alias Sue.Models.Platform
 
   @enforce_keys [:platform_id, :is_direct]
-  defstruct [:platform_id, :is_direct, :id]
+  defstruct [:platform_id, :is_direct, :id, is_ignored: false]
 
   @behaviour Subaru.Vertex
 
   @type t() :: %__MODULE__{
           platform_id: {Platform.t(), bitstring() | integer()},
-          # is a 1:1 convo with Sue
           is_direct: boolean(),
-          # subaru id
+          is_ignored: boolean(),
           id: nil | bitstring()
         }
 
@@ -23,16 +22,17 @@ defmodule Sue.Models.Chat do
     doc_search = %{platform: platform, id: id}
     doc_insert = doc(c)
 
-    {:ok, chat_id} = Subaru.upsert(doc_search, doc_insert, %{}, @collection)
-    %Chat{c | id: chat_id}
+    {:ok, new_chat} = Subaru.upsert(doc_search, doc_insert, %{}, @collection, true)
+    from_doc(new_chat)
   end
 
   @spec from_doc(map()) :: t
   def from_doc(d) do
     %Chat{
-      platform_id: {d.platform, d.id},
-      is_direct: d.is_direct,
-      id: d._id
+      platform_id: {Sue.Utils.string_to_atom(d["platform"]), d["id"]},
+      is_direct: d["is_direct"],
+      is_ignored: d["is_ignored"],
+      id: d["_id"]
     }
   end
 
@@ -41,6 +41,8 @@ defmodule Sue.Models.Chat do
 
   @impl Subaru.Vertex
   def doc(%Chat{platform_id: {platform, id}} = c) do
-    %{platform: platform, is_direct: c.is_direct, id: id}
+    Sue.Utils.struct_to_map(c, [:id, :platform_id])
+    |> Map.put(:platform, platform)
+    |> Map.put(:id, id)
   end
 end

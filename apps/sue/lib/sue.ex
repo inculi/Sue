@@ -3,7 +3,9 @@ defmodule Sue do
   require Logger
 
   alias Sue.Commands.{Core, Defns}
-  alias Sue.Models.{Message, Response, Attachment}
+  alias Sue.Models.{Message, Response, Attachment, Account}
+
+  @cmd_rate_limit Application.compile_env(:sue, :cmd_rate_limit)
 
   def start_link(args) do
     GenServer.start_link(__MODULE__, args, name: __MODULE__)
@@ -28,6 +30,7 @@ defmodule Sue do
     {uSecs, :ok} =
       :timer.tc(fn ->
         rsp = Core.help(msg, state.commands)
+        log_and_cache_recent(msg, rsp)
         send_response(msg, rsp)
       end)
 
@@ -37,6 +40,7 @@ defmodule Sue do
 
   def handle_cast({:process, msg}, state) do
     spawn(__MODULE__, :execute_in_background, [state.commands, msg])
+    # execute_in_background(state.commands, msg)
     {:noreply, state}
   end
 
@@ -67,6 +71,7 @@ defmodule Sue do
   @spec process_messages([Message.t()]) :: :ok
   def process_messages(msgs) do
     Enum.each(msgs, fn msg ->
+      log_and_cache_recent(msg, nil)
       process_message(msg)
     end)
   end
@@ -117,6 +122,7 @@ defmodule Sue do
     {uSecs, :ok} =
       :timer.tc(fn ->
         rsp = execute_command(commands, msg)
+        log_and_cache_recent(msg, rsp)
         send_response(msg, rsp)
       end)
 
@@ -126,14 +132,63 @@ defmodule Sue do
   end
 
   @spec execute_command(map(), Message.t()) :: Response.t()
-  defp execute_command(commands, msg) do
-    {module, f, _} =
-      case Map.get(commands, msg.command) do
-        nil -> {Defns, :calldefn, ""}
-        {module, fname, doc} -> {module, String.to_atom("c_" <> fname), doc}
-      end
+  defp execute_command(_, %Message{account: %Account{is_banned: true, ban_reason: ban_reason}}) do
+    %Response{
+      body: "User is banned for reason: '#{ban_reason}'. May God have mercy on your soul."
+    }
+  end
 
-    apply(module, f, [msg])
+  defp execute_command(commands, %Message{account: %Account{id: account_id}} = msg) do
+    # Check rate limit for sending commands - 5 cmds per 5 seconds
+    with :ok <- Sue.Limits.check_rate("sue-command:#{account_id}", @cmd_rate_limit) do
+      {module, f, _} =
+        case Map.get(commands, msg.command) do
+          nil -> {Defns, :calldefn, ""}
+          {module, fname, doc} -> {module, String.to_atom("c_" <> fname), doc}
+        end
+
+      apply(module, f, [msg])
+    else
+      :deny -> %Response{body: "Please slow down your requests."}
+    end
+  end
+
+  # Message from Sue
+  @spec log_and_cache_recent(Message.t(), Response.t() | Attachment.t() | nil) :: :ok
+  defp log_and_cache_recent(%Message{is_from_sue: true}, nil), do: :ok
+
+  # Message/command from user
+  defp log_and_cache_recent(msg, nil) do
+    Sue.DB.RecentMessages.add(msg.chat.id, %{
+      account_id: msg.account.id,
+      body: msg.body,
+      is_from_sue: false,
+      is_from_gpt: false
+    })
+  end
+
+  # Sue response, attachment.
+  # TODO: Log enough info to be able to use the file.
+  defp log_and_cache_recent(msg, %Attachment{}) do
+    Sue.DB.RecentMessages.add(msg.chat.id, %{
+      account_id: "sue",
+      body: "<media>",
+      is_from_sue: true,
+      is_from_gpt: false
+    })
+  end
+
+  # Sue response, still being streamed.
+  defp log_and_cache_recent(_msg, %Response{is_complete: false}), do: :ok
+
+  # Sue response, non-attachment.
+  defp log_and_cache_recent(msg, rsp) do
+    Sue.DB.RecentMessages.add(msg.chat.id, %{
+      account_id: "sue",
+      body: if(rsp.body != "", do: rsp.body, else: "<media>"),
+      is_from_sue: true,
+      is_from_gpt: rsp.is_from_gpt
+    })
   end
 
   # Functions starting with c_ are actually callable Sue commands, and are thus

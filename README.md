@@ -126,7 +126,7 @@ $ asdf global elixir 1.14.3-otp-25
 
 ## How do I add a command?
 
-1. When Sue loads (see `sue.ex`), it iterates through a list of `@modules`, reading the methods defined in them. If a method name starts with `c_`, it is saved as a callable command. For example, see `rand.ex`:
+1. When Sue loads (see `sue.ex`), it iterates through the modules under `Sue.Commands`, reading the methods defined in them. If a method name starts with `c_`, it is saved as a callable command. For example, see `rand.ex`:
 
 ```elixir
 @doc """
@@ -158,8 +158,6 @@ def c_choose(%Message{args: args}) do
   }
 end
 ```
-
-Once you have modified your module, import it and place it in the `@modules` list at the top of `sue.ex`.
 
 ## How do I help contribute?
 
