@@ -29,7 +29,7 @@ defmodule Sue.Models.Chat do
   @spec from_doc(map()) :: t
   def from_doc(d) do
     %Chat{
-      platform_id: {d["platform"], d["id"]},
+      platform_id: {string_to_atom(d["platform"]), d["id"]},
       is_direct: d["is_direct"],
       is_ignored: d["is_ignored"],
       id: d["_id"]
