@@ -72,7 +72,7 @@ defmodule Sue.AI do
   end
 
   @spec recent_messages_for_context(Subaru.dbid(), boolean(), bitstring(), integer()) :: [map()]
-  defp recent_messages_for_context(chat_id, is_direct, text, maxlen) do
+  defp recent_messages_for_context(chat_id, _is_direct, text, maxlen) do
     Sue.DB.RecentMessages.get_tail(chat_id)
     |> reduce_recent_messages(String.length(text), maxlen)
     |> Enum.map(fn %{is_from_gpt: is_from_gpt, is_from_sue: is_from_sue} = m ->
