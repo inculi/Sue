@@ -97,8 +97,8 @@ defmodule Sue.DB.Migrations do
       "Elixir.Sue.DB.Migrations.M" <> unix_str = m
       module = String.to_atom(m)
       vsn = apply(module, :vsn, [])
-      {module, DateTime.from_unix!(String.to_integer(unix_str)), vsn}
+      {module, String.to_integer(unix_str), vsn}
     end)
-    |> Enum.sort_by(fn {_m, dt, _vsn} -> dt end, :asc)
+    |> Enum.sort_by(fn {_m, dt_unix, _vsn} -> dt_unix end, :asc)
   end
 end
