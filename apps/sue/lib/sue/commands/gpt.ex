@@ -12,10 +12,13 @@ defmodule Sue.Commands.Gpt do
     %Response{body: "Please provide a request to ChatGPT. See !help gpt"}
   end
 
-  def c_gpt(%Message{args: args, account: %Account{id: account_id, is_premium: is_premium}}) do
+  def c_gpt(%Message{args: args, chat: chat, account: account}) do
     # Check rate limit for using gpt command: 50/day
-    with :ok <- Sue.Limits.check_rate("gpt:#{account_id}", @gpt_rate_limit, is_premium) do
-      %Response{body: Sue.AI.chat_completion(args, :gpt35), is_from_gpt: true}
+    with :ok <- Sue.Limits.check_rate("gpt:#{account.id}", @gpt_rate_limit, account.is_premium) do
+      %Response{
+        body: Sue.AI.chat_completion(args, :gpt35, chat, account),
+        is_from_gpt: true
+      }
     else
       :deny -> %Response{body: "Please slow down your requests. Try again in 24 hours."}
     end
@@ -32,8 +35,8 @@ defmodule Sue.Commands.Gpt do
     }
   end
 
-  def c_gpt4(%Message{account: %Account{is_premium: true}, args: args}) do
-    %Response{body: Sue.AI.chat_completion(args, :gpt4), is_from_gpt: true}
+  def c_gpt4(%Message{args: args, chat: chat, account: %Account{is_premium: true} = account}) do
+    %Response{body: Sue.AI.chat_completion(args, :gpt4, chat, account), is_from_gpt: true}
   end
 
   @doc """
