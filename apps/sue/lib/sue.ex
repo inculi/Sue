@@ -80,9 +80,9 @@ defmodule Sue do
   def debug_blocking_process_message(msg), do: execute_command(get_commands(), msg)
 
   @spec process_message(Message.t()) :: :ok
-  defp process_message(%Message{is_ignorable: true}), do: :ok
+  def process_message(%Message{is_ignorable: true}), do: :ok
 
-  defp process_message(msg) do
+  def process_message(msg) do
     Logger.info("[Sue] Processing: #{inspect(msg)}")
     GenServer.cast(__MODULE__, {:process, msg})
   end
@@ -160,7 +160,7 @@ defmodule Sue do
   # Message/command from user
   defp log_and_cache_recent(msg, nil) do
     Sue.DB.RecentMessages.add(msg.chat.id, %{
-      name: msg.account.id,
+      account_id: msg.account.id,
       body: msg.body,
       is_from_sue: false,
       is_from_gpt: false
@@ -171,7 +171,7 @@ defmodule Sue do
   # TODO: Log enough info to be able to use the file.
   defp log_and_cache_recent(msg, %Attachment{}) do
     Sue.DB.RecentMessages.add(msg.chat.id, %{
-      name: "sue",
+      account_id: "sue",
       body: "<media>",
       is_from_sue: true,
       is_from_gpt: false
@@ -184,7 +184,7 @@ defmodule Sue do
   # Sue response, non-attachment.
   defp log_and_cache_recent(msg, rsp) do
     Sue.DB.RecentMessages.add(msg.chat.id, %{
-      name: "sue",
+      account_id: "sue",
       body: if(rsp.body != "", do: rsp.body, else: "<media>"),
       is_from_sue: true,
       is_from_gpt: rsp.is_from_gpt

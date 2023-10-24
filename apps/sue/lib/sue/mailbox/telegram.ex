@@ -34,13 +34,8 @@ defmodule Sue.Mailbox.Telegram do
     context
   end
 
-  def handle({:text, _text, msg}, context) do
+  def handle({:text, _text, _msg}, _context) do
     # Direct text or reply in group
-    Logger.debug("=== begin :text handle ===")
-    item = %{msg: msg, context: context}
-    Logger.debug(item |> inspect())
-    Sue.process_messages([Message.from_telegram(item)])
-    Logger.debug("=== end :text handle ===")
     :ok
   end
 
