@@ -79,7 +79,10 @@ defmodule Sue.DB.RecentMessages do
   """
   @spec get_tail(Subaru.dbid()) :: [map()]
   def get_tail(chat_id) when is_dbid(chat_id) do
-    [_h | tail] = get(chat_id)
-    tail
+    # Somehow this is fastest https://stackoverflow.com/a/52322926/2877738
+    get(chat_id)
+    |> Enum.reverse()
+    |> tl()
+    |> Enum.reverse()
   end
 end

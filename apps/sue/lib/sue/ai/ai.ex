@@ -44,7 +44,12 @@ defmodule Sue.AI do
         }
       ] ++
         recent_messages_for_context(chat.id, chat.is_direct, text, maxlen) ++
-        [%{role: "user", content: "#{Account.friendly_name(account)} said " <> text}]
+        [
+          %{
+            role: "user",
+            content: "#{Account.friendly_name(account) |> format_user_id()} said " <> text
+          }
+        ]
 
     Logger.debug(messages |> inspect(pretty: true))
 
@@ -80,18 +85,21 @@ defmodule Sue.AI do
 
           is_from_sue ->
             # "(as Sue) "
-            "Sue said "
-
-          is_direct ->
-            ""
+            "SueBot said "
 
           true ->
-            m.name <> " said "
+            format_user_id(m.name) <> " said "
         end
 
       %{role: role, content: content_prefix <> m.body}
     end)
   end
+
+  defp format_user_id("sue_users/" <> user_id) do
+    "User" <> user_id
+  end
+
+  defp format_user_id(otherwise), do: otherwise
 
   @spec reduce_recent_messages([map()], integer(), integer()) :: {integer(), [map()]}
   defp reduce_recent_messages(recent_messages, promptlen, maxlen) do
