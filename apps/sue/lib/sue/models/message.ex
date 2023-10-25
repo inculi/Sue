@@ -316,6 +316,8 @@ defmodule Sue.Models.Message do
   # character 65532 (OBJECT REPLACEMENT CHARACTER) is used in iMessage when you
   #   also have an image, like a fancy carriage return. trim_leading doesn't
   #   currently find this.
+  defp better_trim_leading(nil), do: ""
+
   defp better_trim_leading(text) when is_bitstring(text) do
     text
     |> String.replace_leading(List.to_string([65532]), "")
