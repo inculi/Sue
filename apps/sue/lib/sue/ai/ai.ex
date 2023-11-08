@@ -34,6 +34,10 @@ defmodule Sue.AI do
     else
       {:error, :timeout} ->
         "Sorry, I timed out. Please try later, maybe additionally asking I keep my response short."
+
+      {:error, %{"status" => status_message}} ->
+        Logger.warn("[Sue.AI.chat_completion()] #{status_message}")
+        status_message
     end
   end
 
