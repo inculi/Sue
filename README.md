@@ -107,15 +107,21 @@ config :replicate,
 # Use whatever version tag it recommends on the website:
 # https://asdf-vm.com/guide/getting-started.html#official-download
 # For me, this is:
-$ git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.11.3
+$ git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.13.1
+
+# add ~/.asdf/bin to path
+
+# Install erlang dependencies
+# Discussed in https://github.com/asdf-vm/asdf-erlang
+$ brew install autoconf openssl wxwidgets libxslt fop
 
 # Add erlang and elixir plugins, install and set a version.
 $ asdf plugin add erlang https://github.com/asdf-vm/asdf-erlang.git
 $ asdf plugin-add elixir https://github.com/asdf-vm/asdf-elixir.git
-$ asdf install erlang 25.2.3
-$ asdf install elixir 1.14.3-otp-25
-$ asdf global erlang 25.2.3
-$ asdf global elixir 1.14.3-otp-25
+$ asdf install erlang 26.1.2
+$ asdf install elixir 1.15.7
+$ asdf global erlang 26.1.2
+$ asdf global elixir 1.15.7
 
 # add to path: ~/.asdf/shims
 ```

@@ -54,8 +54,7 @@ logger_dir =
 
 config :logger,
   backends: [:console, {LoggerFileBackend, :file_log}, {LoggerFileBackend, :error_log}],
-  format: "$time $metadata[$level] $message\n",
-  metadata: [:request_id]
+  format: "$time [$level] $message\n"
 
 config :logger, :console, level: :debug
 

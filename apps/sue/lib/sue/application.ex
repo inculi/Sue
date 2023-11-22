@@ -13,7 +13,7 @@ defmodule Sue.Application do
       Sue,
       Sue.DB,
       Sue.DB.RecentMessages,
-      Sue.AI,
+      Sue.AI
     ]
 
     children_imessage =

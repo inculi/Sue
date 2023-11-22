@@ -106,7 +106,8 @@ defmodule Sue.Models.Message do
       time: DateTime.from_unix!(utc_date),
       #
       is_from_sue: from_me,
-      is_ignorable: is_ignorable?(:imessage, from_me, body) or account.is_ignored or chat.is_ignored,
+      is_ignorable:
+        is_ignorable?(:imessage, from_me, body) or account.is_ignored or chat.is_ignored,
       has_attachments: has_attachments == 1
     }
     |> add_account_and_chat_to_graph()
@@ -297,7 +298,7 @@ defmodule Sue.Models.Message do
     if has_command?(platform, body) do
       trimmed_body = body |> better_trim()
       [command | args] = String.split(String.slice(trimmed_body, 1..-1), " ", parts: 2)
-      {command, Enum.at(args, 0) || "", trimmed_body}
+      {command |> String.downcase(), Enum.at(args, 0) || "", trimmed_body}
     else
       {"", "", body |> better_trim()}
     end
