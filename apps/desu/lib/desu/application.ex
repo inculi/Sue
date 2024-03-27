@@ -11,9 +11,8 @@ defmodule Desu.Application do
       # Start the PubSub system
       {Phoenix.PubSub, name: Desu.PubSub},
       # Start Finch
-      {Finch, name: Desu.Finch}
-      # Start a worker by calling: Desu.Worker.start_link(arg)
-      # {Desu.Worker, arg}
+      {Finch, name: Desu.Finch},
+      Desu.Login
     ]
 
     Supervisor.start_link(children, strategy: :one_for_one, name: Desu.Supervisor)

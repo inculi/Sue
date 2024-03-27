@@ -21,8 +21,7 @@ defmodule Subaru.Application do
   #   similar to database_name works.
   defp cachex_children() do
     [
-      # cache extant {userid, chatid} occurrences. maximum 500 entries.
-      build_cachex("user_chat_edges", limit: 500),
+      build_cachex("desu_login"),
       build_cachex("suestate")
     ]
   end
