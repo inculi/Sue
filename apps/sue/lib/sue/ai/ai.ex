@@ -27,11 +27,11 @@ defmodule Sue.AI do
 
     maxlen = if account.is_premium, do: 4_000, else: 1_000
 
-    system_content_suffix =
+    prompt_user_count =
       if chat.is_direct do
-        " one other user."
+        " one other user"
       else
-        " 2+ other users."
+        " 2+ other users"
       end
 
     messages =
@@ -39,15 +39,14 @@ defmodule Sue.AI do
         %{
           role: "system",
           content:
-            "You are a helpful assistant in a group chat with a chatbot named Sue and" <>
-              system_content_suffix
+            "You are a helpful assistant known as ChatGPT in a group chat with a chatbot named Sue and #{prompt_user_count}. Use names for personalization when appropriate; if a user has only numerical ID, opt for a neutral address. Please provide your responses in JSON, under the key 'body'."
         }
       ] ++
         recent_messages_for_context(chat.id, chat.is_direct, text, maxlen) ++
         [
           %{
             role: "user",
-            content: "#{Account.friendly_name(account) |> format_user_id()} said " <> text
+            content: Jason.encode!(%{"name" => Account.friendly_name(account), "body" => text})
           }
         ]
 
@@ -56,11 +55,12 @@ defmodule Sue.AI do
     with {:ok, response} <-
            OpenAI.chat_completion(
              model: model,
-             messages: messages
+             messages: messages,
+             response_format: %{"type" => "json_object"}
            ) do
       [%{"message" => %{"content" => content}}] = response.choices
       Logger.debug("GPT response: " <> content)
-      content |> String.trim("\n")
+      Jason.decode!(content |> String.trim("\n"))["body"]
     else
       {:error, :timeout} ->
         "Sorry, I timed out. Please try later, maybe additionally asking I keep my response short."
@@ -75,10 +75,6 @@ defmodule Sue.AI do
     end
   end
 
-  defp remove_sue_prefix(str) do
-    Regex.replace(~r/^\((as )?sue\)\s*/i, str, "")
-  end
-
   @spec recent_messages_for_context(Subaru.dbid(), boolean(), bitstring(), integer()) :: [map()]
   defp recent_messages_for_context(chat_id, _is_direct, text, maxlen) do
     Sue.DB.RecentMessages.get_tail(chat_id)
@@ -86,20 +82,19 @@ defmodule Sue.AI do
     |> Enum.map(fn %{is_from_gpt: is_from_gpt, is_from_sue: is_from_sue} = m ->
       role = if is_from_gpt, do: "assistant", else: "user"
 
-      content_prefix =
+      name =
         cond do
           is_from_gpt ->
-            ""
+            "ChatGPT"
 
           is_from_sue ->
-            # "(as Sue) "
-            "SueBot said "
+            "SueBot"
 
           true ->
-            format_user_id(m.name) <> " said "
+            format_user_id(m.name)
         end
 
-      %{role: role, content: content_prefix <> m.body}
+      %{role: role, content: Jason.encode!(%{"name" => name, "body" => m.body})}
     end)
   end
 

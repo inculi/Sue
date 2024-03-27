@@ -55,7 +55,7 @@ defmodule Sue.Models.Account do
 
   def friendly_name(a) do
     case {a.name, a.handle, a.id} do
-      {"", "", id} -> id
+      {"", "", id} -> "User" <> Sue.Utils.dbid_number(id)
       {"", handle, _} -> handle
       {name, _handle, _} -> name
     end

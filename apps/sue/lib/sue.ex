@@ -160,7 +160,7 @@ defmodule Sue do
   # Message/command from user
   defp log_and_cache_recent(msg, nil) do
     Sue.DB.RecentMessages.add(msg.chat.id, %{
-      name: msg.account.id,
+      name: Account.friendly_name(msg.account),
       body: msg.body,
       is_from_sue: false,
       is_from_gpt: false

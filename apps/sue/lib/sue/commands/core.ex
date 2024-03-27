@@ -31,7 +31,8 @@ defmodule Sue.Commands.Core do
     }
   end
 
-  def c_name(%Message{args: name}) do
+  def c_name(%Message{args: name, account: %Account{id: account_id}}) do
+    :ok = Sue.DB.change_name(account_id, name)
     %Response{body: "Name set to #{name}"}
   end
 

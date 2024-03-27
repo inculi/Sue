@@ -1,4 +1,8 @@
 defmodule Sue.Utils do
+  def dbid_number(dbid) do
+    Enum.at(String.split(dbid, "/"), 1)
+  end
+
   def quoted(s) when is_bitstring(s) do
     "\"#{s}\""
   end
