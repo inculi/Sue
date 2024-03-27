@@ -16,11 +16,18 @@ defmodule DesuWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :auth_required do
+    plug DesuWeb.Plugs.Auth
+  end
+
   scope "/", DesuWeb do
     pipe_through :browser
 
-    get "/", OedoController, :home
-    live "/box", Live.Home
+    pipe_through :auth_required
+    live "/", Live.TrueHome
+
+    # get "/", OedoController, :home
+    # live "/", Live.Home
   end
 
   # Other scopes may use custom stacks.
