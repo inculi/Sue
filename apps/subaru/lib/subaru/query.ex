@@ -1,6 +1,5 @@
 defmodule Subaru.Query do
   require Logger
-  import ExUnit.Assertions
 
   @query_debug Application.compile_env(:sue, :query_debug, false)
 
@@ -215,7 +214,6 @@ defmodule Subaru.Query do
   def get(q, collection, id) do
     cond do
       String.contains?(id, "/") ->
-        assert Enum.at(String.split(id, "/"), 0) == collection
         return(q, "DOCUMENT(#{quoted(id)})")
 
       true ->
