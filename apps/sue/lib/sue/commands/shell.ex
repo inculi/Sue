@@ -19,7 +19,7 @@ defmodule Sue.Commands.Shell do
     %Response{body: output_single_cmd("fortune")}
   end
 
-  @spec output_single_cmd(String.t()) :: String.t()
+  @spec output_single_cmd(bitstring()) :: bitstring()
   defp output_single_cmd(cmd) do
     {output, 0} = System.cmd(cmd, [])
     output

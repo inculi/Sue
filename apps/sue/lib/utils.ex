@@ -3,7 +3,7 @@ defmodule Sue.Utils do
     "\"#{s}\""
   end
 
-  @spec tokenize(String.t()) :: [String.t()]
+  @spec tokenize(bitstring()) :: [bitstring()]
   def tokenize(args) do
     cond do
       String.contains?(args, "\n") -> String.split(args, "\n")

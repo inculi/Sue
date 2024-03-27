@@ -50,9 +50,9 @@ defmodule Sue.Models.Message do
           chat: Chat.t(),
           account: Account.t() | nil,
           ###
-          body: String.t(),
-          command: String.t(),
-          args: String.t(),
+          body: bitstring(),
+          command: bitstring(),
+          args: bitstring(),
           attachments: [Attachment.t()] | nil,
           time: DateTime.t(),
           ###
@@ -295,8 +295,8 @@ defmodule Sue.Models.Message do
   # TODO: Replace all of this with regular expressions.
 
   # returns {command, args, body}
-  @spec command_args_from_body(Platform.t(), String.t()) ::
-          {String.t(), String.t(), String.t()}
+  @spec command_args_from_body(Platform.t(), bitstring()) ::
+          {bitstring(), bitstring(), bitstring()}
   defp command_args_from_body(platform, body) do
     if has_command?(platform, body) do
       trimmed_body = body |> better_trim()

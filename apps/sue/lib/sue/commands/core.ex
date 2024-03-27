@@ -13,6 +13,28 @@ defmodule Sue.Commands.Core do
     %Response{body: "pong!"}
   end
 
+  @doc """
+  Set a name for your account. Helpful when interacting with GPT.
+  Usage: !name Jimmy
+  """
+  def c_name(%Message{args: ""}) do
+    %Response{
+      body:
+        "Hmm, it seems like you didn't specify a name. To set your name, use !name followed by the name you'd like to use. See !help name for more information."
+    }
+  end
+
+  def c_name(%Message{args: name}) when byte_size(name) > 32 do
+    %Response{
+      body:
+        "The name you've chosen is a bit too long. Please keep it under 32 characters. Try again with a shorter name!"
+    }
+  end
+
+  def c_name(%Message{args: name}) do
+    %Response{body: "Name set to #{name}"}
+  end
+
   def c_h_debug(m) do
     %Response{body: m |> inspect()}
   end

@@ -11,4 +11,5 @@ config :desu_web, DesuWeb.Endpoint,
 config :logger, level: :debug
 
 config :sue,
-  cmd_rate_limit: {:timer.seconds(5), 5000}
+  cmd_rate_limit: {:timer.seconds(5), 5000},
+  query_debug: false

@@ -81,6 +81,14 @@ defmodule Subaru do
     |> result_id()
   end
 
+  def update_with(key, doc, collection) do
+    Query.new()
+    |> Query.update_with(key, doc, collection)
+    |> Query.return("NEW._id")
+    |> Query.exec()
+    |> result_id()
+  end
+
   # TODO: Currently I just use the Query API for these. I don't yet know what
   # their API or return type should look lke.
 

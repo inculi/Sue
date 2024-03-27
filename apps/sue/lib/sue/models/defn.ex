@@ -5,8 +5,8 @@ defmodule Sue.Models.Defn do
   defstruct [:var, :val, :type, :date_created, :date_modified, :id]
 
   @type t() :: %__MODULE__{
-          var: String.t(),
-          val: String.t() | integer(),
+          var: bitstring(),
+          val: bitstring() | integer(),
           type: :text | :num | :bin | :func,
           date_created: integer(),
           date_modified: integer(),
