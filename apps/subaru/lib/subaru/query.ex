@@ -1,6 +1,8 @@
 defmodule Subaru.Query do
   require Logger
 
+  @query_debug Application.compile_env(:sue, :query_debug, false)
+
   @moduledoc """
   The end goal is to have a stable wrapper for our DB that feels as good to use
     as elixir does, maybe even Mnesia inspired.
@@ -15,7 +17,7 @@ defmodule Subaru.Query do
   @type t() :: %__MODULE__{
           q: queue(),
           bindvars: Map.t(),
-          statement: [String.t()],
+          statement: [bitstring()],
           context: [atom()],
           depth: integer(),
           writes: MapSet.t(),
@@ -87,24 +89,49 @@ defmodule Subaru.Query do
     push(q, item)
   end
 
-  @spec for(t, atom(), String.t()) :: t
+  @spec for(t, atom(), bitstring()) :: t
   def for(q, variableName, collection) do
     item = {:for, variableName, collection}
     push(q, item)
   end
 
-  @spec insert(t, any(), String.t()) :: t
+  @spec insert(t, any(), bitstring()) :: t
   def insert(q, doc, collection) do
     item = {:insert, doc, collection}
     push(q, item)
   end
 
-  @spec upsert(t, any(), any(), any(), String.t()) :: t
+  @spec upsert(t, any(), any(), any(), bitstring()) :: t
   def upsert(q, searchdoc, insertdoc, updatedoc, collection) do
     item = {:upsert, searchdoc, insertdoc, updatedoc, collection}
     push(q, item)
   end
 
+  @doc """
+  Updates a document in a specified collection with given key expression and new document data.
+
+  ## Parameters
+
+  - `q`: The Query struct, representing the current state of the query being built.
+  - `keyExpression`: The key of the document to update, either as "123456" or "myCollection/123456"
+  - `doc`: A map containing the document's new data.
+  - `collection`: The name of the collection containing the document.
+
+  ## Examples
+
+      Query.new()
+      |> Query.update_with("123456", %{field: "new value"}, "myCollection")
+      |> Query.exec()
+
+  This updates the document with key "123456" in "myCollection", setting its "field" to "new value".
+
+      Query.new()
+      |> Query.update_with("people/123456", %{field: "new value"}, "people")
+      |> Query.exec()
+
+  This also updates the document with key "123456" in "people", assuming "people/123456" is provided as a key expression.
+  """
+  @spec update_with(t, bitstring(), any(), bitstring()) :: t
   def update_with(q, keyExpression, doc, collection) do
     item = {:update_with, keyExpression, doc, collection}
     push(q, item)
@@ -175,8 +202,23 @@ defmodule Subaru.Query do
     push(q, item)
   end
 
+  @doc """
+  Retrieves a document from a specified collection by its ID.
+
+  ## Parameters
+
+  - `q`: The Query struct, representing the current state of the query being built.
+  - `collection`: The name of the collection from which to retrieve the document.
+  - `id`: The unique identifier of the document to retrieve. Can be provided with or without the collection name prefix.
+  """
   def get(q, collection, id) do
-    return(q, "DOCUMENT(\"#{collection}/#{id}\")")
+    cond do
+      String.contains?(id, "/") ->
+        return(q, "DOCUMENT(#{quoted(id)})")
+
+      true ->
+        return(q, "DOCUMENT(\"#{collection}/#{id}\")")
+    end
   end
 
   def first(q, return \\ false) when is_boolean(return) do
@@ -192,7 +234,9 @@ defmodule Subaru.Query do
   @spec exec(t) :: DB.res()
   def exec(query) do
     {statement, bindvars, opts} = run(query)
-    Subaru.DB.exec(statement, bindvars, opts)
+    res = Subaru.DB.exec(statement, bindvars, opts)
+    if @query_debug, do: Logger.debug(res |> inspect())
+    res
   end
 
   @doc """
@@ -205,15 +249,17 @@ defmodule Subaru.Query do
     bindvars = q.bindvars
     opts = [write: MapSet.to_list(q.writes), read: MapSet.to_list(q.reads)]
 
-    # For debug purposes
-    maxlinelen =
-      statement
-      |> String.split("\n")
-      |> Enum.map(&String.length/1)
-      |> Enum.max()
+    if @query_debug do
+      # For debug purposes
+      maxlinelen =
+        statement
+        |> String.split("\n")
+        |> Enum.map(&String.length/1)
+        |> Enum.max()
 
-    # logborder = String.duplicate("*", maxlinelen)
-    # Logger.debug("EXECUTING QUERY:\n#{logborder}\n#{statement}\n#{logborder}")
+      logborder = String.duplicate("*", maxlinelen)
+      Logger.debug("EXECUTING QUERY:\n#{logborder}\n#{statement}\n#{logborder}")
+    end
 
     {statement, bindvars, opts}
   end
@@ -283,17 +329,37 @@ defmodule Subaru.Query do
     |> gen()
   end
 
-  defp gen({:update_with, keyExpression, doc, collection}, query) do
+  defp gen({:update_with, keyExpression, doc, collection}, query)
+       when is_bitstring(keyExpression) do
     bv_doc = generate_bindvar(doc)
     bv_coll = "@" <> generate_bindvar(collection)
 
-    statement = "UPDATE #{keyExpression} WITH #{bv_doc} IN #{bv_coll}"
+    # Directly handle the keyExpression format simplification
+    formatted_key_expr =
+      if keyExpression =~ ~r/^\d+$/ do
+        # If the keyExpression is purely numeric, quote it
+        quoted(keyExpression)
+      else
+        # Check if keyExpression is in "collection/numericKey" format and extract the numeric part
+        case Regex.run(~r/^[\w-]+\/(\d+)$/, keyExpression) do
+          [_, numeric_id] ->
+            # If so, use the numeric ID, quoted
+            quoted(numeric_id)
+
+          _ ->
+            # If not, use the keyExpression as is
+            keyExpression
+        end
+      end
+
+    statement = "UPDATE #{formatted_key_expr} WITH #{bv_doc} IN #{bv_coll}"
 
     query
     |> add_statement(statement)
     |> add_bindvar(bv_doc, doc)
     |> add_bindvar(bv_coll, collection)
     |> add_write_coll(collection)
+    |> add_read_coll(collection)
     |> gen()
   end
 
@@ -435,7 +501,7 @@ defmodule Subaru.Query do
     |> gen()
   end
 
-  @spec gen_statement(t) :: String.t()
+  @spec gen_statement(t) :: bitstring()
   defp gen_statement(query) do
     helper_gen_statement(query, query.statement, "")
   end

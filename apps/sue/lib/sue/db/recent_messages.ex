@@ -21,8 +21,8 @@ defmodule Sue.DB.RecentMessages do
 
   @type queue() :: Queue.queue()
 
-  # Keep 5 prev messages per chat
-  @context_length 5
+  # Keep 6 prev messages per chat
+  @context_length 6
 
   def start_link(args) do
     GenServer.start_link(__MODULE__, args, name: __MODULE__)
@@ -71,5 +71,18 @@ defmodule Sue.DB.RecentMessages do
   @spec get(Subaru.dbid()) :: [map()]
   def get(chat_id) when is_dbid(chat_id) do
     GenServer.call(__MODULE__, {:get, chat_id})
+  end
+
+  @doc """
+  Get recent messages, ignoring the most recent. Useful when a command was just
+  executed (and thus logged) and we only care about the msgs just before then.
+  """
+  @spec get_tail(Subaru.dbid()) :: [map()]
+  def get_tail(chat_id) when is_dbid(chat_id) do
+    # Somehow this is fastest https://stackoverflow.com/a/52322926/2877738
+    get(chat_id)
+    |> Enum.reverse()
+    |> tl()
+    |> Enum.reverse()
   end
 end

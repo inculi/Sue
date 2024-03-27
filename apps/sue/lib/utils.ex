@@ -1,9 +1,13 @@
 defmodule Sue.Utils do
+  def dbid_number(dbid) do
+    Enum.at(String.split(dbid, "/"), 1)
+  end
+
   def quoted(s) when is_bitstring(s) do
     "\"#{s}\""
   end
 
-  @spec tokenize(String.t()) :: [String.t()]
+  @spec tokenize(bitstring()) :: [bitstring()]
   def tokenize(args) do
     cond do
       String.contains?(args, "\n") -> String.split(args, "\n")

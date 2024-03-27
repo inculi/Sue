@@ -7,8 +7,8 @@ defmodule Sue.Models.Poll do
   @type interface() :: :standard | :platform
   @type t() :: %__MODULE__{
           chat_id: Subaru.dbid(),
-          topic: String.t(),
-          options: [String.t()],
+          topic: bitstring(),
+          options: [bitstring()],
           # k:AccountID, v:ChoiceIndex
           votes: map(),
           interface: interface(),

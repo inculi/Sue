@@ -232,4 +232,13 @@ defmodule Sue.DB do
 
     {:ok, Poll.from_doc(newpoll)}
   end
+
+  # ==========
+  # || User ||
+  # ==========
+  @spec change_name(Subaru.dbid(), bitstring()) :: :ok
+  def change_name(account_id, newname) do
+    {:ok, ^account_id} = Subaru.update_with(account_id, %{name: newname}, Account.collection())
+    :ok
+  end
 end
