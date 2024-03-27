@@ -53,6 +53,14 @@ defmodule Sue.Models.Account do
     }
   end
 
+  def friendly_name(a) do
+    case {a.name, a.handle, a.id} do
+      {"", "", id} -> "User" <> Sue.Utils.dbid_number(id)
+      {"", handle, _} -> handle
+      {name, _handle, _} -> name
+    end
+  end
+
   @impl Subaru.Vertex
   def collection(), do: @collection
 

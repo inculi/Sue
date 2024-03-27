@@ -90,4 +90,18 @@ defmodule SubaruTest do
     assert Subaru.exists?("chats", expr2) == false
     {:ok, _} = Subaru.DB.remove_collection("chats")
   end
+
+  test "update field" do
+    {:ok, _} = Subaru.DB.create_collection("people", :doc)
+
+    {:ok, jimmy_key} = Subaru.insert(%{name: "Jimmy", age: 100}, "people")
+    %{"name" => "Jimmy"} = Subaru.get!("people", jimmy_key)
+
+    {:ok, johnny_key} = Subaru.update_with(jimmy_key, %{name: "Johnny"}, "people")
+    %{"name" => "Johnny"} = Subaru.get!("people", johnny_key)
+
+    assert jimmy_key == johnny_key
+
+    {:ok, _} = Subaru.DB.remove_collection("people")
+  end
 end

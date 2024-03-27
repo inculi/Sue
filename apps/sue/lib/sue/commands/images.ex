@@ -78,7 +78,7 @@ defmodule Sue.Commands.Images do
     %Attachment{filename: outpath}
   end
 
-  @spec random_image_from_dir(String.t()) :: Attachment.t()
+  @spec random_image_from_dir(bitstring()) :: Attachment.t()
   defp random_image_from_dir(dir) do
     path = Path.join(@media_path, dir)
 

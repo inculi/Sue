@@ -50,9 +50,9 @@ defmodule Sue.Models.Message do
           chat: Chat.t(),
           account: Account.t() | nil,
           ###
-          body: String.t(),
-          command: String.t(),
-          args: String.t(),
+          body: bitstring(),
+          command: bitstring(),
+          args: bitstring(),
           attachments: [Attachment.t()] | nil,
           time: DateTime.t(),
           ###
@@ -117,8 +117,11 @@ defmodule Sue.Models.Message do
   def from_telegram(%{msg: msg, context: context} = update) do
     {command, args, body} =
       case Map.get(update, :command) do
-        nil -> command_args_from_body(:telegram, Map.get(msg, :caption, ""))
-        c -> {c, msg.text, context.update.message.text}
+        nil ->
+          command_args_from_body(:telegram, Map.get(msg, :caption, Map.get(msg, :text, "")))
+
+        c ->
+          {c, msg.text, context.update.message.text}
       end
 
     command =
@@ -148,7 +151,7 @@ defmodule Sue.Models.Message do
       chat: chat,
       account: account,
       #
-      body: body |> better_trim(),
+      body: body,
       time: DateTime.from_unix!(msg.date),
       #
       is_from_sue: false,
@@ -292,8 +295,8 @@ defmodule Sue.Models.Message do
   # TODO: Replace all of this with regular expressions.
 
   # returns {command, args, body}
-  @spec command_args_from_body(Platform.t(), String.t()) ::
-          {String.t(), String.t(), String.t()}
+  @spec command_args_from_body(Platform.t(), bitstring()) ::
+          {bitstring(), bitstring(), bitstring()}
   defp command_args_from_body(platform, body) do
     if has_command?(platform, body) do
       trimmed_body = body |> better_trim()
