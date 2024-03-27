@@ -17,7 +17,7 @@ defmodule Sue.AI do
     model =
       case modelversion do
         :gpt35 -> "gpt-3.5-turbo"
-        :gpt4 -> "gpt-4"
+        :gpt4 -> "gpt-4-turbo-preview"
       end
 
     Logger.debug("Running chat_completion with #{model}")
