@@ -117,8 +117,11 @@ defmodule Sue.Models.Message do
   def from_telegram(%{msg: msg, context: context} = update) do
     {command, args, body} =
       case Map.get(update, :command) do
-        nil -> command_args_from_body(:telegram, Map.get(msg, :caption, ""))
-        c -> {c, msg.text, context.update.message.text}
+        nil ->
+          command_args_from_body(:telegram, Map.get(msg, :caption, Map.get(msg, :text, "")))
+
+        c ->
+          {c, msg.text, context.update.message.text}
       end
 
     command =
@@ -148,7 +151,7 @@ defmodule Sue.Models.Message do
       chat: chat,
       account: account,
       #
-      body: body |> better_trim(),
+      body: body,
       time: DateTime.from_unix!(msg.date),
       #
       is_from_sue: false,
