@@ -22,6 +22,7 @@ defmodule DesuWeb.Router do
 
   scope "/", DesuWeb do
     pipe_through :browser
+    live "/login", Live.Login
 
     pipe_through :auth_required
     live "/", Live.TrueHome

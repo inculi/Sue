@@ -28,6 +28,8 @@ defmodule Subaru.Cache do
   def keys(table), do: Cachex.keys(table)
   def keys!(table), do: Cachex.keys!(table)
 
+  def refresh(table, key), do: Cachex.refresh(table, key)
+
   def exists?(table, key) do
     {:ok, res} = Cachex.exists?(table, key)
     res

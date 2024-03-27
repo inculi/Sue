@@ -63,25 +63,6 @@ defmodule Subaru.DB do
     GenServer.call(__MODULE__, :ping)
   end
 
-  @spec insert(Map.t(), bitstring()) :: any
-  def insert(doc, collection) do
-    GenServer.call(__MODULE__, {:insert, doc, collection})
-  end
-
-  @spec upsert(Map.t(), Map.t(), Map.t(), bitstring()) :: any
-  def upsert(searchdoc, insertdoc, updatedoc, collection) do
-    GenServer.call(__MODULE__, {:upsert, searchdoc, insertdoc, updatedoc, collection})
-  end
-
-  def insert_edge(fromid, toid, collection) do
-    GenServer.call(__MODULE__, {:insert_edge, fromid, toid, collection})
-  end
-
-  @spec list(bitstring()) :: any
-  def list(collection) do
-    GenServer.call(__MODULE__, {:list, collection})
-  end
-
   @spec conn :: pid()
   def conn() do
     GenServer.call(__MODULE__, :conn)
@@ -95,32 +76,6 @@ defmodule Subaru.DB do
   @spec remove_collection(bitstring()) :: {:ok, bitstring()} | {:error, :dne}
   def remove_collection(name) do
     GenServer.call(__MODULE__, {:remove_collection, name})
-  end
-
-  @spec add_multi([{:doc | :edge, Map.t(), bitstring()}, ...]) :: any()
-  def add_multi([]), do: {[], %{}}
-
-  def add_multi(items_and_collections) do
-    GenServer.call(__MODULE__, {:insert_multi, items_and_collections})
-  end
-
-  # HELPER METHODS
-  # ==============
-
-  defp add_multi_helper({{:doc, doc, coll}, idx}) do
-    dockey = "doc#{idx}"
-    collkey = "@coll#{idx}"
-    bindvars = %{dockey => doc, collkey => coll}
-    {"INSERT @#{dockey} INTO @#{collkey}", bindvars}
-  end
-
-  defp add_multi_helper({{:edge, %{_from: fromid, _to: toid}, coll}, idx}) do
-    fromkey = "fromid#{idx}"
-    tokey = "toid#{idx}"
-    collkey = "@coll#{idx}"
-    bindvars = %{fromkey => fromid, tokey => toid, collkey => coll}
-
-    {"INSERT {_from: @#{fromkey}, _to: @#{tokey}} INTO @#{collkey}", bindvars}
   end
 
   # HELPER UTILS

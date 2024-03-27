@@ -36,6 +36,7 @@ defmodule Desu.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:logger_file_backend, "~> 0.0.10"},
       {:phoenix_pubsub, "~> 2.1"},
       {:finch, "~> 0.13"},
       {:cachex, "~> 3.6"}
