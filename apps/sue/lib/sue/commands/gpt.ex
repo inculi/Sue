@@ -16,7 +16,7 @@ defmodule Sue.Commands.Gpt do
     # Check rate limit for using gpt command: 50/day
     with :ok <- Sue.Limits.check_rate("gpt:#{account.id}", @gpt_rate_limit, account.is_premium) do
       %Response{
-        body: Sue.AI.chat_completion(args, :gpt35, chat, account),
+        body: Sue.AI.chat_completion(args, :gpt4o, chat, account),
         is_from_gpt: true
       }
     else
