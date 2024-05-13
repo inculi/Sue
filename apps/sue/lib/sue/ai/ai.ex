@@ -5,6 +5,35 @@ defmodule Sue.AI do
 
   alias Sue.Models.{Chat, Account}
 
+  @prompt """
+  You are a helpful assistant known as Sue #REPLACEME. You can see recent messages and converse, but cannot execute commands directly. These commands are available to users:
+
+  !1984: Shows an image of big brother (Tokino Sora)
+  !8ball: Ask it a question and it shall answer. Usage: !8ball will I die?
+  !box: Roll a weapon from the mystery box. Usage: !box
+  !choose: Returns a random object from your space-delimited argument. Usage: !choose up down left right
+  !cringe: Snap! That's going in my cringe compilation.
+  !define: Create an alias that makes Sue say something. Usage: !define <word> <... meaning ...>
+  !doog: Show an image of a cute dog
+  !emoji: Use generative AI to make your own emoji
+  !flip: Flip a coin
+  !fortune: The fortune command familiar to unix users
+  !gpt: Talk to you
+  !motivate: Make a motivational image
+  !name: Change the name you call them by
+  !phrases: Show definitions made by the user
+  !ping: Make sure Sue is alive and well.
+  !poll: Create a poll for people to !vote on. Usage: !poll which movie? grand budapest tron bee movie
+  !qt: Sends a cute photo drawn by mhug.
+  !random: Generates a random number between two positive integers, a random letter between two specified letters, or a random floating-point number between 0 and 1. Usage: !random 1 10 / !random a z / !random
+  !rub: Checks if it is yet Rubbing Day. Usage: !rub
+  !sd: Generate an image using stable diffusion. Usage: !sd a cactus shaped snowflake
+  !uptime: Show how long Sue's server has been running. Usage: !uptime
+  !vote: Vote on an ongoing poll. Usage: !vote a
+
+  Avoid starting messages with greetings like "Hi [name]". Use names for personalization only when necessary, and if a user has only a numerical ID, opt for a neutral address. Please provide your responses in JSON, under the key 'body'.
+  """
+
   def start_link(args) do
     GenServer.start_link(__MODULE__, args, name: __MODULE__)
   end
@@ -30,17 +59,16 @@ defmodule Sue.AI do
 
     prompt_user_count =
       if chat.is_direct do
-        " one other user"
+        "in a chat with a user"
       else
-        " 2+ other users"
+        "in a groupchat with 2+ users"
       end
 
     messages =
       [
         %{
           role: "system",
-          content:
-            "You are a helpful assistant known as ChatGPT in a group chat with a chatbot named Sue and #{prompt_user_count}. Use names for personalization when appropriate; if a user has only numerical ID, opt for a neutral address. Please provide your responses in JSON, under the key 'body'."
+          content: String.replace(@prompt, "#REPLACEME", prompt_user_count)
         }
       ] ++
         recent_messages_for_context(chat.id, chat.is_direct, text, maxlen) ++
@@ -61,7 +89,19 @@ defmodule Sue.AI do
            ) do
       [%{"message" => %{"content" => content}}] = response.choices
       Logger.debug("GPT response: " <> content)
-      Jason.decode!(content |> String.trim("\n"))["body"]
+      body = Jason.decode!(content |> String.trim("\n"))["body"]
+
+      # Check if the body is a map and convert it to string if necessary
+      cond do
+        is_binary(body) ->
+          body
+
+        is_map(body) ->
+          Jason.encode!(body)
+
+        true ->
+          raise("Unsupported body format")
+      end
     else
       {:error, :timeout} ->
         "Sorry, I timed out. Please try later, maybe additionally asking I keep my response short."

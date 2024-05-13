@@ -30,7 +30,7 @@ defmodule Sue.Commands.Images do
   def c_cringe(_msg), do: random_image_from_dir("cringe/")
 
   @doc """
-  Sends a cute photo.
+  Sends a cute photo drawn by mhug.
   """
   def c_qt(_msg), do: random_image_from_dir("qt/")
 
