@@ -189,20 +189,23 @@ defmodule Sue.AI do
 
   @spec gen_image_sd(bitstring()) :: {:ok | :error, bitstring()}
   def gen_image_sd(prompt) do
-    model = Replicate.Models.get!("stability-ai/sdxl")
+    model = Replicate.Models.get!("lucataco/proteus-v0.2")
 
     version =
       Replicate.Models.get_version!(
         model,
-        "8beff3369e81422112d93b89ca01426147de542cd4684c244b673b105188fe5f"
+        "06775cd262843edbde5abab958abdbb65a0a6b58ca301c9fd78fa55c775fc019"
       )
 
     {:ok, prediction} =
       Replicate.Predictions.create(version, %{
         prompt: prompt,
+        negative_prompt: "worst quality, low quality",
+        scheduler: "KarrasDPM",
         width: 768,
         height: 768,
-        num_inference_steps: 30
+        num_inference_steps: 20,
+        apply_watermark: false
       })
 
     Replicate.Predictions.wait(prediction)
