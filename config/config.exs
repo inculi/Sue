@@ -87,7 +87,8 @@ config :hammer,
 
 config :sue,
   # options include :discord, :imessage, :telegram - :debug is just for testing
-  platforms: [:debug, :discord, :imessage, :telegram],
+  # platforms: [:debug, :discord, :imessage, :telegram],
+  platforms: [:debug, :telegram],
   chat_db_path: Path.join(System.user_home(), "Library/Messages/chat.db"),
   # Rate limits
   cmd_rate_limit: {:timer.seconds(5), 5},

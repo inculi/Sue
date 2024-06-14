@@ -26,9 +26,10 @@ defmodule Subaru.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:logger_file_backend, "~> 0.0.10"},
       {:velocy, "~> 0.1"},
       {:arangox, git: "https://github.com/ArangoDB-Community/arangox"},
-      {:cachex, "~> 3.4"},
+      {:cachex, "~> 3.6"},
       # override for nostrum discord
       {:gun, "2.0.1", [env: :prod, hex: "remedy_gun", override: true, repo: "hexpm"]}
     ]

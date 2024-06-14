@@ -1,8 +1,6 @@
 defmodule Subaru.Cache do
   use GenServer
 
-  # @table_userchats :user_chat_edges_cache
-
   def start_link(args) do
     GenServer.start_link(__MODULE__, args, name: __MODULE__)
   end
@@ -15,6 +13,8 @@ defmodule Subaru.Cache do
 
   def put(table, key, val), do: Cachex.put(table, key, val)
   def put!(table, key, val), do: Cachex.put!(table, key, val)
+  def put_ttl(table, key, val, ttl), do: Cachex.put(table, key, val, ttl: ttl)
+  def put_ttl!(table, key, val, ttl), do: Cachex.put!(table, key, val, ttl: ttl)
 
   def put_many(table, pairs), do: Cachex.put_many(table, pairs)
   def put_many!(table, pairs), do: Cachex.put_many!(table, pairs)
@@ -24,6 +24,11 @@ defmodule Subaru.Cache do
 
   def del(table, key), do: Cachex.del(table, key)
   def del!(table, key), do: Cachex.del!(table, key)
+
+  def keys(table), do: Cachex.keys(table)
+  def keys!(table), do: Cachex.keys!(table)
+
+  def refresh(table, key), do: Cachex.refresh(table, key)
 
   def exists?(table, key) do
     {:ok, res} = Cachex.exists?(table, key)

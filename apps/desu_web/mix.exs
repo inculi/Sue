@@ -36,6 +36,8 @@ defmodule DesuWeb.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:desu, in_umbrella: true},
+      {:logger_file_backend, "~> 0.0.10"},
       {:phoenix, "~> 1.7.2"},
       {:phoenix_html, "~> 3.3"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},

@@ -36,6 +36,11 @@ defmodule Sue.Commands.Core do
     %Response{body: "Name set to #{name}"}
   end
 
+  def c_login(%Message{account: %Account{id: account_id}}) do
+    code = Desu.Login.gen_code(account_id)
+    %Response{body: "Your code is: #{code}\nPlease login at sue.robertism.com"}
+  end
+
   def c_h_debug(m) do
     %Response{body: m |> inspect()}
   end
